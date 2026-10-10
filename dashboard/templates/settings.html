@@ -1,0 +1,823 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- عنوان الصفحة -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">
+        <i class="fas fa-cog text-primary me-2"></i>
+        إعدادات البوت
+    </h2>
+    <button class="btn btn-outline-primary btn-sm" onclick="loadSettings()">
+        <i class="fas fa-sync-alt me-1"></i> إعادة تحميل
+    </button>
+</div>
+
+<!-- رسائل التنبيه -->
+<div id="settings-alert" class="alert d-none" role="alert"></div>
+
+<!-- نموذج الإعدادات الرئيسي -->
+<form id="settings-form" onsubmit="saveSettings(event)">
+    
+    <!-- =================== إعدادات عامة =================== -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-sliders-h text-primary me-2"></i>
+                الإعدادات العامة
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- البادئة -->
+                <div class="col-md-6">
+                    <label for="prefix" class="form-label fw-bold">
+                        <i class="fas fa-hashtag text-muted me-1"></i>
+                        بادئة الأوامر
+                    </label>
+                    <input 
+                        type="text" 
+                        class="form-control" 
+                        id="prefix" 
+                        value="!"
+                        placeholder="مثال: ! أو / أو ."
+                        maxlength="5"
+                    >
+                    <div class="form-text">الرمز الذي يسبق الأوامر النصية</div>
+                </div>
+
+                <!-- اللغة -->
+                <div class="col-md-6">
+                    <label for="language" class="form-label fw-bold">
+                        <i class="fas fa-language text-muted me-1"></i>
+                        اللغة
+                    </label>
+                    <select class="form-select" id="language">
+                        <option value="ar" selected>🇸🇦 العربية</option>
+                        <option value="en">🇬🇧 الإنجليزية</option>
+                        <option value="fr">🇫🇷 الفرنسية</option>
+                        <option value="es">🇪🇸 الإسبانية</option>
+                        <option value="tr">🇹🇷 التركية</option>
+                    </select>
+                    <div class="form-text">لغة رسائل البوت والأوامر</div>
+                </div>
+
+                <!-- اسم البوت -->
+                <div class="col-md-6">
+                    <label for="bot-name" class="form-label fw-bold">
+                        <i class="fas fa-robot text-muted me-1"></i>
+                        اسم البوت
+                    </label>
+                    <input 
+                        type="text" 
+                        class="form-control" 
+                        id="bot-name" 
+                        value="MARS Bot"
+                        placeholder="اسم البوت"
+                    >
+                </div>
+
+                <!-- حالة البوت -->
+                <div class="col-md-6">
+                    <label for="status" class="form-label fw-bold">
+                        <i class="fas fa-signal text-muted me-1"></i>
+                        حالة البوت
+                    </label>
+                    <select class="form-select" id="status">
+                        <option value="online" selected>🟢 متصل</option>
+                        <option value="idle">🟡 مشغول</option>
+                        <option value="dnd">🔴 لا تزعج</option>
+                        <option value="invisible">⚫ مخفي</option>
+                    </select>
+                </div>
+
+                <!-- نشاط البوت -->
+                <div class="col-12">
+                    <label for="activity" class="form-label fw-bold">
+                        <i class="fas fa-gamepad text-muted me-1"></i>
+                        نشاط البوت (Activity)
+                    </label>
+                    <div class="input-group">
+                        <select class="form-select" id="activity-type" style="max-width: 200px;">
+                            <option value="playing">يلعب</option>
+                            <option value="watching">يشاهد</option>
+                            <option value="listening">يستمع إلى</option>
+                            <option value="competing">يتنافس في</option>
+                        </select>
+                        <input 
+                            type="text" 
+                            class="form-control" 
+                            id="activity-text" 
+                            placeholder="مثال: !help للمساعدة"
+                        >
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================== إعدادات الرومات =================== -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-door-open text-success me-2"></i>
+                إعدادات الرومات
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- روم الترحيب -->
+                <div class="col-md-6">
+                    <label for="welcome-channel" class="form-label fw-bold">
+                        <i class="fas fa-hand-wave text-success me-1"></i>
+                        روم الترحيب
+                    </label>
+                    <select class="form-select" id="welcome-channel">
+                        <option value="">-- اختر الروم --</option>
+                        <option value="123456789">#welcome</option>
+                        <option value="987654321">#general</option>
+                    </select>
+                    <div class="form-text">الروم الذي تُرسل فيه رسائل الترحيب</div>
+                </div>
+
+                <!-- روم الوداع -->
+                <div class="col-md-6">
+                    <label for="goodbye-channel" class="form-label fw-bold">
+                        <i class="fas fa-sign-out-alt text-danger me-1"></i>
+                        روم الوداع
+                    </label>
+                    <select class="form-select" id="goodbye-channel">
+                        <option value="">-- اختر الروم --</option>
+                        <option value="123456789">#welcome</option>
+                        <option value="987654321">#general</option>
+                    </select>
+                    <div class="form-text">الروم الذي تُرسل فيه رسائل الوداع</div>
+                </div>
+
+                <!-- روم السجلات -->
+                <div class="col-md-6">
+                    <label for="log-channel" class="form-label fw-bold">
+                        <i class="fas fa-clipboard-list text-info me-1"></i>
+                        روم السجلات
+                    </label>
+                    <select class="form-select" id="log-channel">
+                        <option value="">-- اختر الروم --</option>
+                        <option value="123456789">#logs</option>
+                        <option value="987654321">#mod-logs</option>
+                    </select>
+                    <div class="form-text">الروم الذي تُسجل فيه أحداث البوت</div>
+                </div>
+
+                <!-- روم التذاكر -->
+                <div class="col-md-6">
+                    <label for="ticket-channel" class="form-label fw-bold">
+                        <i class="fas fa-ticket-alt text-warning me-1"></i>
+                        Category التذاكر
+                    </label>
+                    <select class="form-select" id="ticket-channel">
+                        <option value="">-- اختر الـ Category --</option>
+                        <option value="123456789">📋 الدعم الفني</option>
+                        <option value="987654321">🎫 التذاكر</option>
+                    </select>
+                    <div class="form-text">الـ Category الذي تُفتح فيه التذاكر</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================== إعدادات الحماية =================== -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-shield-alt text-danger me-2"></i>
+                إعدادات الحماية
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- حماية من الروابط -->
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            id="anti-links"
+                            checked
+                        >
+                        <label class="form-check-label fw-bold" for="anti-links">
+                            <i class="fas fa-link text-muted me-1"></i>
+                            منع الروابط
+                        </label>
+                        <div class="form-text">حذف الرسائل التي تحتوي على روابط</div>
+                    </div>
+                </div>
+
+                <!-- حماية من السبام -->
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            id="anti-spam"
+                            checked
+                        >
+                        <label class="form-check-label fw-bold" for="anti-spam">
+                            <i class="fas fa-bolt text-muted me-1"></i>
+                            منع السبام
+                        </label>
+                        <div class="form-text">حظر الأعضاء الذين يرسلون رسائل كثيرة بسرعة</div>
+                    </div>
+                </div>
+
+                <!-- حماية من الكلمات -->
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            id="anti-words"
+                            checked
+                        >
+                        <label class="form-check-label fw-bold" for="anti-words">
+                            <i class="fas fa-ban text-muted me-1"></i>
+                            منع الكلمات المسيئة
+                        </label>
+                        <div class="form-text">حذف الرسائل التي تحتوي على كلمات محظورة</div>
+                    </div>
+                </div>
+
+                <!-- حماية من الرأيد -->
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            id="anti-raid"
+                            checked
+                        >
+                        <label class="form-check-label fw-bold" for="anti-raid">
+                            <i class="fas fa-users-slash text-muted me-1"></i>
+                            حماية من Raid
+                        </label>
+                        <div class="form-text">حظر الانضمام الجماعي المشبوه</div>
+                    </div>
+                </div>
+
+                <!-- حد الانضمام -->
+                <div class="col-md-6">
+                    <label for="join-limit" class="form-label fw-bold">
+                        <i class="fas fa-user-clock text-muted me-1"></i>
+                        حد الانضمام (ثواني)
+                    </label>
+                    <input 
+                        type="number" 
+                        class="form-control" 
+                        id="join-limit" 
+                        value="10"
+                        min="1"
+                        max="60"
+                    >
+                    <div class="form-text">عدد الانضمامات المسموحة في الثانية</div>
+                </div>
+
+                <!-- عمر الحساب -->
+                <div class="col-md-6">
+                    <label for="account-age" class="form-label fw-bold">
+                        <i class="fas fa-calendar-alt text-muted me-1"></i>
+                        الحد الأدنى لعمر الحساب (أيام)
+                    </label>
+                    <input 
+                        type="number" 
+                        class="form-control" 
+                        id="account-age" 
+                        value="7"
+                        min="0"
+                        max="365"
+                    >
+                    <div class="form-text">حظر الحسابات الأحدث من هذا العمر</div>
+                </div>
+
+                <!-- إجراء الحماية -->
+                <div class="col-md-6">
+                    <label for="protection-action" class="form-label fw-bold">
+                        <i class="fas fa-gavel text-muted me-1"></i>
+                        إجراء الحماية
+                    </label>
+                    <select class="form-select" id="protection-action">
+                        <option value="warn" selected>⚠️ تحذير</option>
+                        <option value="mute">🔇 كتم</option>
+                        <option value="kick">👢 طرد</option>
+                        <option value="ban">🔨 حظر</option>
+                    </select>
+                </div>
+
+                <!-- مدة الكتم -->
+                <div class="col-md-6">
+                    <label for="mute-duration" class="form-label fw-bold">
+                        <i class="fas fa-clock text-muted me-1"></i>
+                        مدة الكتم (دقائق)
+                    </label>
+                    <input 
+                        type="number" 
+                        class="form-control" 
+                        id="mute-duration" 
+                        value="60"
+                        min="1"
+                        max="40320"
+                    >
+                    <div class="form-text">مدة الكتم التلقائي عند المخالفة</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================== إعدادات المستويات =================== -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-chart-line text-success me-2"></i>
+                إعدادات نظام المستويات
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- تفعيل المستويات -->
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            id="levels-enabled"
+                            checked
+                        >
+                        <label class="form-check-label fw-bold" for="levels-enabled">
+                            <i class="fas fa-toggle-on text-success me-1"></i>
+                            تفعيل نظام المستويات
+                        </label>
+                    </div>
+                </div>
+
+                <!-- رسائل الترقية -->
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            id="level-up-messages"
+                            checked
+                        >
+                        <label class="form-check-label fw-bold" for="level-up-messages">
+                            <i class="fas fa-comment-dots text-muted me-1"></i>
+                            رسائل الترقية
+                        </label>
+                        <div class="form-text">إرسال رسالة عند ترقية العضو</div>
+                    </div>
+                </div>
+
+                <!-- الحد الأدنى لـ XP -->
+                <div class="col-md-6">
+                    <label for="xp-min" class="form-label fw-bold">
+                        <i class="fas fa-arrow-down text-muted me-1"></i>
+                        الحد الأدنى لـ XP لكل رسالة
+                    </label>
+                    <input 
+                        type="number" 
+                        class="form-control" 
+                        id="xp-min" 
+                        value="5"
+                        min="1"
+                        max="100"
+                    >
+                </div>
+
+                <!-- الحد الأقصى لـ XP -->
+                <div class="col-md-6">
+                    <label for="xp-max" class="form-label fw-bold">
+                        <i class="fas fa-arrow-up text-muted me-1"></i>
+                        الحد الأقصى لـ XP لكل رسالة
+                    </label>
+                    <input 
+                        type="number" 
+                        class="form-control" 
+                        id="xp-max" 
+                        value="15"
+                        min="1"
+                        max="100"
+                    >
+                </div>
+
+                <!-- كولداون XP -->
+                <div class="col-md-6">
+                    <label for="xp-cooldown" class="form-label fw-bold">
+                        <i class="fas fa-hourglass-half text-muted me-1"></i>
+                        كولداون XP (ثواني)
+                    </label>
+                    <input 
+                        type="number" 
+                        class="form-control" 
+                        id="xp-cooldown" 
+                        value="60"
+                        min="10"
+                        max="3600"
+                    >
+                    <div class="form-text">الوقت بين كل رسالة تحتسب XP</div>
+                </div>
+
+                <!-- رومات مستبعدة -->
+                <div class="col-12">
+                    <label for="ignored-channels" class="form-label fw-bold">
+                        <i class="fas fa-eye-slash text-muted me-1"></i>
+                        الرومات المستبعدة من حساب XP
+                    </label>
+                    <input 
+                        type="text" 
+                        class="form-control" 
+                        id="ignored-channels" 
+                        placeholder="أدخل آيدي الرومات مفصولة بفاصلة"
+                    >
+                    <div class="form-text">لن يُحسب XP في هذه الرومات</div>
+                </div>
+
+                <!-- رولات مستبعدة -->
+                <div class="col-12">
+                    <label for="ignored-roles" class="form-label fw-bold">
+                        <i class="fas fa-user-slash text-muted me-1"></i>
+                        الرولات المستبعدة من حساب XP
+                    </label>
+                    <input 
+                        type="text" 
+                        class="form-control" 
+                        id="ignored-roles" 
+                        placeholder="أدخل آيدي الرولات مفصولة بفاصلة"
+                    >
+                    <div class="form-text">لن يُحسب XP للأعضاء الذين يملكون هذه الرولات</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================== إعدادات متقدمة =================== -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-tools text-warning me-2"></i>
+                إعدادات متقدمة
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <!-- Debug Mode -->
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            id="debug-mode"
+                        >
+                        <label class="form-check-label fw-bold" for="debug-mode">
+                            <i class="fas fa-bug text-muted me-1"></i>
+                            وضع التصحيح (Debug)
+                        </label>
+                        <div class="form-text">تسجيل تفاصيل أكثر في السجلات</div>
+                    </div>
+                </div>
+
+                <!-- Auto Save -->
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            id="auto-save"
+                            checked
+                        >
+                        <label class="form-check-label fw-bold" for="auto-save">
+                            <i class="fas fa-save text-muted me-1"></i>
+                            الحفظ التلقائي
+                        </label>
+                        <div class="form-text">حفظ البيانات تلقائياً كل 5 دقائق</div>
+                    </div>
+                </div>
+
+                <!-- Backup Interval -->
+                <div class="col-md-6">
+                    <label for="backup-interval" class="form-label fw-bold">
+                        <i class="fas fa-database text-muted me-1"></i>
+                        فترة النسخ الاحتياطي (ساعات)
+                    </label>
+                    <input 
+                        type="number" 
+                        class="form-control" 
+                        id="backup-interval" 
+                        value="24"
+                        min="1"
+                        max="168"
+                    >
+                </div>
+
+                <!-- Max Logs -->
+                <div class="col-md-6">
+                    <label for="max-logs" class="form-label fw-bold">
+                        <i class="fas fa-archive text-muted me-1"></i>
+                        الحد الأقصى للسجلات
+                    </label>
+                    <input 
+                        type="number" 
+                        class="form-control" 
+                        id="max-logs" 
+                        value="1000"
+                        min="100"
+                        max="100000"
+                    >
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================== أزرار الحفظ =================== -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    سيتم تطبيق التغييرات فوراً بعد الحفظ
+                </div>
+                <div class="d-flex gap-2">
+                    <button 
+                        type="button" 
+                        class="btn btn-outline-secondary"
+                        onclick="resetSettings()"
+                    >
+                        <i class="fas fa-undo me-1"></i> إعادة تعيين
+                    </button>
+                    <button 
+                        type="submit" 
+                        class="btn btn-primary btn-lg px-5"
+                    >
+                        <i class="fas fa-save me-2"></i> حفظ جميع التغييرات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</form>
+
+<!-- Modal تأكيد إعادة التعيين -->
+<div class="modal fade" id="resetModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-white border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تأكيد إعادة التعيين
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">هل أنت متأكد من إعادة تعيين جميع الإعدادات إلى القيم الافتراضية؟</p>
+                <div class="alert alert-warning mt-3 mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    <strong>تنبيه:</strong> لا يمكن التراجع عن هذه العملية!
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-warning" onclick="confirmReset()">
+                    <i class="fas fa-undo me-1"></i> إعادة تعيين
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let resetModal = null;
+    let originalSettings = null;
+
+    // تهيئة Modal
+    document.addEventListener('DOMContentLoaded', function() {
+        const modalEl = document.getElementById('resetModal');
+        resetModal = new bootstrap.Modal(modalEl);
+        loadSettings();
+    });
+
+    // تحميل الإعدادات من API
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/settings');
+            const result = await response.json();
+            
+            if (result.success) {
+                const data = result.data;
+                originalSettings = { ...data };
+                
+                // تعبئة الحقول
+                document.getElementById('prefix').value = data.prefix || '!';
+                document.getElementById('language').value = data.language || 'ar';
+                document.getElementById('bot-name').value = data.bot_name || 'MARS Bot';
+                document.getElementById('status').value = data.status || 'online';
+                document.getElementById('activity-type').value = data.activity_type || 'playing';
+                document.getElementById('activity-text').value = data.activity_text || '';
+                
+                document.getElementById('welcome-channel').value = data.welcome_channel || '';
+                document.getElementById('goodbye-channel').value = data.goodbye_channel || '';
+                document.getElementById('log-channel').value = data.log_channel || '';
+                document.getElementById('ticket-channel').value = data.ticket_channel || '';
+                
+                document.getElementById('anti-links').checked = data.anti_links !== false;
+                document.getElementById('anti-spam').checked = data.anti_spam !== false;
+                document.getElementById('anti-words').checked = data.anti_words !== false;
+                document.getElementById('anti-raid').checked = data.anti_raid !== false;
+                document.getElementById('join-limit').value = data.join_limit || 10;
+                document.getElementById('account-age').value = data.account_age || 7;
+                document.getElementById('protection-action').value = data.protection_action || 'warn';
+                document.getElementById('mute-duration').value = data.mute_duration || 60;
+                
+                document.getElementById('levels-enabled').checked = data.levels_enabled !== false;
+                document.getElementById('level-up-messages').checked = data.level_up_messages !== false;
+                document.getElementById('xp-min').value = data.xp_min || 5;
+                document.getElementById('xp-max').value = data.xp_max || 15;
+                document.getElementById('xp-cooldown').value = data.xp_cooldown || 60;
+                document.getElementById('ignored-channels').value = (data.ignored_channels || []).join(',');
+                document.getElementById('ignored-roles').value = (data.ignored_roles || []).join(',');
+                
+                document.getElementById('debug-mode').checked = data.debug_mode || false;
+                document.getElementById('auto-save').checked = data.auto_save !== false;
+                document.getElementById('backup-interval').value = data.backup_interval || 24;
+                document.getElementById('max-logs').value = data.max_logs || 1000;
+                
+                showAlert('تم تحميل الإعدادات بنجاح', 'info');
+            }
+        } catch (error) {
+            console.error('خطأ:', error);
+            showAlert('حدث خطأ في تحميل الإعدادات', 'danger');
+        }
+    }
+
+    // حفظ الإعدادات
+    async function saveSettings(e) {
+        e.preventDefault();
+        
+        const settings = {
+            // إعدادات عامة
+            prefix: document.getElementById('prefix').value,
+            language: document.getElementById('language').value,
+            bot_name: document.getElementById('bot-name').value,
+            status: document.getElementById('status').value,
+            activity_type: document.getElementById('activity-type').value,
+            activity_text: document.getElementById('activity-text').value,
+            
+            // إعدادات الرومات
+            welcome_channel: document.getElementById('welcome-channel').value,
+            goodbye_channel: document.getElementById('goodbye-channel').value,
+            log_channel: document.getElementById('log-channel').value,
+            ticket_channel: document.getElementById('ticket-channel').value,
+            
+            // إعدادات الحماية
+            anti_links: document.getElementById('anti-links').checked,
+            anti_spam: document.getElementById('anti-spam').checked,
+            anti_words: document.getElementById('anti-words').checked,
+            anti_raid: document.getElementById('anti-raid').checked,
+            join_limit: parseInt(document.getElementById('join-limit').value),
+            account_age: parseInt(document.getElementById('account-age').value),
+            protection_action: document.getElementById('protection-action').value,
+            mute_duration: parseInt(document.getElementById('mute-duration').value),
+            
+            // إعدادات المستويات
+            levels_enabled: document.getElementById('levels-enabled').checked,
+            level_up_messages: document.getElementById('level-up-messages').checked,
+            xp_min: parseInt(document.getElementById('xp-min').value),
+            xp_max: parseInt(document.getElementById('xp-max').value),
+            xp_cooldown: parseInt(document.getElementById('xp-cooldown').value),
+            ignored_channels: document.getElementById('ignored-channels').value.split(',').map(s => s.trim()).filter(s => s),
+            ignored_roles: document.getElementById('ignored-roles').value.split(',').map(s => s.trim()).filter(s => s),
+            
+            // إعدادات متقدمة
+            debug_mode: document.getElementById('debug-mode').checked,
+            auto_save: document.getElementById('auto-save').checked,
+            backup_interval: parseInt(document.getElementById('backup-interval').value),
+            max_logs: parseInt(document.getElementById('max-logs').value)
+        };
+        
+        // التحقق من صحة البيانات
+        if (!settings.prefix) {
+            showAlert('يرجى إدخال بادئة الأوامر', 'warning');
+            return;
+        }
+        
+        if (settings.xp_min > settings.xp_max) {
+            showAlert('الحد الأدنى لـ XP يجب أن يكون أقل من الحد الأقصى', 'warning');
+            return;
+        }
+        
+        if (settings.join_limit < 1 || settings.join_limit > 60) {
+            showAlert('حد الانضمام يجب أن يكون بين 1 و 60', 'warning');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(settings)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showAlert('✅ تم حفظ الإعدادات بنجاح!', 'success');
+                originalSettings = { ...settings };
+                
+                // التمرير لأعلى الصفحة
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                showAlert('❌ ' + (result.error || 'حدث خطأ في الحفظ'), 'danger');
+            }
+        } catch (error) {
+            console.error('خطأ:', error);
+            showAlert('❌ حدث خطأ في الاتصال بالخادم', 'danger');
+        }
+    }
+
+    // إعادة تعيين الإعدادات
+    function resetSettings() {
+        resetModal.show();
+    }
+
+    // تأكيد إعادة التعيين
+    function confirmReset() {
+        if (originalSettings) {
+            // إعادة تعبئة الحقول من القيم الأصلية
+            document.getElementById('prefix').value = originalSettings.prefix || '!';
+            document.getElementById('language').value = originalSettings.language || 'ar';
+            document.getElementById('bot-name').value = originalSettings.bot_name || 'MARS Bot';
+            document.getElementById('status').value = originalSettings.status || 'online';
+            
+            showAlert('تم إعادة تعيين الإعدادات إلى القيم المحفوظة', 'info');
+        } else {
+            // إعادة تعيين للقيم الافتراضية
+            document.getElementById('settings-form').reset();
+            showAlert('تم إعادة تعيين الإعدادات إلى القيم الافتراضية', 'info');
+        }
+        
+        resetModal.hide();
+    }
+
+    // عرض رسائل التنبيه
+    function showAlert(message, type) {
+        const alertDiv = document.getElementById('settings-alert');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-${getAlertIcon(type)} me-2"></i>
+                <span>${message}</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        alertDiv.classList.remove('d-none');
+        
+        // إخفاء تلقائي بعد 5 ثواني (ما عدا الأخطاء)
+        if (type !== 'danger') {
+            setTimeout(() => {
+                alertDiv.classList.remove('show');
+                setTimeout(() => alertDiv.classList.add('d-none'), 150);
+            }, 5000);
+        }
+    }
+
+    function getAlertIcon(type) {
+        const icons = {
+            'success': 'check-circle',
+            'danger': 'exclamation-circle',
+            'warning': 'exclamation-triangle',
+            'info': 'info-circle'
+        };
+        return icons[type] || 'info-circle';
+    }
+
+    // التحقق من تغييرات قبل مغادرة الصفحة
+    window.addEventListener('beforeunload', function(e) {
+        const currentSettings = getCurrentFormValues();
+        if (originalSettings && JSON.stringify(currentSettings) !== JSON.stringify(originalSettings)) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    // جلب القيم الحالية من النموذج
+    function getCurrentFormValues() {
+        return {
+            prefix: document.getElementById('prefix').value,
+            language: document.getElementById('language').value,
+            bot_name: document.getElementById('bot-name').value,
+            status: document.getElementById('status').value,
+            activity_type: document.getElementById('activity-type').value,
+            activity_text: document.getElementById('activity-text').value
+        };
+    }
+</script>
+{% endblock %}

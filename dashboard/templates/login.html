@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 85vh;">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-lg border-0 rounded-4 login-card">
+            <div class="card-body p-5 text-center">
+                <!-- أيقونة البوت -->
+                <div class="mb-4">
+                    <div class="avatar-circle mx-auto mb-3">
+                        <i class="fas fa-robot fa-2x text-white"></i>
+                    </div>
+                </div>
+                
+                <!-- العنوان والوصف -->
+                <h3 class="fw-bold mb-2">تسجيل الدخول</h3>
+                <p class="text-muted mb-4">أدخل كلمة السر للوصول إلى لوحة تحكم Volt</p>
+
+                <!-- رسالة الخطأ (تظهر لو كلمة السر غلط) -->
+                {% if error %}
+                <div class="alert alert-danger d-flex align-items-center shadow-sm" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2 ms-2"></i>
+                    <div>{{ error }}</div>
+                </div>
+                {% endif %}
+
+                <!-- نموذج تسجيل الدخول -->
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-4 text-start">
+                        <label for="password" class="form-label fw-bold small text-muted">كلمة السر</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="fas fa-lock text-muted"></i>
+                            </span>
+                            <input 
+                                type="password" 
+                                class="form-control border-start-0" 
+                                id="password" 
+                                name="password" 
+                                placeholder="أدخل كلمة السر هنا" 
+                                required 
+                                autofocus
+                            >
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3 shadow-sm btn-hover-effect">
+                        <i class="fas fa-sign-in-alt me-2"></i> دخول
+                    </button>
+                </form>
+
+                <!-- ملاحظة سفلية -->
+                <div class="mt-4 text-muted small">
+                    <i class="fas fa-shield-alt me-1"></i> 
+                    اتصال آمن ومشفر
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // تحسين تجربة المستخدم: التركيز التلقائي على حقل كلمة السر
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordInput = document.getElementById('password');
+        if (passwordInput) {
+            passwordInput.focus();
+        }
+    });
+</script>
+{% endblock %}
