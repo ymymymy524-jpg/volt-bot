@@ -1,8 +1,201 @@
 /* ==========================================
-   🎨 Fix All White Elements
+   🎨 Volt Dashboard - Dark Modern Theme
    ========================================== */
 
-/* كل الـ Inputs والـ Forms */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+
+:root {
+    --primary: #8b5cf6;
+    --primary-light: #a78bfa;
+    --primary-dark: #6d28d9;
+    --secondary: #ec4899;
+    --accent: #06b6d4;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --dark: #0a0a15;
+    --dark-2: #13131f;
+    --dark-3: #1a1a2e;
+    --dark-4: #252542;
+    --text: #ffffff;
+    --text-muted: #94a3b8;
+    --border: rgba(139, 92, 246, 0.2);
+    --glow: 0 0 20px rgba(139, 92, 246, 0.5);
+}
+
+/* ==========================================
+   🌐 Global Reset
+   ========================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Cairo', sans-serif;
+}
+
+html, body {
+    background: #0a0a15 !important;
+    color: #ffffff !important;
+    min-height: 100vh;
+    direction: rtl;
+}
+
+/* ==========================================
+   ✨ Animated Background
+   ========================================== */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.15) 0%, transparent 50%);
+    z-index: -2;
+    animation: bgPulse 10s ease-in-out infinite;
+}
+
+@keyframes bgPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ==========================================
+   🧭 Navbar
+   ========================================== */
+.navbar {
+    background: rgba(19, 19, 31, 0.95) !important;
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid #8b5cf6 !important;
+    padding: 15px 30px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+.navbar-brand {
+    font-size: 1.8rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899, #06b6d4);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientMove 3s ease infinite;
+    letter-spacing: 1px;
+}
+
+@keyframes gradientMove {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.nav-link {
+    color: #ffffff !important;
+    font-weight: 600;
+    padding: 8px 16px !important;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #ffffff !important;
+    background: rgba(139, 92, 246, 0.3) !important;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+}
+
+/* ==========================================
+   🎴 Cards - Dark
+   ========================================== */
+.card,
+.card-body,
+.card-header,
+.card-footer {
+    background: #13131f !important;
+    border: 1px solid rgba(139, 92, 246, 0.3) !important;
+    border-radius: 16px !important;
+    color: #ffffff !important;
+    backdrop-filter: blur(20px);
+}
+
+.card-header {
+    background: #1a1a2e !important;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.3) !important;
+    border-radius: 16px 16px 0 0 !important;
+}
+
+.card-title,
+.card-text,
+.card h1,
+.card h2,
+.card h3,
+.card h4,
+.card h5,
+.card h6,
+.card p,
+.card span,
+.card small,
+.card div {
+    color: #ffffff !important;
+}
+
+.card-value {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #a78bfa !important;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.6) !important;
+    transition: all 0.3s ease;
+}
+
+/* ==========================================
+   📊 Stats Cards (اللي في الصورة)
+   ========================================== */
+.stat-card,
+.stats-card,
+.stat-box,
+.metric-card {
+    background: #13131f !important;
+    border: 1px solid rgba(139, 92, 246, 0.3) !important;
+    border-radius: 16px !important;
+    color: #ffffff !important;
+    padding: 20px !important;
+    transition: all 0.3s ease;
+}
+
+.stat-card *,
+.stats-card *,
+.stat-box *,
+.metric-card * {
+    color: #ffffff !important;
+}
+
+.stat-card .icon,
+.stats-card .icon {
+    color: #a78bfa !important;
+    font-size: 1.5rem;
+}
+
+.stat-card h3,
+.stat-card h5 {
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+.stat-card p,
+.stat-card small {
+    color: #94a3b8 !important;
+}
+
+/* ==========================================
+   📝 Forms
+   ========================================== */
 input,
 input[type="text"],
 input[type="search"],
@@ -15,7 +208,7 @@ select,
 .form-select {
     background: #0a0a15 !important;
     color: #ffffff !important;
-    border: 1px solid rgba(139, 92, 246, 0.3) !important;
+    border: 1px solid rgba(139, 92, 246, 0.4) !important;
     border-radius: 10px !important;
     padding: 10px 15px !important;
 }
@@ -28,106 +221,318 @@ textarea::placeholder {
 input:focus,
 textarea:focus,
 select:focus,
-.form-control:focus,
-.form-select:focus {
+.form-control:focus {
     background: #13131f !important;
     border-color: #8b5cf6 !important;
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.4) !important;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.5) !important;
     color: #ffffff !important;
     outline: none !important;
 }
 
-/* الأزرار */
+label,
+.form-label {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+/* ==========================================
+   🔘 Buttons
+   ========================================== */
 button,
 .btn,
-button[type="submit"] {
+.btn-primary,
+.btn-success,
+.btn-info {
     background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
     color: #ffffff !important;
     border: none !important;
     border-radius: 10px !important;
     padding: 10px 20px !important;
+    font-weight: 700 !important;
     cursor: pointer !important;
     transition: all 0.3s ease !important;
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
 
 button:hover,
 .btn:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.6) !important;
+    box-shadow: 0 0 25px rgba(139, 92, 246, 0.8) !important;
 }
 
-/* حقول البحث */
-.search-input,
-.search-box,
-input[type="search"] {
+.btn-secondary {
+    background: #1a1a2e !important;
+    color: #ffffff !important;
+    border: 1px solid #8b5cf6 !important;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+}
+
+.btn-outline-light {
+    background: transparent !important;
+    color: #ffffff !important;
+    border: 1px solid #8b5cf6 !important;
+}
+
+.btn-outline-light:hover {
+    background: #8b5cf6 !important;
+    color: #ffffff !important;
+}
+
+/* ==========================================
+   📊 Tables
+   ========================================== */
+table,
+table.dataTable,
+.table {
     background: #0a0a15 !important;
     color: #ffffff !important;
-    border: 1px solid rgba(139, 92, 246, 0.3) !important;
-}
-
-/* الجداول */
-table {
-    background: #0a0a15 !important;
-    border-radius: 12px !important;
-    overflow: hidden !important;
+    border-collapse: separate !important;
+    border-spacing: 0 8px !important;
+    width: 100% !important;
 }
 
 table thead,
 table thead tr,
-table thead th {
+table thead th,
+.table thead th {
     background: #13131f !important;
     color: #a78bfa !important;
-    border-bottom: 1px solid rgba(139, 92, 246, 0.3) !important;
+    border: none !important;
+    border-bottom: 2px solid #8b5cf6 !important;
     padding: 15px !important;
+    font-weight: 700 !important;
+    text-align: right !important;
 }
 
-table tbody tr {
-    background: #0a0a15 !important;
-    border-bottom: 1px solid rgba(139, 92, 246, 0.1) !important;
+table tbody tr,
+.table tbody tr {
+    background: #13131f !important;
+    border-radius: 12px !important;
+    transition: all 0.3s ease !important;
 }
 
-table tbody tr:hover {
+table tbody tr:hover,
+.table tbody tr:hover {
     background: #1a1a2e !important;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4) !important;
 }
 
 table td,
-table th {
+table th,
+.table td {
     color: #ffffff !important;
-    padding: 12px !important;
+    background: #13131f !important;
+    padding: 12px 15px !important;
+    border: none !important;
+    text-align: right !important;
 }
 
-/* الأيقونات */
-i,
-svg,
-.icon,
-.bi,
-.fa {
+table tbody tr td:first-child {
+    border-radius: 0 12px 12px 0 !important;
+}
+
+table tbody tr td:last-child {
+    border-radius: 12px 0 0 12px !important;
+}
+
+/* ==========================================
+   🎛️ Toggle Switches
+   ========================================== */
+.form-check-input,
+.form-switch .form-check-input {
+    background-color: #1a1a2e !important;
+    border: 2px solid #8b5cf6 !important;
+    width: 3em !important;
+    height: 1.5em !important;
+    cursor: pointer !important;
+}
+
+.form-check-input:checked {
+    background-color: #8b5cf6 !important;
+    border-color: #8b5cf6 !important;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.8) !important;
+}
+
+/* ==========================================
+   🔍 Search Boxes
+   ========================================== */
+.search-box,
+.search-input,
+.input-group,
+.input-group-text {
+    background: #0a0a15 !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(139, 92, 246, 0.4) !important;
+}
+
+.input-group-text {
+    background: #1a1a2e !important;
     color: #a78bfa !important;
 }
 
-/* الـ Header */
-.header,
-.card-header,
-.toolbar {
-    background: #0a0a15 !important;
-    border-bottom: 1px solid rgba(139, 92, 246, 0.3) !important;
+/* ==========================================
+   🏷️ Badges
+   ========================================== */
+.badge {
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-weight: 700 !important;
     color: #ffffff !important;
 }
 
-/* الـ Container */
+.badge.bg-success {
+    background: rgba(16, 185, 129, 0.3) !important;
+    color: #6ee7b7 !important;
+    border: 1px solid #10b981 !important;
+}
+
+.badge.bg-danger {
+    background: rgba(239, 68, 68, 0.3) !important;
+    color: #fca5a5 !important;
+    border: 1px solid #ef4444 !important;
+}
+
+.badge.bg-warning {
+    background: rgba(245, 158, 11, 0.3) !important;
+    color: #fcd34d !important;
+    border: 1px solid #f59e0b !important;
+}
+
+.badge.bg-info {
+    background: rgba(6, 182, 212, 0.3) !important;
+    color: #67e8f9 !important;
+    border: 1px solid #06b6d4 !important;
+}
+
+/* ==========================================
+   🔐 Login Page
+   ========================================== */
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: #0a0a15 !important;
+}
+
+.login-card {
+    background: rgba(19, 19, 31, 0.95) !important;
+    backdrop-filter: blur(30px);
+    border: 1px solid #8b5cf6 !important;
+    border-radius: 24px;
+    padding: 50px 40px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 20px 60px rgba(139, 92, 246, 0.4) !important;
+}
+
+/* ==========================================
+   🎯 All Containers
+   ========================================== */
 .container,
-.card-body,
-.card-content {
+.container-fluid,
+main,
+section,
+article,
+aside {
     background: transparent !important;
     color: #ffffff !important;
 }
 
-/* الـ Dropdown */
-.dropdown,
-.dropdown-menu {
+/* ==========================================
+   🌈 Override Bootstrap White Classes
+   ========================================== */
+.bg-dark,
+.bg-light,
+.bg-body {
     background: #13131f !important;
-    border: 1px solid rgba(139, 92, 246, 0.3) !important;
-    border-radius: 10px !important;
+    color: #ffffff !important;
+}
+
+.text-white,
+.text-white {
+    color: #ffffff !important;
+}
+
+.bg-body-tertiary {
+    background: #1a1a2e !important;
+}
+
+/* ==========================================
+   🎨 Charts
+   ========================================== */
+canvas {
+    background: transparent !important;
+}
+
+.chart-container,
+.chart-wrapper {
+    background: #13131f !important;
+    border-radius: 12px !important;
+    padding: 15px !important;
+}
+
+/* ==========================================
+   🎯 Icons
+   ========================================== */
+i,
+.bi,
+.fas,
+.far,
+.fab,
+svg {
+    color: #a78bfa !important;
+}
+
+.btn i,
+.btn svg {
+    color: #ffffff !important;
+}
+
+/* ==========================================
+   🚨 Alerts
+   ========================================== */
+.alert {
+    border-radius: 12px !important;
+    border: none !important;
+    padding: 15px 20px !important;
+    color: #ffffff !important;
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.2) !important;
+    border-right: 4px solid #10b981 !important;
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border-right: 4px solid #ef4444 !important;
+}
+
+.alert-warning {
+    background: rgba(245, 158, 11, 0.2) !important;
+    border-right: 4px solid #f59e0b !important;
+}
+
+.alert-info {
+    background: rgba(6, 182, 212, 0.2) !important;
+    border-right: 4px solid #06b6d4 !important;
+}
+
+/* ==========================================
+   🎯 Dropdowns
+   ========================================== */
+.dropdown-menu,
+.dropdown,
+.select2-container {
+    background: #13131f !important;
+    border: 1px solid #8b5cf6 !important;
+    border-radius: 12px !important;
+    color: #ffffff !important;
 }
 
 .dropdown-item {
@@ -136,132 +541,87 @@ svg,
 }
 
 .dropdown-item:hover {
-    background: rgba(139, 92, 246, 0.2) !important;
+    background: rgba(139, 92, 246, 0.3) !important;
 }
 
-/* الـ Switch/Toggle */
-.form-check-input {
-    background-color: #1a1a2e !important;
-    border: 2px solid #8b5cf6 !important;
-}
-
-.form-check-input:checked {
-    background-color: #8b5cf6 !important;
-}
-
-/* الـ Modal */
-.modal,
+/* ==========================================
+   🔔 Modal
+   ========================================== */
 .modal-content,
 .modal-header,
 .modal-body,
 .modal-footer {
     background: #13131f !important;
     color: #ffffff !important;
-    border: 1px solid rgba(139, 92, 246, 0.3) !important;
-}
-
-.modal-header,
-.modal-footer {
-    border-color: rgba(139, 92, 246, 0.2) !important;
-}
-
-/* الأزرار الصغيرة */
-.btn-sm,
-.btn-icon {
-    background: rgba(139, 92, 246, 0.2) !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(139, 92, 246, 0.4) !important;
-    border-radius: 8px !important;
-    padding: 6px 12px !important;
-}
-
-/* أي عنصر فيه خلفية بيضاء */
-[style*="background: white"],
-[style*="background-color: white"],
-[style*="background:#fff"],
-[style*="background:#ffffff"],
-[style*="background-color:#fff"],
-[style*="background-color:#ffffff"] {
-    background: #0a0a15 !important;
-    color: #ffffff !important;
-}
-
-/* الفورم */
-form {
-    background: transparent !important;
-}
-
-/* الـ Labels */
-label,
-.form-label {
-    color: #ffffff !important;
-    font-weight: 600 !important;
-}
-
-/* الـ Icons في الأزرار */
-.btn i,
-.btn svg {
-    color: #ffffff !important;
-}
-
-/* كل الـ hr */
-hr {
-    border-color: rgba(139, 92, 246, 0.3) !important;
-}
-
-/* الـ Select Options */
-option {
-    background: #13131f !important;
-    color: #ffffff !important;
-}
-
-/* الـ Tooltip */
-.tooltip {
-    background: #13131f !important;
-    color: #ffffff !important;
     border: 1px solid #8b5cf6 !important;
+    border-radius: 16px !important;
 }
 
 /* ==========================================
-   🔧 Specific Fixes
+   📌 Footer
    ========================================== */
-
-/* خانات البحث في الجداول */
-.table-search,
-.search-field,
-input[type="text"] {
-    background: #0a0a15 !important;
+footer {
+    background: #13131f !important;
     color: #ffffff !important;
-    border: 1px solid rgba(139, 92, 246, 0.3) !important;
+    padding: 20px !important;
+    border-top: 1px solid #8b5cf6 !important;
+    margin-top: 40px;
 }
 
-/* الأزرار اللي فيها أيقونات بس */
-.btn-icon-only,
-.btn-square,
-.btn-circle {
-    background: #1a1a2e !important;
+footer p,
+footer span,
+footer div {
     color: #ffffff !important;
-    border: 1px solid rgba(139, 92, 246, 0.3) !important;
-    width: 40px !important;
-    height: 40px !important;
-    border-radius: 10px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
 }
 
-/* الأزرار في الـ Card Headers */
-.card-header button,
-.card-header .btn {
-    background: rgba(139, 92, 246, 0.2) !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(139, 92, 246, 0.4) !important;
-    padding: 8px 12px !important;
+/* ==========================================
+   🌊 Scrollbar
+   ========================================== */
+::-webkit-scrollbar {
+    width: 10px;
+    background: #0a0a15;
 }
 
-/* الأيقونات في الـ Card Headers */
-.card-header i,
-.card-header svg {
-    color: #a78bfa !important;
-    font-size: 1.2rem !important;
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #8b5cf6, #ec4899);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #a78bfa, #ec4899);
+}
+
+/* ==========================================
+   🎯 تحويل أي عنصر أبيض لأسود
+   ========================================== */
+*[style*="background: white"],
+*[style*="background-color: white"],
+*[style*="background:#fff"],
+*[style*="background:#ffffff"],
+*[style*="background-color:#fff"],
+*[style*="background-color:#ffffff"],
+*[style*="background-color: white"] {
+    background: #13131f !important;
+    color: #ffffff !important;
+}
+
+/* ==========================================
+   📱 Responsive
+   ========================================== */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.4rem;
+    }
+    
+    .card-value {
+        font-size: 2rem;
+    }
+    
+    .login-card {
+        padding: 30px 25px;
+    }
+    
+    table {
+        font-size: 0.85rem;
+    }
 }
