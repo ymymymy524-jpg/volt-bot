@@ -11,6 +11,12 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # ==========================================
+# 🎧 إعدادات Spotify
+# ==========================================
+SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
+SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
+
+# ==========================================
 # 🌐 إعدادات لوحة التحكم (Dashboard)
 # ==========================================
 DASHBOARD_SECRET_KEY = os.getenv("DASHBOARD_SECRET_KEY", "super_secret_key_change_me_in_production")
@@ -20,9 +26,6 @@ DASHBOARD_PORT = int(os.getenv("DASHBOARD_PORT", 5000))
 # ==========================================
 # 🛠️ إعدادات التطوير (مزامنة الأوامر)
 # ==========================================
-# معرف سيرفر الاختبار (اختياري). 
-# إذا تم وضعه، سيتم مزامنة الأوامر فوراً في هذا السيرفر فقط لتسريع التطوير.
-# اتركه فارغاً "" في ملف .env لمزامنة الأوامر عالمياً (Global Sync).
 TEST_GUILD_ID_STR = os.getenv("TEST_GUILD_ID", "")
 TEST_GUILD_ID = int(TEST_GUILD_ID_STR) if TEST_GUILD_ID_STR.isdigit() else None
 
