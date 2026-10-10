@@ -26,7 +26,7 @@ if SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET:
         print(f"⚠️ فشل الاتصال بـ Spotify: {e}")
 
 # ═══════════════════════════════════════
-# 🎵 إعدادات yt-dlp
+# 🎵 إعدادات yt-dlp - SoundCloud
 # ═══════════════════════════════════════
 YDL_OPTIONS = {
     'format': 'bestaudio/best',
@@ -34,9 +34,12 @@ YDL_OPTIONS = {
     'quiet': True,
     'no_warnings': True,
     'extract_flat': False,
-    'default_search': 'ytsearch',
+    'default_search': 'scsearch',  # ← SoundCloud Search
     'source_address': '0.0.0.0',
     'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'age_limit': 100,
+    'no_check_certificates': True,
+    'geo_bypass': True,
 }
 
 FFMPEG_OPTIONS = {
@@ -54,7 +57,6 @@ def search_spotify(query: str):
         return None
     
     try:
-        # لو رابط Spotify
         if "open.spotify.com" in query:
             if "/track/" in query:
                 track_id = query.split("/track/")[1].split("?")[0]
@@ -66,20 +68,7 @@ def search_spotify(query: str):
                     "duration": track['duration_ms'] // 1000,
                     "search_query": f"{track['name']} {track['artists'][0]['name']}"
                 }
-            elif "/playlist/" in query:
-                playlist_id = query.split("/playlist/")[1].split("?")[0]
-                playlist = sp.playlist(playlist_id)
-                tracks = []
-                for item in playlist['tracks']['items'][:10]:
-                    track = item['track']
-                    tracks.append({
-                        "name": track['name'],
-                        "artist": track['artists'][0]['name'],
-                        "search_query": f"{track['name']} {track['artists'][0]['name']}"
-                    })
-                return {"playlist": tracks, "name": playlist['name']}
         else:
-            # بحث عادي
             results = sp.search(q=query, type='track', limit=1)
             if results['tracks']['items']:
                 track = results['tracks']['items'][0]
@@ -118,13 +107,15 @@ class Music(commands.Cog):
         return self.queues[guild_id]
 
     async def search_song(self, query: str):
-        """البحث عن أغنية على YouTube"""
+        """البحث عن أغنية على SoundCloud"""
         loop = asyncio.get_event_loop()
         
+        # لو رابط مباشر
         if query.startswith('http://') or query.startswith('https://'):
             url = query
         else:
-            url = f"ytsearch1:{query}"
+            # بحث SoundCloud
+            url = f"scsearch1:{query}"
 
         try:
             data = await loop.run_in_executor(
@@ -136,6 +127,8 @@ class Music(commands.Cog):
                 return None
 
             if 'entries' in data:
+                if not data['entries']:
+                    return None
                 data = data['entries'][0]
 
             return {
@@ -182,8 +175,8 @@ class Music(commands.Cog):
     # ═══════════════════════════════════════
     # 🎵 أمر /play
     # ═══════════════════════════════════════
-    @app_commands.command(name="play", description="🎵 تشغيل أغنية من YouTube أو Spotify")
-    @app_commands.describe(query="اسم الأغنية أو الرابط (YouTube / Spotify)")
+    @app_commands.command(name="play", description="🎵 تشغيل أغنية من SoundCloud أو Spotify")
+    @app_commands.describe(query="اسم الأغنية أو الرابط (SoundCloud / Spotify)")
     async def play(self, interaction: discord.Interaction, query: str):
         await interaction.response.defer()
 
@@ -199,19 +192,19 @@ class Music(commands.Cog):
         search_query = query
         spotify_info = None
 
-        # لو Spotify، جيب اسم الأغنية
+        # لو Spotify أو بحث عادي، جيب معلومات من Spotify
         if "spotify.com" in query or (sp and not query.startswith(('http://', 'https://'))):
             spotify_info = search_spotify(query)
             if spotify_info and "search_query" in spotify_info:
                 search_query = spotify_info["search_query"]
 
-        # البحث عن الأغنية
+        # البحث في SoundCloud
         song = await self.search_song(search_query)
         
         if song is None:
             embed = discord.Embed(
                 title="❌ لم يتم العثور على الأغنية",
-                description="لم أتمكن من العثور على الأغنية المطلوبة",
+                description=f"لم أتمكن من العثور على: `{query}`\nجرب اسم تاني أو رابط مباشر",
                 color=discord.Color.red()
             )
             await interaction.followup.send(embed=embed)
@@ -234,7 +227,7 @@ class Music(commands.Cog):
         else:
             queue.voice_client = interaction.guild.voice_client
 
-        # لو مفيش حاجة شغالة، شغّل على طول
+        # لو مفيش حاجة شغالة
         if not queue.is_playing:
             queue.queue.append(song)
             await self.play_next(interaction.guild.id)
@@ -244,7 +237,6 @@ class Music(commands.Cog):
                 description=f"**[{song['title']}]({song['webpage_url']})**\nبواسطة: {song['uploader']}",
                 color=0x1DB954
             )
-            # لو Spotify، استخدم صورته
             if spotify_info and spotify_info.get("thumbnail"):
                 embed.set_thumbnail(url=spotify_info["thumbnail"])
                 embed.add_field(name="🎧 Spotify", value=f"{spotify_info['name']} - {spotify_info['artist']}", inline=False)
@@ -279,7 +271,7 @@ class Music(commands.Cog):
         await interaction.response.defer()
         
         if not sp:
-            return await interaction.followup.send("❌ Spotify غير مفعّل. ضيف SPOTIFY_CLIENT_ID و SPOTIFY_CLIENT_SECRET في .env")
+            return await interaction.followup.send("❌ Spotify غير مفعّل")
         
         try:
             results = sp.search(q=query, type='track', limit=5)
