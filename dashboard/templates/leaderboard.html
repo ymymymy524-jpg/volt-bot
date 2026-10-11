@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block page_title %}
+<i class="fas fa-trophy text-warning me-2"></i>
+قائمة المتصدرين — أغنى الأعضاء
+{% endblock %}
+
+{% block content %}
+
+<!-- كارت رئيسي -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-dark border-0 py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-crown text-warning me-2"></i>
+                أغنى 10 أعضاء في Crypto
+            </h5>
+            <button class="btn btn-sm btn-outline-primary" onclick="loadLeaderboard()">
+                <i class="fas fa-sync-alt me-1"></i> تحديث
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-3">
+        <div id="leaderboard-container">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary"></div>
+                <p class="text-muted mt-2">جاري التحميل...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- كارت إحصائيات -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-coins fa-2x text-warning mb-2"></i>
+                <h3 class="fw-bold text-warning" id="total-coins">0 ₿</h3>
+                <p class="text-muted mb-0 small">إجمالي العملات</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                <h3 class="fw-bold text-primary" id="total-users">0</h3>
+                <p class="text-muted mb-0 small">إجمالي الأعضاء</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-2x text-success mb-2"></i>
+                <h3 class="fw-bold text-success" id="avg-coins">0 ₿</h3>
+                <p class="text-muted mb-0 small">متوسط الرصيد</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const MEDALS = ['🥇', '🥈', '🥉'];
+    const COLORS = {
+        1: 'linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 193, 7, 0.05))',
+        2: 'linear-gradient(135deg, rgba(192, 192, 192, 0.15), rgba(160, 160, 160, 0.05))',
+        3: 'linear-gradient(135deg, rgba(205, 127, 50, 0.15), rgba(184, 115, 51, 0.05))'
+    };
+
+    async function loadLeaderboard() {
+        try {
+            const response = await fetch('/api/leaderboard');
+            const result = await response.json();
+            
+            if (result.success && result.data.length > 0) {
+                renderLeaderboard(result.data);
+                updateStats(result.data);
+            } else {
+                document.getElementById('leaderboard-container').innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">لا توجد بيانات حتى الآن</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('خطأ:', error);
+        }
+    }
+
+    function renderLeaderboard(users) {
+        const container = document.getElementById('leaderboard-container');
+        
+        container.innerHTML = users.map((user, index) => {
+            const rank = user.rank;
+            const medal = MEDALS[index] || `<span class="rank-num">#${rank}</span>`;
+            const bg = COLORS[rank] || 'rgba(139, 92, 246, 0.05)';
+            const borderColor = rank === 1 ? '#FFD700' : rank === 2 ? '#C0C0C0' : rank === 3 ? '#CD7F32' : 'rgba(139, 92, 246, 0.3)';
+            
+            return `
+                <div class="leaderboard-row" style="background: ${bg}; border-color: ${borderColor};">
+                    <div class="rank-badge">${medal}</div>
+                    
+                    <div class="user-info">
+                        <div class="user-avatar-lb" style="background: linear-gradient(135deg, ${borderColor}, #ec4899);">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <div class="user-name-lb">User ${user.user_id.substring(0, 6)}...</div>
+                            <div class="user-id-lb">ID: ${user.user_id}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="balance-info">
+                        <i class="fas fa-coins"></i>
+                        <span class="balance-amount">${user.balance.toLocaleString('ar-EG')}</span>
+                        <span class="balance-currency">₿</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateStats(users) {
+        const total = users.reduce((sum, u) => sum + u.balance, 0);
+        const avg = Math.round(total / users.length);
+        
+        document.getElementById('total-coins').textContent = total.toLocaleString('ar-EG') + ' ₿';
+        document.getElementById('total-users').textContent = users.length;
+        document.getElementById('avg-coins').textContent = avg.toLocaleString('ar-EG') + ' ₿';
+    }
+
+    document.addEventListener('DOMContentLoaded', loadLeaderboard);
+</script>
+
+<style>
+    .leaderboard-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 22px;
+        margin: 10px 0;
+        border-radius: 15px;
+        border: 2px solid;
+        transition: all 0.3s ease;
+        gap: 15px;
+    }
+
+    .leaderboard-row:hover {
+        transform: translateX(-5px);
+        box-shadow: 0 5px 25px rgba(139, 92, 246, 0.3);
+    }
+
+    .rank-badge {
+        min-width: 50px;
+        text-align: center;
+        font-size: 2rem;
+    }
+
+    .rank-num {
+        font-size: 1.2rem;
+        font-weight: 900;
+        color: #94a3b8;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-grow: 1;
+    }
+
+    .user-avatar-lb {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .user-name-lb {
+        font-weight: 700;
+        color: #ffffff;
+        font-size: 1rem;
+    }
+
+    .user-id-lb {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .balance-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        background: rgba(255, 193, 7, 0.1);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        border-radius: 12px;
+    }
+
+    .balance-info i {
+        color: #fbbf24;
+    }
+
+    .balance-amount {
+        font-weight: 900;
+        color: #fbbf24;
+        font-size: 1.1rem;
+    }
+
+    .balance-currency {
+        color: #fbbf24;
+        font-weight: 700;
+    }
+
+    @media (max-width: 768px) {
+        .leaderboard-row {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}

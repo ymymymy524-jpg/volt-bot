@@ -24,10 +24,19 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('DASHBOARD_SECRET_KEY', 'default_secret_key_change_this')
 
+# ═══════════════════════════════════════
+# 🔐 إعدادات Session (عشان الـ Cookie ما يبقاش كبير)
+# ═══════════════════════════════════════
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400
+app.config['SESSION_COOKIE_NAME'] = 'volt_session'
+
 # =================== دوال مساعدة ===================
 
 def login_required(f):
-    """Decorator للتحقق من تسجيل الدخول عبر Discord"""
+    """Decorator للتحقق من تسجيل الدخول"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user' not in session:
@@ -103,7 +112,6 @@ def get_all_users():
 # 📋 قائمة الأوامر الكاملة
 # ═══════════════════════════════════════
 ALL_COMMANDS = [
-    # 👑 الإدارة
     {"name": "ban", "description": "حظر عضو", "category": "الإدارة"},
     {"name": "kick", "description": "طرد عضو", "category": "الإدارة"},
     {"name": "unban", "description": "فك حظر عضو", "category": "الإدارة"},
@@ -130,7 +138,6 @@ ALL_COMMANDS = [
     {"name": "role", "description": "رتبة لعضو", "category": "الإدارة"},
     {"name": "prefix", "description": "تغيير البادئة", "category": "الإدارة"},
     
-    # 🛡️ الحماية
     {"name": "protection auto", "description": "حماية تلقائية", "category": "الحماية"},
     {"name": "protection spam", "description": "حماية السبام", "category": "الحماية"},
     {"name": "protection link", "description": "حماية الروابط", "category": "الحماية"},
@@ -142,13 +149,11 @@ ALL_COMMANDS = [
     {"name": "protection roles", "description": "حماية الرتب", "category": "الحماية"},
     {"name": "protection bots", "description": "حماية البوتات", "category": "الحماية"},
     
-    # 📊 المستويات
     {"name": "rank", "description": "مستواك", "category": "المستويات"},
     {"name": "top", "description": "أفضل الأعضاء", "category": "المستويات"},
     {"name": "setlevel", "description": "تحديد مستوى", "category": "المستويات"},
     {"name": "resetlevel", "description": "تصفير مستوى", "category": "المستويات"},
     
-    # 🎵 الموسيقى
     {"name": "play", "description": "تشغيل أغنية", "category": "الموسيقى"},
     {"name": "pause", "description": "إيقاف مؤقت", "category": "الموسيقى"},
     {"name": "resume", "description": "استكمال", "category": "الموسيقى"},
@@ -158,26 +163,22 @@ ALL_COMMANDS = [
     {"name": "volume", "description": "تعديل الصوت", "category": "الموسيقى"},
     {"name": "nowplaying", "description": "الأغنية الحالية", "category": "الموسيقى"},
     
-    # 📨 الدعوات
     {"name": "invites", "description": "عدد الدعوات", "category": "الدعوات"},
     {"name": "inviter", "description": "مين دعاك", "category": "الدعوات"},
     {"name": "invitetop", "description": "أفضل الداعين", "category": "الدعوات"},
     {"name": "resetinvites", "description": "تصفير الدعوات", "category": "الدعوات"},
     
-    # 🎫 التذاكر
     {"name": "ticket", "description": "فتح تذكرة", "category": "التذاكر"},
     {"name": "close", "description": "إغلاق التذكرة", "category": "التذاكر"},
     {"name": "add", "description": "إضافة عضو", "category": "التذاكر"},
     {"name": "remove", "description": "إزالة عضو", "category": "التذاكر"},
     {"name": "setticket", "description": "تحديد الروم", "category": "التذاكر"},
     
-    # 👋 الترحيب
     {"name": "setwelcome", "description": "روم الترحيب", "category": "الترحيب"},
     {"name": "setgoodbye", "description": "روم الوداع", "category": "الترحيب"},
     {"name": "testwelcome", "description": "تجربة الترحيب", "category": "الترحيب"},
     {"name": "welcome-set-status", "description": "حالة الترحيب", "category": "الترحيب"},
     
-    # 🎮 الألعاب
     {"name": "game", "description": "الألعاب", "category": "الألعاب"},
     {"name": "bomb", "description": "القنبلة", "category": "الألعاب"},
     {"name": "button", "description": "زر الحظ", "category": "الألعاب"},
@@ -189,7 +190,6 @@ ALL_COMMANDS = [
     {"name": "roulette", "description": "الروليت", "category": "الألعاب"},
     {"name": "fizzy", "description": "رصيد Fizzy", "category": "الألعاب"},
     
-    # 💎 الاقتصاد
     {"name": "balance", "description": "الرصيد", "category": "الاقتصاد"},
     {"name": "daily", "description": "المكافأة اليومية", "category": "الاقتصاد"},
     {"name": "work", "description": "العمل", "category": "الاقتصاد"},
@@ -200,7 +200,6 @@ ALL_COMMANDS = [
     {"name": "buy", "description": "شراء", "category": "الاقتصاد"},
     {"name": "bitcoin-admin", "description": "إدارة", "category": "الاقتصاد"},
     
-    # 🤖 الذكاء الاصطناعي
     {"name": "ai ask", "description": "سؤال", "category": "الذكاء الاصطناعي"},
     {"name": "ai imagine", "description": "توليد صورة", "category": "الذكاء الاصطناعي"},
     {"name": "ai translate", "description": "ترجمة", "category": "الذكاء الاصطناعي"},
@@ -209,7 +208,6 @@ ALL_COMMANDS = [
     {"name": "ai story", "description": "قصة", "category": "الذكاء الاصطناعي"},
     {"name": "ai analyze", "description": "تحليل", "category": "الذكاء الاصطناعي"},
     
-    # ⚙️ الإعدادات
     {"name": "add-emoji", "description": "إضافة إيموجي", "category": "الإعدادات"},
     {"name": "auto-message", "description": "رسالة تلقائية", "category": "الإعدادات"},
     {"name": "auto-reply", "description": "رد تلقائي", "category": "الإعدادات"},
@@ -231,7 +229,6 @@ ALL_COMMANDS = [
     {"name": "shorts", "description": "اختصارات", "category": "الإعدادات"},
     {"name": "end-premium", "description": "إلغاء بريميوم", "category": "الإعدادات"},
     
-    # 🛠️ عام
     {"name": "ping", "description": "سرعة البوت", "category": "عام"},
     {"name": "help", "description": "المساعدة", "category": "عام"},
     {"name": "avatar", "description": "الصورة", "category": "عام"},
@@ -293,8 +290,7 @@ def callback():
                              error='فشل في جلب معلومات المستخدم',
                              discord_login_url=get_login_url())
     
-    user_guilds = get_user_guilds(access_token)
-    
+    # ⚠️ ما نحفظش access_token ولا guilds (عشان الـ Cookie)
     session['user'] = {
         'id': user_info.get('id'),
         'username': user_info.get('username'),
@@ -302,12 +298,10 @@ def callback():
         'avatar': user_info.get('avatar'),
         'avatar_url': get_avatar_url(user_info),
         'display_name': get_user_display_name(user_info),
-        'access_token': access_token,
     }
     session['logged_in'] = True
     session['login_time'] = datetime.now().isoformat()
-    session['guilds'] = user_guilds
-    session['is_admin'] = is_user_admin(access_token)
+    session['is_admin'] = False
     
     return redirect(url_for('index'))
 
@@ -348,16 +342,50 @@ def settings():
     return render_template('settings.html')
 
 
+@app.route('/leaderboard')
+def leaderboard():
+    """صفحة قائمة المتصدرين"""
+    return render_template('leaderboard.html')
+
+
 # =================== APIs ===================
 
 @app.route('/api/user')
-@login_required
 def api_user():
+    """معلومات المستخدم"""
+    if 'user' not in session:
+        return jsonify({'success': False, 'user': None})
+    
     return jsonify({
         'success': True,
         'user': session.get('user', {}),
         'is_admin': session.get('is_admin', False)
     })
+
+
+@app.route('/api/leaderboard')
+def api_leaderboard():
+    """أغنى 10 أعضاء"""
+    try:
+        bitcoin_data = load_json_file('bitcoin.json')
+        
+        sorted_users = sorted(
+            bitcoin_data.items(),
+            key=lambda x: x[1].get('balance', 0),
+            reverse=True
+        )[:10]
+        
+        leaderboard = []
+        for rank, (user_id, data) in enumerate(sorted_users, 1):
+            leaderboard.append({
+                'rank': rank,
+                'user_id': user_id,
+                'balance': data.get('balance', 0)
+            })
+        
+        return jsonify({'success': True, 'data': leaderboard})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/stats')
@@ -529,27 +557,6 @@ def api_toggle_command():
         return jsonify({
             'success': True,
             'message': f'تم {"تفعيل" if enabled else "تعطيل"} الأمر'
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@app.route('/api/commands/reload', methods=['POST'])
-@login_required
-def api_reload_commands():
-    """محاكاة إعادة تحميل (البوت يعمل reload كل 60 ثانية)"""
-    try:
-        # نلمس الملف عشان البوت يلاحظ التغيير
-        config_file = os.path.join('..', 'commands_config.json')
-        if not os.path.exists(config_file):
-            config_file = 'commands_config.json'
-        
-        if os.path.exists(config_file):
-            os.utime(config_file, None)
-        
-        return jsonify({
-            'success': True,
-            'message': '✅ تم الحفظ - البوت هيعمل reload خلال 60 ثانية'
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
