@@ -161,320 +161,7 @@ body::before {
 }
 
 /* ==========================================
-   🌌 Landing Page
-   ========================================== */
-.landing-container {
-    position: relative;
-    min-height: 100vh;
-    overflow-x: hidden;
-}
-
-.landing-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    background: 
-        radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 40%);
-}
-
-.landing-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 80px 30px 60px;
-    text-align: center;
-    position: relative;
-    z-index: 2;
-}
-
-.landing-logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 40px;
-}
-
-.logo-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #8b5cf6, #ec4899);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
-    animation: float 3s ease-in-out infinite;
-}
-
-.logo-icon i {
-    font-size: 2rem;
-    color: #ffffff !important;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-}
-
-.logo-text {
-    font-size: 2rem;
-    font-weight: 900;
-    background: linear-gradient(135deg, #8b5cf6, #ec4899, #06b6d4);
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradientMove 3s ease infinite;
-}
-
-.landing-title {
-    font-size: 3.5rem;
-    font-weight: 900;
-    color: #ffffff;
-    margin-bottom: 25px;
-    line-height: 1.2;
-}
-
-.gradient-text {
-    background: linear-gradient(135deg, #8b5cf6, #ec4899, #06b6d4);
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradientMove 3s ease infinite;
-}
-
-.landing-subtitle {
-    font-size: 1.3rem;
-    color: #94a3b8;
-    margin-bottom: 40px;
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-    line-height: 1.8;
-}
-
-.landing-actions {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: 70px;
-}
-
-.landing-actions .btn-landing {
-    min-width: 220px;
-    justify-content: center;
-}
-
-.btn-landing {
-    display: inline-flex;
-    align-items: center;
-    padding: 18px 45px;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #ffffff;
-    background: linear-gradient(135deg, #8b5cf6, #ec4899);
-    border: none;
-    border-radius: 16px;
-    text-decoration: none;
-    box-shadow: 0 10px 40px rgba(139, 92, 246, 0.5);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-}
-
-.btn-landing::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-}
-
-.btn-landing:hover::before {
-    width: 400px;
-    height: 400px;
-}
-
-.btn-landing:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 50px rgba(139, 92, 246, 0.8);
-    color: #ffffff;
-}
-
-/* ==========================================
-   🎯 Features Grid
-   ========================================== */
-.features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
-    max-width: 1000px;
-    margin: 0 auto;
-}
-
-.feature-card {
-    background: rgba(19, 19, 31, 0.8);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    border-radius: 20px;
-    padding: 35px 25px;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.feature-card:hover {
-    transform: translateY(-10px);
-    border-color: #8b5cf6;
-    box-shadow: 0 15px 40px rgba(139, 92, 246, 0.4);
-}
-
-.feature-icon {
-    width: 70px;
-    height: 70px;
-    margin: 0 auto 20px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, #8b5cf6, #ec4899);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
-}
-
-.feature-icon i {
-    font-size: 1.8rem;
-    color: #ffffff !important;
-}
-
-.feature-card h5 {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin-bottom: 12px;
-}
-
-.feature-card p {
-    color: #94a3b8;
-    line-height: 1.6;
-    margin: 0;
-}
-
-/* ==========================================
-   🔐 Login Section
-   ========================================== */
-.login-section {
-    padding: 60px 30px 100px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-}
-
-.login-card-modern {
-    background: rgba(19, 19, 31, 0.9);
-    backdrop-filter: blur(30px);
-    border: 1px solid rgba(139, 92, 246, 0.4);
-    border-radius: 25px;
-    padding: 50px 40px;
-    width: 100%;
-    max-width: 450px;
-    box-shadow: 0 20px 70px rgba(139, 92, 246, 0.3);
-    position: relative;
-    overflow: hidden;
-    text-align: center;
-}
-
-.login-card-modern::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #8b5cf6, #ec4899, #06b6d4, #8b5cf6);
-    background-size: 300% 100%;
-    animation: gradientMove 3s linear infinite;
-}
-
-.login-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 25px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #8b5cf6, #ec4899);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
-}
-
-.login-icon i {
-    font-size: 2rem;
-    color: #ffffff !important;
-}
-
-.login-heading {
-    font-size: 1.8rem;
-    font-weight: 900;
-    color: #ffffff;
-    margin-bottom: 10px;
-}
-
-.login-subheading {
-    color: #94a3b8;
-    margin-bottom: 30px;
-}
-
-/* ==========================================
-   ✨ Effects
-   ========================================== */
-.pop-in {
-    opacity: 0;
-    transform: scale(0.8);
-    transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.pop-in.visible {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.pop-up {
-    opacity: 0;
-    transform: translateY(40px);
-    transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.pop-up.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.fade-in {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.8s ease;
-}
-
-.fade-in.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* ==========================================
-   🧭 Navbar
+   🧭 Navbar (العلوي)
    ========================================== */
 .navbar {
     background: rgba(19, 19, 31, 0.95) !important;
@@ -519,7 +206,7 @@ body::before {
 }
 
 /* ==========================================
-   🎴 Cards - Dark
+   🎴 Cards
    ========================================== */
 .card,
 .card-body,
@@ -965,6 +652,42 @@ footer div {
 }
 
 /* ==========================================
+   ✨ Effects (Pop-in, Pop-up, Fade-in)
+   ========================================== */
+.pop-in {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.pop-in.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.pop-up {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.pop-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease;
+}
+
+.fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ==========================================
    📱 Responsive
    ========================================== */
 @media (max-width: 768px) {
@@ -974,38 +697,6 @@ footer div {
     
     .card-value {
         font-size: 2rem;
-    }
-    
-    .landing-title {
-        font-size: 2rem;
-    }
-    
-    .landing-subtitle {
-        font-size: 1rem;
-    }
-    
-    .landing-actions {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .btn-landing {
-        padding: 15px 30px;
-        font-size: 1rem;
-        width: 100%;
-    }
-    
-    .logo-icon {
-        width: 50px;
-        height: 50px;
-    }
-    
-    .logo-text {
-        font-size: 1.4rem;
-    }
-    
-    .login-card-modern {
-        padding: 35px 25px;
     }
     
     table {
