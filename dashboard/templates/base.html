@@ -5,33 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Volt System Dashboard</title>
     
-    <!-- خط Cairo -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-    
-    <!-- Bootstrap 5 RTL -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
-    
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- CSS مخصص -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Sidebar CSS -->
     <style>
+        /* ═══════════════════════════════════════ */
+        /* 🌐 Global */
+        /* ═══════════════════════════════════════ */
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        body {
+            background: #0a0a15 !important;
+            color: #ffffff !important;
+            direction: rtl;
+            padding-right: 260px;
+            transition: padding-right 0.3s ease;
+            min-height: 100vh;
+        }
+
+        body.sidebar-collapsed {
+            padding-right: 80px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.15) 0%, transparent 50%);
+            z-index: -2;
+            animation: bgPulse 10s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
         /* ═══════════════════════════════════════ */
         /* 📌 Sidebar */
         /* ═══════════════════════════════════════ */
-        body {
-            padding-right: 260px;
-            transition: padding-right 0.3s ease;
-        }
-
         .sidebar {
             position: fixed;
             top: 0;
@@ -40,10 +64,12 @@
             height: 100vh;
             background: linear-gradient(180deg, #13131f 0%, #0a0a15 100%);
             border-left: 1px solid rgba(139, 92, 246, 0.3);
-            padding: 25px 0;
             overflow-y: auto;
+            overflow-x: hidden;
             z-index: 1001;
-            transition: transform 0.3s ease;
+            transition: width 0.3s ease;
+            scrollbar-width: thin;
+            scrollbar-color: #8b5cf6 #13131f;
         }
 
         .sidebar::-webkit-scrollbar {
@@ -55,62 +81,193 @@
             border-radius: 10px;
         }
 
-        /* الشعار */
-        .sidebar-logo {
-            padding: 0 25px 25px;
-            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
-            margin-bottom: 20px;
+        /* Sidebar مصغّر */
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar.collapsed .profile-text,
+        .sidebar.collapsed .guild-text,
+        .sidebar.collapsed .sidebar-link span,
+        .sidebar.collapsed .sidebar-section-title,
+        .sidebar.collapsed .sidebar-logo-text {
+            display: none;
+        }
+
+        .sidebar.collapsed .sidebar-profile,
+        .sidebar.collapsed .sidebar-guild {
+            justify-content: center;
+            padding: 20px 10px;
+        }
+
+        .sidebar.collapsed .sidebar-link {
+            justify-content: center;
+            padding: 14px 10px;
+        }
+
+        .sidebar.collapsed .sidebar-logo {
+            justify-content: center;
+            padding: 20px 10px;
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 👤 الملف الشخصي */
+        /* ═══════════════════════════════════════ */
+        .sidebar-profile {
             display: flex;
             align-items: center;
             gap: 12px;
-            text-decoration: none;
+            padding: 20px 18px;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
         }
 
-        .sidebar-logo-icon {
-            width: 45px;
-            height: 45px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #8b5cf6, #ec4899);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 25px rgba(139, 92, 246, 0.6);
+        .profile-avatar-wrapper {
+            position: relative;
             flex-shrink: 0;
         }
 
-        .sidebar-logo-icon i {
-            font-size: 1.3rem;
-            color: #ffffff !important;
+        .profile-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid #8b5cf6;
+            object-fit: cover;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
         }
 
-        .sidebar-logo-text {
-            font-size: 1.3rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, #8b5cf6, #ec4899, #06b6d4);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: gradientMove 3s ease infinite;
-            letter-spacing: 0.5px;
+        .status-dot {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border: 2px solid #13131f;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
         }
 
-        @keyframes gradientMove {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+        .profile-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            overflow: hidden;
+            flex-grow: 1;
         }
 
-        /* عنوان القسم */
+        .profile-name {
+            font-weight: 700;
+            color: #ffffff;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .profile-tag {
+            font-size: 0.72rem;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* زر التصغير */
+        .sidebar-collapse-btn {
+            position: absolute;
+            top: 75px;
+            left: -15px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #13131f;
+            border: 2px solid rgba(139, 92, 246, 0.4);
+            color: #8b5cf6;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+            font-size: 0.75rem;
+        }
+
+        .sidebar-collapse-btn:hover {
+            background: #8b5cf6;
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.7);
+        }
+
+        .sidebar.collapsed .sidebar-collapse-btn {
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .sidebar.collapsed .sidebar-collapse-btn i {
+            transform: rotate(180deg);
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 🏰 السيرفر */
+        /* ═══════════════════════════════════════ */
+        .sidebar-guild {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 18px;
+            margin-bottom: 15px;
+            background: rgba(139, 92, 246, 0.05);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .guild-avatar-wrapper {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .guild-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: 2px solid rgba(139, 92, 246, 0.4);
+            object-fit: cover;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .guild-text {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-grow: 1;
+        }
+
+        .guild-name {
+            font-weight: 700;
+            color: #ffffff;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 🎨 عنوان القسم */
+        /* ═══════════════════════════════════════ */
         .sidebar-section-title {
             padding: 12px 25px 8px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 700;
             color: #6b7280;
             text-transform: uppercase;
             letter-spacing: 1.5px;
         }
 
-        /* روابط الـ Sidebar */
+        /* ═══════════════════════════════════════ */
+        /* 🔗 روابط الـ Sidebar */
+        /* ═══════════════════════════════════════ */
         .sidebar-nav {
             list-style: none;
             padding: 0;
@@ -133,7 +290,7 @@
             font-size: 0.95rem;
             transition: all 0.3s ease;
             position: relative;
-            overflow: hidden;
+            white-space: nowrap;
         }
 
         .sidebar-link i {
@@ -142,6 +299,7 @@
             text-align: center;
             color: #8b5cf6 !important;
             transition: all 0.3s ease;
+            flex-shrink: 0;
         }
 
         .sidebar-link:hover {
@@ -172,6 +330,7 @@
             margin-top: 20px;
             padding-top: 20px;
             border-top: 1px solid rgba(139, 92, 246, 0.2);
+            margin-bottom: 20px;
         }
 
         .sidebar-logout .sidebar-link {
@@ -187,7 +346,9 @@
             box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
         }
 
-        /* زرار فتح/قفل الـ Sidebar (للموبايل) */
+        /* ═══════════════════════════════════════ */
+        /* 📱 زرار الموبايل */
+        /* ═══════════════════════════════════════ */
         .sidebar-toggle {
             display: none;
             position: fixed;
@@ -205,7 +366,6 @@
             box-shadow: 0 0 25px rgba(139, 92, 246, 0.6);
         }
 
-        /* Overlay للموبايل */
         .sidebar-overlay {
             display: none;
             position: fixed;
@@ -219,33 +379,6 @@
 
         .sidebar-overlay.active {
             display: block;
-        }
-
-        /* Responsive */
-        @media (max-width: 992px) {
-            body {
-                padding-right: 0;
-            }
-
-            .sidebar {
-                transform: translateX(100%);
-            }
-
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            .sidebar-toggle {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-        }
-
-        /* الـ main */
-        main {
-            padding: 20px 30px;
-            min-height: calc(100vh - 80px);
         }
 
         /* ═══════════════════════════════════════ */
@@ -270,9 +403,7 @@
             visibility: hidden;
         }
 
-        .loading-content {
-            text-align: center;
-        }
+        .loading-content { text-align: center; }
 
         .loading-logo {
             width: 100px;
@@ -325,6 +456,11 @@
             to { transform: rotate(360deg); }
         }
 
+        @keyframes gradientMove {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
         /* ═══════════════════════════════════════ */
         /* 🧭 Navbar العلوي */
         /* ═══════════════════════════════════════ */
@@ -355,11 +491,55 @@
         }
 
         /* ═══════════════════════════════════════ */
-        /* 🎨 Animations */
+        /* 📄 Main + Footer */
         /* ═══════════════════════════════════════ */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+        main {
+            padding: 20px 30px;
+            min-height: calc(100vh - 80px);
+        }
+
+        footer {
+            background: rgba(19, 19, 31, 0.8);
+            border-top: 1px solid rgba(139, 92, 246, 0.2);
+            padding: 20px !important;
+            margin-top: 40px;
+            text-align: center;
+            color: #94a3b8;
+        }
+
+        footer .fw-bold {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 📱 Responsive */
+        /* ═══════════════════════════════════════ */
+        @media (max-width: 992px) {
+            body, body.sidebar-collapsed {
+                padding-right: 0;
+            }
+
+            .sidebar {
+                transform: translateX(100%);
+                width: 260px !important;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .sidebar-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .sidebar-collapse-btn {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -384,58 +564,86 @@
     <!-- Overlay -->
     <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
+    <!-- ═══════════════════════════════════════ -->
     <!-- 📌 Sidebar -->
+    <!-- ═══════════════════════════════════════ -->
     <aside class="sidebar" id="sidebar">
-        
-        <!-- الشعار -->
-        <a href="{{ url_for('index') }}" class="sidebar-logo">
-            <div class="sidebar-logo-icon">
-                <i class="fas fa-bolt"></i>
-            </div>
-            <span class="sidebar-logo-text">Volt System</span>
-        </a>
 
-        <!-- القائمة -->
+        <!-- 👤 الملف الشخصي -->
+        <div class="sidebar-profile">
+            <div class="profile-avatar-wrapper">
+                <img id="sidebar-user-avatar" 
+                     src="https://cdn.discordapp.com/embed/avatars/0.png" 
+                     alt="Avatar"
+                     class="profile-avatar">
+                <span class="status-dot"></span>
+            </div>
+            
+            <div class="profile-text">
+                <span class="profile-name" id="sidebar-user-name">User</span>
+                <span class="profile-tag" id="sidebar-user-tag">@user</span>
+            </div>
+        </div>
+
+        <!-- زر التصغير -->
+        <button class="sidebar-collapse-btn" onclick="toggleCollapse()">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+
+        <!-- 🏰 السيرفر -->
+        <div class="sidebar-guild">
+            <div class="guild-avatar-wrapper">
+                <img id="sidebar-guild-avatar" 
+                     src="https://cdn.discordapp.com/embed/avatars/0.png" 
+                     alt="Guild"
+                     class="guild-avatar">
+            </div>
+            <div class="guild-text">
+                <span class="guild-name" id="sidebar-guild-name">Volt System</span>
+            </div>
+        </div>
+
+        <!-- 🔗 القائمة -->
         <div class="sidebar-section-title">القائمة الرئيسية</div>
         <ul class="sidebar-nav">
             <li>
-                <a href="{{ url_for('index') }}" class="sidebar-link {% if request.endpoint == 'index' %}active{% endif %}">
+                <a href="{{ url_for('index') }}" class="sidebar-link {% if request.endpoint == 'index' %}active{% endif %}" title="الرئيسية">
                     <i class="fas fa-home"></i>
                     <span>الرئيسية</span>
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('commands') }}" class="sidebar-link {% if request.endpoint == 'commands' %}active{% endif %}">
+                <a href="{{ url_for('commands') }}" class="sidebar-link {% if request.endpoint == 'commands' %}active{% endif %}" title="الأوامر">
                     <i class="fas fa-terminal"></i>
                     <span>الأوامر</span>
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('users') }}" class="sidebar-link {% if request.endpoint == 'users' %}active{% endif %}">
+                <a href="{{ url_for('users') }}" class="sidebar-link {% if request.endpoint == 'users' %}active{% endif %}" title="الأعضاء">
                     <i class="fas fa-users"></i>
                     <span>الأعضاء</span>
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('economy') }}" class="sidebar-link {% if request.endpoint == 'economy' %}active{% endif %}">
+                <a href="{{ url_for('economy') }}" class="sidebar-link {% if request.endpoint == 'economy' %}active{% endif %}" title="الاقتصاد">
                     <i class="fas fa-coins"></i>
                     <span>الاقتصاد</span>
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('leaderboard') }}" class="sidebar-link {% if request.endpoint == 'leaderboard' %}active{% endif %}">
+                <a href="{{ url_for('leaderboard') }}" class="sidebar-link {% if request.endpoint == 'leaderboard' %}active{% endif %}" title="المتصدرين">
                     <i class="fas fa-trophy"></i>
                     <span>المتصدرين</span>
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('logs') }}" class="sidebar-link {% if request.endpoint == 'logs' %}active{% endif %}">
+                <a href="{{ url_for('logs') }}" class="sidebar-link {% if request.endpoint == 'logs' %}active{% endif %}" title="السجلات">
                     <i class="fas fa-history"></i>
                     <span>السجلات</span>
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('settings') }}" class="sidebar-link {% if request.endpoint == 'settings' %}active{% endif %}">
+                <a href="{{ url_for('settings') }}" class="sidebar-link {% if request.endpoint == 'settings' %}active{% endif %}" title="الإعدادات">
                     <i class="fas fa-cog"></i>
                     <span>الإعدادات</span>
                 </a>
@@ -446,7 +654,7 @@
         <div class="sidebar-logout">
             <ul class="sidebar-nav">
                 <li>
-                    <a href="{{ url_for('logout') }}" class="sidebar-link">
+                    <a href="{{ url_for('logout') }}" class="sidebar-link" title="تسجيل خروج">
                         <i class="fas fa-sign-out-alt"></i>
                         <span>تسجيل خروج</span>
                     </a>
@@ -456,14 +664,14 @@
 
     </aside>
 
-    <!-- 🧭 Navbar العلوي (بدون زر إضافة البوت) -->
+    <!-- 🧭 Navbar العلوي -->
     <div class="top-navbar">
         <h1 class="page-title">
             {% block page_title %}لوحة التحكم{% endblock %}
         </h1>
         
         <div class="top-actions">
-            <!-- ✅ اتشال زر "إضافة البوت" من هنا -->
+            {% block top_actions %}{% endblock %}
         </div>
     </div>
 
@@ -494,9 +702,10 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- JavaScript -->
     <script>
-        // Loading Screen
+        // ═══════════════════════════════════════
+        // 🔄 Loading Screen
+        // ═══════════════════════════════════════
         window.addEventListener('load', function() {
             setTimeout(() => {
                 const loader = document.getElementById('loading-screen');
@@ -507,20 +716,104 @@
             }, 600);
         });
 
-        // Sidebar Toggle
+        // ═══════════════════════════════════════
+        // 📌 Sidebar Toggle (للموبايل)
+        // ═══════════════════════════════════════
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('active');
             document.querySelector('.sidebar-overlay').classList.toggle('active');
         }
 
-        // إغلاق الـ Sidebar عند الضغط على رابط (للموبايل)
-        document.querySelectorAll('.sidebar-link').forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth <= 992) {
-                    toggleSidebar();
-                }
+        // ═══════════════════════════════════════
+        // 📌 Sidebar Collapse (Desktop)
+        // ═══════════════════════════════════════
+        function toggleCollapse() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            
+            if (sidebar.classList.contains('collapsed')) {
+                localStorage.setItem('sidebar_collapsed', 'true');
+                document.body.classList.add('sidebar-collapsed');
+            } else {
+                localStorage.setItem('sidebar_collapsed', 'false');
+                document.body.classList.remove('sidebar-collapsed');
+            }
+        }
+
+        // ═══════════════════════════════════════
+        // 🔄 استرجاع الحالة عند التحميل
+        // ═══════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', function() {
+            // استرجع حالة الـ Sidebar
+            const collapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+            if (collapsed) {
+                document.getElementById('sidebar')?.classList.add('collapsed');
+                document.body.classList.add('sidebar-collapsed');
+            }
+            
+            // حمّل معلومات المستخدم
+            loadSidebarUser();
+            
+            // حمّل معلومات السيرفر
+            loadSidebarGuild();
+
+            // إغلاق الـ Sidebar لما تضغط على رابط (للموبايل)
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth <= 992) {
+                        toggleSidebar();
+                    }
+                });
             });
         });
+
+        // ═══════════════════════════════════════
+        // 👤 تحميل معلومات المستخدم
+        // ═══════════════════════════════════════
+        async function loadSidebarUser() {
+            try {
+                const response = await fetch('/api/user');
+                const result = await response.json();
+                
+                if (result.success && result.user && result.user.id) {
+                    const user = result.user;
+                    
+                    document.getElementById('sidebar-user-name').textContent = 
+                        user.display_name || user.username || 'User';
+                    
+                    const discriminator = user.discriminator && user.discriminator !== '0' 
+                        ? `#${user.discriminator}` 
+                        : `@${user.username || 'user'}`;
+                    document.getElementById('sidebar-user-tag').textContent = discriminator;
+                    
+                    document.getElementById('sidebar-user-avatar').src = 
+                        user.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
+                }
+            } catch (error) {
+                console.log('Failed to load sidebar user:', error);
+            }
+        }
+
+        // ═══════════════════════════════════════
+        // 🏰 تحميل معلومات السيرفر
+        // ═══════════════════════════════════════
+        async function loadSidebarGuild() {
+            try {
+                const response = await fetch('/api/guild-info');
+                const result = await response.json();
+                
+                if (result.success && result.guild) {
+                    document.getElementById('sidebar-guild-name').textContent = 
+                        result.guild.name || 'Volt System';
+                    
+                    if (result.guild.icon) {
+                        document.getElementById('sidebar-guild-avatar').src = result.guild.icon;
+                    }
+                }
+            } catch (error) {
+                console.log('Guild info not available');
+            }
+        }
     </script>
     
     {% block scripts %}

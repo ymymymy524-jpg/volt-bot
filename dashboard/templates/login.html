@@ -98,7 +98,6 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             animation: gradientMove 3s ease infinite;
-            letter-spacing: 0.5px;
         }
 
         @keyframes gradientMove {
@@ -143,12 +142,8 @@
             justify-self: end;
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 🌐 زر اللغة */
-        /* ═══════════════════════════════════════ */
-        .lang-wrapper {
-            position: relative;
-        }
+        /* زر اللغة */
+        .lang-wrapper { position: relative; }
 
         .lang-btn {
             display: flex;
@@ -171,9 +166,7 @@
             box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
         }
 
-        .lang-btn i {
-            color: #06b6d4;
-        }
+        .lang-btn i { color: #06b6d4; }
 
         .lang-dropdown {
             position: absolute;
@@ -221,9 +214,7 @@
             color: #ffffff;
         }
 
-        .lang-option .flag {
-            font-size: 1.5rem;
-        }
+        .lang-option .flag { font-size: 1.5rem; }
 
         .lang-info {
             display: flex;
@@ -231,29 +222,12 @@
             flex-grow: 1;
         }
 
-        .lang-name {
-            font-weight: 700;
-            font-size: 0.95rem;
-        }
+        .lang-name { font-weight: 700; font-size: 0.95rem; }
+        .lang-sub { font-size: 0.75rem; color: #64748b; font-weight: 500; }
+        .lang-check { color: #06b6d4; opacity: 0; }
+        .lang-option.active .lang-check { opacity: 1; }
 
-        .lang-sub {
-            font-size: 0.75rem;
-            color: #64748b;
-            font-weight: 500;
-        }
-
-        .lang-check {
-            color: #06b6d4;
-            opacity: 0;
-        }
-
-        .lang-option.active .lang-check {
-            opacity: 1;
-        }
-
-        /* ═══════════════════════════════════════ */
-        /* 🔘 زر تسجيل الدخول */
-        /* ═══════════════════════════════════════ */
+        /* زر تسجيل الدخول */
         .login-btn {
             display: flex;
             align-items: center;
@@ -290,9 +264,39 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 👤 الملف الشخصي */
-        /* ═══════════════════════════════════════ */
+        /* زرار لوحة التحكم (لما مسجل) */
+        .dashboard-btn {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(19, 19, 31, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            border-radius: 12px;
+            color: #ffffff;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .dashboard-btn.active {
+            display: flex;
+        }
+
+        .dashboard-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: #8b5cf6;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+            color: #ffffff;
+        }
+
+        .dashboard-btn i {
+            color: #8b5cf6;
+        }
+
+        /* الملف الشخصي */
         .user-profile {
             display: none;
             align-items: center;
@@ -302,7 +306,6 @@
             border: 1px solid rgba(139, 92, 246, 0.3);
             border-radius: 50px;
             transition: all 0.3s ease;
-            position: relative;
         }
 
         .user-profile.active {
@@ -326,62 +329,6 @@
             font-weight: 700;
             color: #ffffff;
             font-size: 0.9rem;
-        }
-
-        .user-dropdown-btn {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            padding: 5px;
-        }
-
-        .user-dropdown {
-            position: absolute;
-            top: calc(100% + 10px);
-            left: 0;
-            background: #13131f;
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            border-radius: 15px;
-            padding: 8px;
-            min-width: 200px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-            display: none;
-            z-index: 1001;
-        }
-
-        .user-dropdown.active {
-            display: block;
-            animation: dropdownFade 0.3s ease;
-        }
-
-        .dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 15px;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .dropdown-item:hover {
-            background: rgba(139, 92, 246, 0.2);
-            color: #ffffff;
-        }
-
-        .dropdown-item i {
-            color: #8b5cf6;
-            width: 20px;
-        }
-
-        .dropdown-divider {
-            height: 1px;
-            background: rgba(139, 92, 246, 0.2);
-            margin: 5px 0;
         }
 
         /* ═══════════════════════════════════════ */
@@ -497,7 +444,7 @@
             justify-content: center;
             align-items: center;
             flex-wrap: wrap;
-            margin-bottom: 70px;
+            margin-bottom: 40px;
             opacity: 0;
             transform: translateY(30px);
             transition: all 0.8s ease;
@@ -541,17 +488,88 @@
             animation: spin 1s linear infinite;
         }
 
-        /* Features */
+        /* ═══════════════════════════════════════ */
+        /* 📸 Dashboard Preview */
+        /* ═══════════════════════════════════════ */
+        .dashboard-preview {
+            max-width: 900px;
+            margin: 60px auto 80px;
+            position: relative;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .dashboard-preview.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dashboard-preview::before {
+            content: '';
+            position: absolute;
+            inset: -20px;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899, #06b6d4);
+            opacity: 0;
+            filter: blur(40px);
+            z-index: -1;
+            transition: all 0.6s ease;
+        }
+
+        .dashboard-preview:hover::before {
+            opacity: 0.7;
+        }
+
+        .dashboard-preview:hover {
+            transform: translateY(-10px) scale(1.02);
+        }
+
+        .dashboard-preview img {
+            width: 100%;
+            border-radius: 20px;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            transition: all 0.6s ease;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .dashboard-preview:hover img {
+            border-color: #8b5cf6;
+            box-shadow: 0 30px 80px rgba(139, 92, 246, 0.6);
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 🎨 Features */
+        /* ═══════════════════════════════════════ */
+        .features-section {
+            padding: 60px 0;
+            scroll-margin-top: 100px;
+        }
+
+        .features-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .features-subtitle {
+            color: #94a3b8;
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 50px;
+        }
+
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 25px;
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
             opacity: 0;
             transform: translateY(30px);
             transition: all 0.8s ease;
-            scroll-margin-top: 100px;
         }
 
         .features-grid.visible {
@@ -564,9 +582,34 @@
             backdrop-filter: blur(20px);
             border: 1px solid rgba(139, 92, 246, 0.3);
             border-radius: 20px;
-            padding: 35px 25px;
+            padding: 30px 22px;
             text-align: center;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(139, 92, 246, 0.1) 50%, transparent 70%);
+            transform: rotate(45deg);
+            opacity: 0;
+            transition: all 0.6s ease;
+        }
+
+        .feature-card:hover::before {
+            animation: shine 1.5s ease;
+            opacity: 1;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
         }
 
         .feature-card:hover {
@@ -576,33 +619,39 @@
         }
 
         .feature-icon {
-            width: 70px;
-            height: 70px;
-            margin: 0 auto 20px;
+            width: 65px;
+            height: 65px;
+            margin: 0 auto 18px;
             border-radius: 18px;
             background: linear-gradient(135deg, #8b5cf6, #ec4899);
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(5deg);
         }
 
         .feature-icon i {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             color: #ffffff;
         }
 
         .feature-card h5 {
-            font-size: 1.3rem;
+            font-size: 1.15rem;
             font-weight: 700;
             color: #ffffff;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .feature-card p {
             color: #94a3b8;
             line-height: 1.6;
             margin: 0;
+            font-size: 0.9rem;
         }
 
         /* Loading Screen */
@@ -688,8 +737,8 @@
             .landing-subtitle { font-size: 1rem; }
             .landing-actions { flex-direction: column; gap: 15px; }
             .btn-landing { padding: 15px 30px; font-size: 1rem; width: 100%; }
-            .navbar-actions { gap: 8px; }
-            .lang-btn span { display: none; }
+            .features-title { font-size: 1.8rem; }
+            .lang-btn span:not(.flag) { display: none; }
             .lang-btn { padding: 8px 12px; }
         }
     </style>
@@ -729,7 +778,7 @@
             </a>
         </div>
 
-        <!-- شمال: اللغة + تسجيل دخول -->
+        <!-- شمال: اللغة + الأزرار -->
         <div class="navbar-actions">
             <!-- زر اللغة -->
             <div class="lang-wrapper">
@@ -759,41 +808,23 @@
                 </div>
             </div>
 
-            <!-- زر تسجيل الدخول -->
+            <!-- زر تسجيل الدخول (قبل الدخول) -->
             <a href="{{ discord_login_url }}" class="login-btn" id="login-btn" onclick="showLoading(event)">
                 <i class="fab fa-discord"></i>
                 <span>تسجيل الدخول</span>
             </a>
 
-            <!-- الملف الشخصي -->
+            <!-- الملف الشخصي (بعد الدخول) -->
             <div class="user-profile" id="user-profile">
                 <img id="user-avatar" src="" alt="Avatar" class="user-avatar">
                 <span id="user-name" class="user-name">User</span>
-                <button class="user-dropdown-btn" onclick="toggleDropdown(event)">
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-
-                <!-- Dropdown -->
-                <div class="user-dropdown" id="user-dropdown">
-                    <a href="/" class="dropdown-item">
-                        <i class="fas fa-home"></i>
-                        <span>لوحة التحكم</span>
-                    </a>
-                    <a href="/commands" class="dropdown-item">
-                        <i class="fas fa-terminal"></i>
-                        <span>الأوامر</span>
-                    </a>
-                    <a href="/leaderboard" class="dropdown-item">
-                        <i class="fas fa-trophy"></i>
-                        <span>المتصدرين</span>
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a href="/logout" class="dropdown-item">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>تسجيل خروج</span>
-                    </a>
-                </div>
             </div>
+
+            <!-- زر لوحة التحكم (بعد الدخول) -->
+            <a href="/" class="dashboard-btn" id="dashboard-btn">
+                <i class="fas fa-chevron-right"></i>
+                <span>لوحة التحكم</span>
+            </a>
         </div>
     </nav>
 
@@ -816,6 +847,7 @@
                 Edit Your Server With Volt System
             </p>
 
+            <!-- الأزرار -->
             <div class="landing-actions">
                 <a href="https://discord.com/oauth2/authorize?client_id=1558484342299295764&permissions=8&scope=bot%20applications.commands" 
                    target="_blank" 
@@ -832,21 +864,71 @@
                 </a>
             </div>
 
-            <div class="features-grid" id="features">
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-bolt"></i></div>
-                    <h5>سريع وقوي</h5>
-                    <p>تحكم كامل في سيرفرك بسرعة فائقة</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
-                    <h5>آمن تماماً</h5>
-                    <p>تسجيل دخول آمن عبر Discord</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-palette"></i></div>
-                    <h5>تصميم عصري</h5>
-                    <p>واجهة جميلة وسهلة الاستخدام</p>
+            <!-- 📸 Dashboard Preview -->
+            <div class="dashboard-preview" id="dashboard-preview">
+                <img src="{{ url_for('static', filename='img/dashboard-preview.png') }}" 
+                     alt="Volt System Dashboard Preview"
+                     onerror="this.src='https://via.placeholder.com/900x600/13131f/8b5cf6?text=Volt+System+Dashboard'">
+            </div>
+
+            <!-- 🎨 Features Section -->
+            <div class="features-section" id="features">
+                <h2 class="features-title">
+                    ✨ مميزات <span class="gradient-text">Volt System</span>
+                </h2>
+                <p class="features-subtitle">
+                    كل اللي تحتاجه عشان تدير سيرفرك بكفاءة
+                </p>
+
+                <div class="features-grid">
+                    <!-- 1 -->
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                        <h5>سرعة فائقة</h5>
+                        <p>أوامر تستجيب في أقل من ثانية، أداء عالي بدون أي تأخير</p>
+                    </div>
+                    <!-- 2 -->
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                        <h5>حماية متطورة</h5>
+                        <p>Antilink + Antispam + Antiraid + Anti-hacked لحماية سيرفرك 24/7</p>
+                    </div>
+                    <!-- 3 -->
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-robot"></i></div>
+                        <h5>ذكاء اصطناعي</h5>
+                        <p>تكامل مع Google Gemini — أسئلة، ترجمة، كتابة كود، توليد صور</p>
+                    </div>
+                    <!-- 4 -->
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-gamepad"></i></div>
+                        <h5>ألعاب تفاعلية</h5>
+                        <p>أكثر من 8 ألعاب ممتعة مع نظام Fizzy — للعب مع أعضاء سيرفرك</p>
+                    </div>
+                    <!-- 5 -->
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-music"></i></div>
+                        <h5>موسيقى YouTube</h5>
+                        <p>شغّل أغانيك المفضلة من YouTube + Spotify بجودة عالية</p>
+                    </div>
+                    <!-- 6 -->
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-coins"></i></div>
+                        <h5>نظام Crypto</h5>
+                        <p>عملة رقمية كاملة — اكسب، حوّل، واشتري من المتجر</p>
+                    </div>
+                    <!-- 7 -->
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                        <h5>مستويات متطورة</h5>
+                        <p>نظام XP كامل مع Leaderboard — تفاعل أكثر مع الأعضاء</p>
+                    </div>
+                    <!-- 8 -->
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-palette"></i></div>
+                        <h5>Dashboard عصري</h5>
+                        <p>لوحة تحكم عربية بالكامل — تحكم في كل حاجة من المتصفح</p>
+                    </div>
                 </div>
             </div>
 
@@ -872,7 +954,8 @@
                 setTimeout(() => document.querySelector('.landing-title')?.classList.add('visible'), 200);
                 setTimeout(() => document.querySelector('.landing-subtitle')?.classList.add('visible'), 400);
                 setTimeout(() => document.querySelector('.landing-actions')?.classList.add('visible'), 600);
-                setTimeout(() => document.querySelector('.features-grid')?.classList.add('visible'), 800);
+                setTimeout(() => document.querySelector('#dashboard-preview')?.classList.add('visible'), 800);
+                setTimeout(() => document.querySelector('.features-grid')?.classList.add('visible'), 1000);
             }, 900);
 
             checkAuthStatus();
@@ -901,84 +984,5 @@
         function showUserProfile(user) {
             const loginBtn = document.getElementById('login-btn');
             const userProfile = document.getElementById('user-profile');
-            const userAvatar = document.getElementById('user-avatar');
-            const userName = document.getElementById('user-name');
-            
-            loginBtn.style.display = 'none';
-            userProfile.classList.add('active');
-            
-            userAvatar.src = user.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
-            userName.textContent = user.display_name || user.username || 'User';
-        }
-
-        // حالة "جاري تسجيل الدخول"
-        function showLoading(event) {
-            const btn = event.currentTarget;
-            const originalHTML = btn.innerHTML;
-            
-            btn.classList.add('loading');
-            btn.innerHTML = '<i class="fas fa-spinner"></i><span>جاري تسجيل الدخول...</span>';
-            
-            setTimeout(() => {
-                btn.classList.remove('loading');
-                btn.innerHTML = originalHTML;
-            }, 5000);
-        }
-
-        // زر اللغة
-        function toggleLangDropdown(event) {
-            event.stopPropagation();
-            document.getElementById('lang-dropdown').classList.toggle('active');
-        }
-
-        function setLang(lang, event) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            document.querySelectorAll('.lang-option').forEach(opt => opt.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            
-            if (lang === 'en') {
-                document.documentElement.dir = 'ltr';
-                document.documentElement.lang = 'en';
-            } else {
-                document.documentElement.dir = 'rtl';
-                document.documentElement.lang = 'ar';
-            }
-            
-            document.getElementById('lang-dropdown').classList.remove('active');
-            localStorage.setItem('lang', lang);
-        }
-
-        // Dropdown المستخدم
-        function toggleDropdown(event) {
-            event.stopPropagation();
-            document.getElementById('user-dropdown').classList.toggle('active');
-        }
-
-        // إغلاق الـ dropdowns
-        document.addEventListener('click', function(event) {
-            if (!event.target.closest('.user-profile')) {
-                document.getElementById('user-dropdown')?.classList.remove('active');
-            }
-            if (!event.target.closest('.lang-wrapper')) {
-                document.getElementById('lang-dropdown')?.classList.remove('active');
-            }
-        });
-
-        // Smooth scroll للمميزات
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                const href = this.getAttribute('href');
-                if (href === '#') return;
-                e.preventDefault();
-                const target = document.querySelector(href);
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
-    </script>
-
-</body>
-</html>
+            const dashboardBtn = document.getElementById('dashboard-btn');
+            const userAvatar = document.getElementById('user
