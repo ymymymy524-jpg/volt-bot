@@ -28,7 +28,7 @@
         /* 📌 Sidebar */
         /* ═══════════════════════════════════════ */
         body {
-            padding-right: 260px; /* مساحة للـ Sidebar */
+            padding-right: 260px;
             transition: padding-right 0.3s ease;
         }
 
@@ -44,8 +44,6 @@
             overflow-y: auto;
             z-index: 1001;
             transition: transform 0.3s ease;
-            scrollbar-width: thin;
-            scrollbar-color: #8b5cf6 #13131f;
         }
 
         .sidebar::-webkit-scrollbar {
@@ -95,6 +93,11 @@
             background-clip: text;
             animation: gradientMove 3s ease infinite;
             letter-spacing: 0.5px;
+        }
+
+        @keyframes gradientMove {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         /* عنوان القسم */
@@ -239,7 +242,7 @@
             }
         }
 
-        /* تعديل الـ main */
+        /* الـ main */
         main {
             padding: 20px 30px;
             min-height: calc(100vh - 80px);
@@ -323,7 +326,7 @@
         }
 
         /* ═══════════════════════════════════════ */
-        /* 🧭 Navbar العلوي (معدّل) */
+        /* 🧭 Navbar العلوي */
         /* ═══════════════════════════════════════ */
         .top-navbar {
             background: rgba(19, 19, 31, 0.95);
@@ -351,46 +354,12 @@
             gap: 15px;
         }
 
-        .top-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 18px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-        }
-
-        .top-btn-primary {
-            background: linear-gradient(135deg, #8b5cf6, #ec4899);
-            color: #ffffff !important;
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-        }
-
-        .top-btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
-        }
-
         /* ═══════════════════════════════════════ */
         /* 🎨 Animations */
         /* ═══════════════════════════════════════ */
-        @keyframes gradientMove {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-
-        .fade-in {
-            animation: fadeInUp 0.6s ease;
         }
     </style>
 </head>
@@ -454,6 +423,12 @@
                 </a>
             </li>
             <li>
+                <a href="{{ url_for('leaderboard') }}" class="sidebar-link {% if request.endpoint == 'leaderboard' %}active{% endif %}">
+                    <i class="fas fa-trophy"></i>
+                    <span>المتصدرين</span>
+                </a>
+            </li>
+            <li>
                 <a href="{{ url_for('logs') }}" class="sidebar-link {% if request.endpoint == 'logs' %}active{% endif %}">
                     <i class="fas fa-history"></i>
                     <span>السجلات</span>
@@ -481,26 +456,19 @@
 
     </aside>
 
-    <!-- 🧭 Navbar العلوي -->
+    <!-- 🧭 Navbar العلوي (بدون زر إضافة البوت) -->
     <div class="top-navbar">
         <h1 class="page-title">
             {% block page_title %}لوحة التحكم{% endblock %}
         </h1>
         
         <div class="top-actions">
-            <!-- زر إضافة البوت -->
-            <a href="https://discord.com/oauth2/authorize?client_id=1558484342299295764&permissions=8&scope=bot%20applications.commands" 
-               target="_blank" 
-               class="top-btn top-btn-primary">
-                <i class="fas fa-plus-circle"></i>
-                <span>إضافة البوت</span>
-            </a>
+            <!-- ✅ اتشال زر "إضافة البوت" من هنا -->
         </div>
     </div>
 
     <!-- 📄 محتوى الصفحة -->
     <main>
-        <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -528,9 +496,7 @@
     
     <!-- JavaScript -->
     <script>
-        // ═══════════════════════════════════════
-        // 🔄 Loading Screen
-        // ═══════════════════════════════════════
+        // Loading Screen
         window.addEventListener('load', function() {
             setTimeout(() => {
                 const loader = document.getElementById('loading-screen');
@@ -541,15 +507,13 @@
             }, 600);
         });
 
-        // ═══════════════════════════════════════
-        // 📌 Sidebar Toggle (للموبايل)
-        // ═══════════════════════════════════════
+        // Sidebar Toggle
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('active');
             document.querySelector('.sidebar-overlay').classList.toggle('active');
         }
 
-        // إغلاق الـ Sidebar لما تضغط على رابط (للموبايل)
+        // إغلاق الـ Sidebar عند الضغط على رابط (للموبايل)
         document.querySelectorAll('.sidebar-link').forEach(link => {
             link.addEventListener('click', () => {
                 if (window.innerWidth <= 992) {
