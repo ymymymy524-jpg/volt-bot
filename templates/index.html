@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+
+{% block page_title %}
+<i class="fas fa-chart-line text-primary me-2"></i>
+لوحة التحكم الرئيسية
+{% endblock %}
+
+{% block content %}
+
+<!-- كروت الإحصائيات -->
+<div class="row g-4 mb-4">
+    <!-- عدد المستخدمين -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">إجمالي المستخدمين</p>
+                        <h3 class="fw-bold mb-0" id="total-users">0</h3>
+                    </div>
+                    <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- إجمالي الرصيد -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">إجمالي Crypto</p>
+                        <h3 class="fw-bold mb-0" id="total-balance">0 ₿</h3>
+                    </div>
+                    <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- عدد المستويات -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">إجمالي المستويات</p>
+                        <h3 class="fw-bold mb-0" id="total-levels">0</h3>
+                    </div>
+                    <div class="stats-icon bg-success bg-opacity-10 text-success">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- وقت التشغيل -->
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">وقت التشغيل</p>
+                        <h3 class="fw-bold mb-0" id="uptime">-</h3>
+                    </div>
+                    <div class="stats-icon bg-info bg-opacity-10 text-info">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- الرسم البياني -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-dark border-0 py-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-chart-bar text-primary me-2"></i>
+                    النشاط اليومي
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="activityChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- إحصائيات إضافية -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-dark border-0 py-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-chart-pie text-success me-2"></i>
+                    توزيع العملات
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="currencyChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- آخر الأحداث -->
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-dark border-0 py-3">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-history text-info me-2"></i>
+                    آخر الأحداث
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush" id="recent-activity">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                        <p>جاري تحميل البيانات...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let activityChart = null;
+    let currencyChart = null;
+
+    async function loadStats() {
+        try {
+            const response = await fetch('/api/stats');
+            const result = await response.json();
+            
+            if (result.success) {
+                const data = result.data;
+                
+                document.getElementById('total-users').textContent = data.total_users.toLocaleString('ar-EG');
+                document.getElementById('total-balance').textContent = data.total_balance.toLocaleString('ar-EG') + ' ₿';
+                document.getElementById('total-levels').textContent = data.total_levels.toLocaleString('ar-EG');
+                document.getElementById('uptime').textContent = data.uptime;
+                
+                updateActivityChart(data.chart_data);
+                loadRecentActivity();
+                loadCurrencyChart(data.total_balance, data.total_fizzy);
+            }
+        } catch (error) {
+            console.error('خطأ في تحميل الإحصائيات:', error);
+            showNotification('حدث خطأ في تحميل البيانات', 'danger');
+        }
+    }
+
+    function updateActivityChart(chartData) {
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        
+        if (activityChart) activityChart.destroy();
+        
+        activityChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: chartData.datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: { font: { family: 'Cairo', size: 14 } }
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { font: { family: 'Cairo' } } },
+                    x: { ticks: { font: { family: 'Cairo' } } }
+                }
+            }
+        });
+    }
+
+    function loadCurrencyChart(totalBitcoin, totalFizzy) {
+        const ctx = document.getElementById('currencyChart').getContext('2d');
+        
+        if (currencyChart) currencyChart.destroy();
+        
+        currencyChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Crypto ₿', 'Fizzy 💎'],
+                datasets: [{
+                    data: [totalBitcoin, totalFizzy],
+                    backgroundColor: [
+                        'rgba(255, 193, 7, 0.8)',
+                        'rgba(111, 66, 193, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(111, 66, 193, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: { family: 'Cairo', size: 14 },
+                            padding: 20
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async function loadRecentActivity() {
+        try {
+            const response = await fetch('/api/logs');
+            const result = await response.json();
+            
+            if (result.success) {
+                const logs = result.data.slice(0, 10);
+                const container = document.getElementById('recent-activity');
+                
+                if (logs.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-3x mb-2"></i>
+                            <p>لا توجد أحداث حتى الآن</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = logs.map(log => {
+                    const icon = getActivityIcon(log.action);
+                    const color = getActivityColor(log.action);
+                    const time = formatTime(log.timestamp);
+                    
+                    return `
+                        <div class="list-group-item border-0 py-3 bg-transparent">
+                            <div class="d-flex align-items-center">
+                                <div class="activity-icon bg-${color} bg-opacity-10 text-${color} me-3">
+                                    <i class="${icon}"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold small">
+                                        ${getActivityText(log.action)}
+                                    </div>
+                                    <div class="text-muted small">
+                                        المستخدم: ${log.user_id} | ${log.details || ''}
+                                    </div>
+                                </div>
+                                <div class="text-muted small">
+                                    ${time}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        } catch (error) {
+            console.error('خطأ في تحميل الأحداث:', error);
+        }
+    }
+
+    function getActivityIcon(action) {
+        const icons = {
+            'daily': 'fas fa-gift',
+            'work': 'fas fa-briefcase',
+            'transfer_in': 'fas fa-arrow-down',
+            'transfer_out': 'fas fa-arrow-up',
+            'buy': 'fas fa-shopping-cart',
+            'admin': 'fas fa-user-cog'
+        };
+        return icons[action] || 'fas fa-circle';
+    }
+
+    function getActivityColor(action) {
+        const colors = {
+            'daily': 'success',
+            'work': 'primary',
+            'transfer_in': 'info',
+            'transfer_out': 'warning',
+            'buy': 'secondary',
+            'admin': 'danger'
+        };
+        return colors[action] || 'secondary';
+    }
+
+    function getActivityText(action) {
+        const texts = {
+            'daily': 'حصل على المكافأة اليومية',
+            'work': 'عمل وكسب Crypto',
+            'transfer_in': 'استقبل تحويل',
+            'transfer_out': 'أرسل تحويل',
+            'buy': 'اشترى عنصر من المتجر',
+            'admin': 'تعديل من الإدارة'
+        };
+        return texts[action] || 'نشاط جديد';
+    }
+
+    function formatTime(timestamp) {
+        if (!timestamp) return 'غير معروف';
+        
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = Math.floor((now - date) / 1000);
+        
+        if (diff < 60) return 'الآن';
+        if (diff < 3600) return `منذ ${Math.floor(diff / 60)} دقيقة`;
+        if (diff < 86400) return `منذ ${Math.floor(diff / 3600)} ساعة`;
+        return `منذ ${Math.floor(diff / 86400)} يوم`;
+    }
+
+    function showNotification(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+        alertDiv.style.zIndex = '9999';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => alertDiv.remove(), 3000);
+    }
+
+    document.addEventListener('DOMContentLoaded', loadStats);
+    setInterval(loadStats, 30000);
+</script>
+{% endblock %}
