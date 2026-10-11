@@ -1,0 +1,22 @@
+venv/
+__pycache__/
+*.pyc
+.env
+*.log
+.vscode/
+.idea/
+
+# ملفات البيانات (مش محتاج تترفع)
+levels.json
+bitcoin.json
+welcome.json
+tickets.json
+invites.json
+protection.json
+settings.json
+games.json
+warnings.json
+prefix.json
+crypto.json
+
+# ⚠️ commands_config.json لازم يترفع
