@@ -26,7 +26,7 @@ if SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET:
         print(f"⚠️ فشل الاتصال بـ Spotify: {e}")
 
 # ═══════════════════════════════════════
-# 🎵 إعدادات yt-dlp - SoundCloud
+# 🎵 إعدادات yt-dlp
 # ═══════════════════════════════════════
 YDL_OPTIONS = {
     'format': 'bestaudio/best',
@@ -34,9 +34,9 @@ YDL_OPTIONS = {
     'quiet': True,
     'no_warnings': True,
     'extract_flat': False,
-    'default_search': 'scsearch',  # ← SoundCloud Search
+    'default_search': 'scsearch',
     'source_address': '0.0.0.0',
-    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
     'age_limit': 100,
     'no_check_certificates': True,
     'geo_bypass': True,
@@ -52,22 +52,18 @@ FFMPEG_OPTIONS = {
 # 🔍 دوال Spotify
 # ═══════════════════════════════════════
 def search_spotify(query: str):
-    """البحث في Spotify وإرجاع معلومات الأغنية"""
     if not sp:
         return None
-    
     try:
-        if "open.spotify.com" in query:
-            if "/track/" in query:
-                track_id = query.split("/track/")[1].split("?")[0]
-                track = sp.track(track_id)
-                return {
-                    "name": track['name'],
-                    "artist": track['artists'][0]['name'],
-                    "thumbnail": track['album']['images'][0]['url'] if track['album']['images'] else None,
-                    "duration": track['duration_ms'] // 1000,
-                    "search_query": f"{track['name']} {track['artists'][0]['name']}"
-                }
+        if "open.spotify.com" in query and "/track/" in query:
+            track_id = query.split("/track/")[1].split("?")[0]
+            track = sp.track(track_id)
+            return {
+                "name": track['name'],
+                "artist": track['artists'][0]['name'],
+                "thumbnail": track['album']['images'][0]['url'] if track['album']['images'] else None,
+                "search_query": f"{track['name']} {track['artists'][0]['name']}"
+            }
         else:
             results = sp.search(q=query, type='track', limit=1)
             if results['tracks']['items']:
@@ -76,17 +72,14 @@ def search_spotify(query: str):
                     "name": track['name'],
                     "artist": track['artists'][0]['name'],
                     "thumbnail": track['album']['images'][0]['url'] if track['album']['images'] else None,
-                    "duration": track['duration_ms'] // 1000,
                     "search_query": f"{track['name']} {track['artists'][0]['name']}"
                 }
     except Exception as e:
-        print(f"⚠️ خطأ في Spotify: {e}")
-    
+        print(f"⚠️ خطأ Spotify: {e}")
     return None
 
 
 class MusicQueue:
-    """فئة لإدارة قائمة التشغيل لكل سيرفر"""
     def __init__(self):
         self.queue = []
         self.current = None
@@ -107,30 +100,22 @@ class Music(commands.Cog):
         return self.queues[guild_id]
 
     async def search_song(self, query: str):
-        """البحث عن أغنية على SoundCloud"""
         loop = asyncio.get_event_loop()
-        
-        # لو رابط مباشر
-        if query.startswith('http://') or query.startswith('https://'):
+        if query.startswith(('http://', 'https://')):
             url = query
         else:
-            # بحث SoundCloud
             url = f"scsearch1:{query}"
-
         try:
             data = await loop.run_in_executor(
-                None, 
+                None,
                 lambda: yt_dlp.YoutubeDL(YDL_OPTIONS).extract_info(url, download=False)
             )
-
             if data is None:
                 return None
-
             if 'entries' in data:
                 if not data['entries']:
                     return None
                 data = data['entries'][0]
-
             return {
                 'title': data.get('title', 'Unknown'),
                 'url': data.get('url', ''),
@@ -143,15 +128,12 @@ class Music(commands.Cog):
             print(f"❌ خطأ في البحث: {e}")
             return None
 
-    async def play_next(self, guild_id):
-        """تشغيل الأغنية التالية"""
+    async def play_next(self, guild_id, channel):
         queue = self.get_queue(guild_id)
-        
         if not queue.queue:
             queue.current = None
             queue.is_playing = False
             return
-
         song = queue.queue.pop(0)
         queue.current = song
         queue.is_playing = True
@@ -166,72 +148,58 @@ class Music(commands.Cog):
             if error:
                 print(f"❌ خطأ في التشغيل: {error}")
             asyncio.run_coroutine_threadsafe(
-                self.play_next(guild_id), 
+                self.play_next(guild_id, channel),
                 self.bot.loop
             )
 
         queue.voice_client.play(source, after=after_play)
 
-    # ═══════════════════════════════════════
-    # 🎵 أمر /play
-    # ═══════════════════════════════════════
-    @app_commands.command(name="play", description="🎵 تشغيل أغنية من SoundCloud أو Spotify")
-    @app_commands.describe(query="اسم الأغنية أو الرابط (SoundCloud / Spotify)")
-    async def play(self, interaction: discord.Interaction, query: str):
-        await interaction.response.defer()
+        embed = discord.Embed(
+            title="🎵 يتم التشغيل الآن",
+            description=f"**{song['title']}**",
+            color=0x1DB954
+        )
+        if song.get('thumbnail'):
+            embed.set_thumbnail(url=song['thumbnail'])
+        try:
+            await channel.send(embed=embed)
+        except:
+            pass
 
-        if not interaction.user.voice:
-            embed = discord.Embed(
-                title="❌ يجب الانضمام لروم صوتي",
-                description="يجب أن تكون في روم صوتي لاستخدام الأمر ده",
-                color=discord.Color.red()
-            )
-            await interaction.followup.send(embed=embed)
-            return
-
+    # ═══════════════════════════════════════
+    # 🎵 منطق play (مشترك)
+    # ═══════════════════════════════════════
+    async def _play_logic(self, guild, user, voice_channel, query, respond):
+        """منطق التشغيل - مشترك بين Slash و Text"""
         search_query = query
         spotify_info = None
 
-        # لو Spotify أو بحث عادي، جيب معلومات من Spotify
+        # لو Spotify أو بحث عادي
         if "spotify.com" in query or (sp and not query.startswith(('http://', 'https://'))):
             spotify_info = search_spotify(query)
             if spotify_info and "search_query" in spotify_info:
                 search_query = spotify_info["search_query"]
 
-        # البحث في SoundCloud
         song = await self.search_song(search_query)
-        
         if song is None:
-            embed = discord.Embed(
-                title="❌ لم يتم العثور على الأغنية",
-                description=f"لم أتمكن من العثور على: `{query}`\nجرب اسم تاني أو رابط مباشر",
-                color=discord.Color.red()
-            )
-            await interaction.followup.send(embed=embed)
+            await respond("❌ لم يتم العثور على الأغنية")
             return
 
-        queue = self.get_queue(interaction.guild.id)
+        queue = self.get_queue(guild.id)
 
-        # الانضمام للروم
-        if not interaction.guild.voice_client:
+        # الانضمام
+        if not guild.voice_client:
             try:
-                queue.voice_client = await interaction.user.voice.channel.connect()
+                queue.voice_client = await voice_channel.connect()
             except Exception as e:
-                embed = discord.Embed(
-                    title="❌ خطأ في الانضمام",
-                    description=f"لم أتمكن من الانضمام: {e}",
-                    color=discord.Color.red()
-                )
-                await interaction.followup.send(embed=embed)
+                await respond(f"❌ خطأ في الانضمام: {e}")
                 return
         else:
-            queue.voice_client = interaction.guild.voice_client
+            queue.voice_client = guild.voice_client
 
-        # لو مفيش حاجة شغالة
         if not queue.is_playing:
             queue.queue.append(song)
-            await self.play_next(interaction.guild.id)
-            
+            await self.play_next(guild.id, respond.__self__.channel if hasattr(respond, '__self__') else None)
             embed = discord.Embed(
                 title="🎵 جاري التشغيل",
                 description=f"**[{song['title']}]({song['webpage_url']})**\nبواسطة: {song['uploader']}",
@@ -239,223 +207,221 @@ class Music(commands.Cog):
             )
             if spotify_info and spotify_info.get("thumbnail"):
                 embed.set_thumbnail(url=spotify_info["thumbnail"])
-                embed.add_field(name="🎧 Spotify", value=f"{spotify_info['name']} - {spotify_info['artist']}", inline=False)
-            elif song['thumbnail']:
+            elif song.get('thumbnail'):
                 embed.set_thumbnail(url=song['thumbnail'])
-            
-            embed.set_footer(text=f"المدة: {self.format_duration(song['duration'])}")
-            await interaction.followup.send(embed=embed)
+            await respond(embed=embed)
         else:
             queue.queue.append(song)
-            
             embed = discord.Embed(
-                title="✅ تمت الإضافة لقائمة التشغيل",
-                description=f"**[{song['title']}]({song['webpage_url']})**\nبواسطة: {song['uploader']}",
-                color=discord.Color.blue()
+                title="✅ تمت الإضافة للقائمة",
+                description=f"**[{song['title']}]({song['webpage_url']})**",
+                color=0x3498DB
             )
-            if spotify_info and spotify_info.get("thumbnail"):
-                embed.set_thumbnail(url=spotify_info["thumbnail"])
-                embed.add_field(name="🎧 Spotify", value=f"{spotify_info['name']} - {spotify_info['artist']}", inline=False)
-            elif song['thumbnail']:
+            if song.get('thumbnail'):
                 embed.set_thumbnail(url=song['thumbnail'])
-            
-            embed.set_footer(text=f"الموقع: #{len(queue.queue)} | المدة: {self.format_duration(song['duration'])}")
-            await interaction.followup.send(embed=embed)
+            await respond(embed=embed)
 
     # ═══════════════════════════════════════
-    # 🎧 أمر /spotify-search
+    # 🎵 SLASH COMMANDS
     # ═══════════════════════════════════════
-    @app_commands.command(name="spotify-search", description="🎧 البحث في Spotify")
-    @app_commands.describe(query="اسم الأغنية")
-    async def spotify_search(self, interaction: discord.Interaction, query: str):
+    @app_commands.command(name="play", description="🎵 تشغيل أغنية")
+    @app_commands.describe(query="اسم الأغنية أو الرابط")
+    async def play_slash(self, interaction: discord.Interaction, query: str):
         await interaction.response.defer()
-        
-        if not sp:
-            return await interaction.followup.send("❌ Spotify غير مفعّل")
-        
-        try:
-            results = sp.search(q=query, type='track', limit=5)
-            
-            if not results['tracks']['items']:
-                return await interaction.followup.send("❌ مفيش نتائج")
-            
-            embed = discord.Embed(
-                title="🎧 نتائج Spotify",
-                description=f"البحث عن: **{query}**",
-                color=0x1DB954
-            )
-            
-            for i, track in enumerate(results['tracks']['items'], 1):
-                name = track['name']
-                artist = track['artists'][0]['name']
-                duration = track['duration_ms'] // 1000
-                embed.add_field(
-                    name=f"{i}. {name}",
-                    value=f"👤 {artist}\n⏱️ {self.format_duration(duration)}",
-                    inline=False
-                )
-            
-            embed.set_footer(text="استخدم /play لتشغيل الأغنية")
-            await interaction.followup.send(embed=embed)
-        except Exception as e:
-            await interaction.followup.send(f"❌ خطأ: {e}")
+        if not interaction.user.voice:
+            return await interaction.followup.send("❌ لازم تكون في روم صوتي!")
 
-    # ═══════════════════════════════════════
-    # ⏸️ /pause
-    # ═══════════════════════════════════════
-    @app_commands.command(name="pause", description="⏸️ إيقاف الأغنية مؤقتاً")
-    async def pause(self, interaction: discord.Interaction):
+        async def respond(content=None, embed=None):
+            if embed:
+                await interaction.followup.send(embed=embed)
+            else:
+                await interaction.followup.send(content)
+
+        await self._play_logic(
+            interaction.guild,
+            interaction.user,
+            interaction.user.voice.channel,
+            query,
+            respond
+        )
+
+    @app_commands.command(name="skip", description="⏭️ تخطي الأغنية")
+    async def skip_slash(self, interaction: discord.Interaction):
         queue = self.get_queue(interaction.guild.id)
-
         if not queue.voice_client or not queue.is_playing:
-            embed = discord.Embed(title="❌ لا يوجد أغنية قيد التشغيل", color=discord.Color.red())
-            await interaction.response.send_message(embed=embed)
-            return
-
-        if queue.is_paused:
-            embed = discord.Embed(title="⚠️ الأغنية موقوفة بالفعل", color=discord.Color.orange())
-            await interaction.response.send_message(embed=embed)
-            return
-
-        queue.voice_client.pause()
-        queue.is_paused = True
-        embed = discord.Embed(title="⏸️ تم الإيقاف المؤقت", color=discord.Color.orange())
-        await interaction.response.send_message(embed=embed)
-
-    # ═══════════════════════════════════════
-    # ▶️ /resume
-    # ═══════════════════════════════════════
-    @app_commands.command(name="resume", description="▶️ استكمال الأغنية")
-    async def resume(self, interaction: discord.Interaction):
-        queue = self.get_queue(interaction.guild.id)
-
-        if not queue.voice_client or not queue.is_paused:
-            embed = discord.Embed(title="❌ لا توجد أغنية موقوفة", color=discord.Color.red())
-            await interaction.response.send_message(embed=embed)
-            return
-
-        queue.voice_client.resume()
-        queue.is_paused = False
-        embed = discord.Embed(title="▶️ تم الاستكمال", color=discord.Color.green())
-        await interaction.response.send_message(embed=embed)
-
-    # ═══════════════════════════════════════
-    # ⏭️ /skip
-    # ═══════════════════════════════════════
-    @app_commands.command(name="skip", description="⏭️ تخطي الأغنية الحالية")
-    async def skip(self, interaction: discord.Interaction):
-        queue = self.get_queue(interaction.guild.id)
-
-        if not queue.voice_client or not queue.is_playing:
-            embed = discord.Embed(title="❌ لا يوجد أغنية قيد التشغيل", color=discord.Color.red())
-            await interaction.response.send_message(embed=embed)
-            return
-
+            return await interaction.response.send_message("❌ مفيش حاجة شغالة", ephemeral=True)
         queue.voice_client.stop()
-        embed = discord.Embed(title="⏭️ تم التخطي", color=discord.Color.blue())
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message("⏭️ تم التخطي")
 
-    # ═══════════════════════════════════════
-    # 📋 /queue
-    # ═══════════════════════════════════════
-    @app_commands.command(name="queue", description="📋 عرض قائمة التشغيل")
-    async def queue_display(self, interaction: discord.Interaction):
+    @app_commands.command(name="stop", description="⏹️ إيقاف التشغيل")
+    async def stop_slash(self, interaction: discord.Interaction):
         queue = self.get_queue(interaction.guild.id)
-
-        if not queue.current and not queue.queue:
-            embed = discord.Embed(title="📭 قائمة التشغيل فارغة", color=discord.Color.orange())
-            await interaction.response.send_message(embed=embed)
-            return
-
-        description = ""
-        if queue.current:
-            description += f"🎵 **الآن:** [{queue.current['title']}]({queue.current['webpage_url']})\n\n"
-
-        if queue.queue:
-            description += "**📋 قائمة التشغيل:**\n"
-            for i, song in enumerate(queue.queue[:10], 1):
-                description += f"`{i}.` [{song['title']}]({song['webpage_url']})\n"
-            
-            if len(queue.queue) > 10:
-                description += f"\n... و {len(queue.queue) - 10} أغاني أخرى"
-
-        embed = discord.Embed(title="🎶 قائمة التشغيل", description=description, color=discord.Color.purple())
-        embed.set_footer(text=f"إجمالي: {len(queue.queue) + (1 if queue.current else 0)}")
-        await interaction.response.send_message(embed=embed)
-
-    # ═══════════════════════════════════════
-    # ⏹️ /stop
-    # ═══════════════════════════════════════
-    @app_commands.command(name="stop", description="⏹️ إيقاف التشغيل والخروج")
-    async def stop(self, interaction: discord.Interaction):
-        queue = self.get_queue(interaction.guild.id)
-
         if not queue.voice_client:
-            embed = discord.Embed(title="❌ البوت مش في روم صوتي", color=discord.Color.red())
-            await interaction.response.send_message(embed=embed)
-            return
-
+            return await interaction.response.send_message("❌ البوت مش في روم صوتي", ephemeral=True)
         queue.queue.clear()
         queue.current = None
         queue.is_playing = False
-        queue.is_paused = False
         await queue.voice_client.disconnect()
+        await interaction.response.send_message("⏹️ تم الإيقاف")
 
-        embed = discord.Embed(title="👋 تم الخروج", color=discord.Color.red())
+    @app_commands.command(name="pause", description="⏸️ إيقاف مؤقت")
+    async def pause_slash(self, interaction: discord.Interaction):
+        queue = self.get_queue(interaction.guild.id)
+        if not queue.voice_client or not queue.is_playing:
+            return await interaction.response.send_message("❌ مفيش حاجة شغالة", ephemeral=True)
+        queue.voice_client.pause()
+        queue.is_paused = True
+        await interaction.response.send_message("⏸️ تم الإيقاف المؤقت")
+
+    @app_commands.command(name="resume", description="▶️ استكمال")
+    async def resume_slash(self, interaction: discord.Interaction):
+        queue = self.get_queue(interaction.guild.id)
+        if not queue.voice_client or not queue.is_paused:
+            return await interaction.response.send_message("❌ مفيش حاجة موقوفة", ephemeral=True)
+        queue.voice_client.resume()
+        queue.is_paused = False
+        await interaction.response.send_message("▶️ تم الاستكمال")
+
+    @app_commands.command(name="queue", description="📋 قائمة التشغيل")
+    async def queue_slash(self, interaction: discord.Interaction):
+        queue = self.get_queue(interaction.guild.id)
+        if not queue.current and not queue.queue:
+            return await interaction.response.send_message("📭 القائمة فاضية")
+        desc = ""
+        if queue.current:
+            desc += f"🎵 **الآن:** {queue.current['title']}\n\n"
+        for i, song in enumerate(queue.queue[:10], 1):
+            desc += f"`{i}.` {song['title']}\n"
+        embed = discord.Embed(title="🎶 قائمة التشغيل", description=desc, color=0x9B59B6)
         await interaction.response.send_message(embed=embed)
 
-    # ═══════════════════════════════════════
-    # 🔊 /volume
-    # ═══════════════════════════════════════
-    @app_commands.command(name="volume", description="🔊 تعديل مستوى الصوت")
-    @app_commands.describe(volume="مستوى الصوت من 0 إلى 100")
-    async def volume(self, interaction: discord.Interaction, volume: app_commands.Range[int, 0, 100]):
+    @app_commands.command(name="nowplaying", description="🎵 الأغنية الحالية")
+    async def nowplaying_slash(self, interaction: discord.Interaction):
         queue = self.get_queue(interaction.guild.id)
+        if not queue.current:
+            return await interaction.response.send_message("❌ مفيش حاجة شغالة", ephemeral=True)
+        embed = discord.Embed(
+            title="🎵 الأغنية الحالية",
+            description=f"**{queue.current['title']}**",
+            color=0x1DB954
+        )
+        if queue.current.get('thumbnail'):
+            embed.set_thumbnail(url=queue.current['thumbnail'])
+        await interaction.response.send_message(embed=embed)
 
+    @app_commands.command(name="volume", description="🔊 تعديل الصوت")
+    @app_commands.describe(volume="مستوى الصوت (0-100)")
+    async def volume_slash(self, interaction: discord.Interaction, volume: app_commands.Range[int, 0, 100]):
+        queue = self.get_queue(interaction.guild.id)
         if not queue.voice_client:
-            embed = discord.Embed(title="❌ البوت مش في روم صوتي", color=discord.Color.red())
-            await interaction.response.send_message(embed=embed)
-            return
-
+            return await interaction.response.send_message("❌ البوت مش في روم", ephemeral=True)
         queue.volume = volume / 100
         if queue.voice_client.source:
             queue.voice_client.source.volume = queue.volume
-
-        embed = discord.Embed(title="🔊 تم تعديل الصوت", description=f"مستوى الصوت: **{volume}%**", color=discord.Color.green())
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(f"🔊 الصوت: **{volume}%**")
 
     # ═══════════════════════════════════════
-    # 🎵 /nowplaying
+    # 🎵 TEXT COMMANDS (للاختصارات)
     # ═══════════════════════════════════════
-    @app_commands.command(name="nowplaying", description="🎵 عرض الأغنية الحالية")
-    async def nowplaying(self, interaction: discord.Interaction):
-        queue = self.get_queue(interaction.guild.id)
+    @commands.command(name="play", aliases=["p"])
+    async def play_text(self, ctx, *, query: str = None):
+        """!play - تشغيل أغنية"""
+        if not query:
+            return await ctx.send("❌ اكتب اسم الأغنية! مثال: `شغ despacito`")
+        if not ctx.author.voice:
+            return await ctx.send("❌ لازم تكون في روم صوتي!")
 
-        if not queue.current or not queue.is_playing:
-            embed = discord.Embed(title="❌ لا يوجد أغنية قيد التشغيل", color=discord.Color.red())
-            await interaction.response.send_message(embed=embed)
-            return
+        async def respond(content=None, embed=None):
+            if embed:
+                await ctx.send(embed=embed)
+            else:
+                await ctx.send(content)
 
-        song = queue.current
+        await self._play_logic(
+            ctx.guild,
+            ctx.author,
+            ctx.author.voice.channel,
+            query,
+            respond
+        )
+
+    @commands.command(name="skip")
+    async def skip_text(self, ctx):
+        queue = self.get_queue(ctx.guild.id)
+        if not queue.voice_client or not queue.is_playing:
+            return await ctx.send("❌ مفيش حاجة شغالة")
+        queue.voice_client.stop()
+        await ctx.send("⏭️ تم التخطي")
+
+    @commands.command(name="stop")
+    async def stop_text(self, ctx):
+        queue = self.get_queue(ctx.guild.id)
+        if not queue.voice_client:
+            return await ctx.send("❌ البوت مش في روم")
+        queue.queue.clear()
+        queue.current = None
+        queue.is_playing = False
+        await queue.voice_client.disconnect()
+        await ctx.send("⏹️ تم الإيقاف")
+
+    @commands.command(name="pause")
+    async def pause_text(self, ctx):
+        queue = self.get_queue(ctx.guild.id)
+        if not queue.voice_client or not queue.is_playing:
+            return await ctx.send("❌ مفيش حاجة شغالة")
+        queue.voice_client.pause()
+        queue.is_paused = True
+        await ctx.send("⏸️ تم الإيقاف المؤقت")
+
+    @commands.command(name="resume")
+    async def resume_text(self, ctx):
+        queue = self.get_queue(ctx.guild.id)
+        if not queue.voice_client or not queue.is_paused:
+            return await ctx.send("❌ مفيش حاجة موقوفة")
+        queue.voice_client.resume()
+        queue.is_paused = False
+        await ctx.send("▶️ تم الاستكمال")
+
+    @commands.command(name="queue")
+    async def queue_text(self, ctx):
+        queue = self.get_queue(ctx.guild.id)
+        if not queue.current and not queue.queue:
+            return await ctx.send("📭 القائمة فاضية")
+        desc = ""
+        if queue.current:
+            desc += f"🎵 **الآن:** {queue.current['title']}\n\n"
+        for i, song in enumerate(queue.queue[:10], 1):
+            desc += f"`{i}.` {song['title']}\n"
+        embed = discord.Embed(title="🎶 قائمة التشغيل", description=desc, color=0x9B59B6)
+        await ctx.send(embed=embed)
+
+    @commands.command(name="nowplaying", aliases=["np"])
+    async def nowplaying_text(self, ctx):
+        queue = self.get_queue(ctx.guild.id)
+        if not queue.current:
+            return await ctx.send("❌ مفيش حاجة شغالة")
         embed = discord.Embed(
             title="🎵 الأغنية الحالية",
-            description=f"**[{song['title']}]({song['webpage_url']})**\nبواسطة: {song['uploader']}",
+            description=f"**{queue.current['title']}**",
             color=0x1DB954
         )
-        if song['thumbnail']:
-            embed.set_thumbnail(url=song['thumbnail'])
-        
-        embed.add_field(name="📊 الصوت", value=f"{int(queue.volume * 100)}%", inline=True)
-        embed.add_field(name="⏱️ المدة", value=self.format_duration(song['duration']), inline=True)
-        await interaction.response.send_message(embed=embed)
+        if queue.current.get('thumbnail'):
+            embed.set_thumbnail(url=queue.current['thumbnail'])
+        await ctx.send(embed=embed)
 
-    def format_duration(self, seconds):
-        """تنسيق المدة"""
-        if not seconds:
-            return "0:00"
-        minutes = int(seconds // 60)
-        seconds = int(seconds % 60)
-        return f"{minutes}:{seconds:02d}"
+    @commands.command(name="volume", aliases=["vol"])
+    async def volume_text(self, ctx, volume: int = None):
+        if volume is None:
+            return await ctx.send("❌ اكتب مستوى الصوت (0-100)")
+        if volume < 0 or volume > 100:
+            return await ctx.send("❌ الصوت من 0 لـ 100")
+        queue = self.get_queue(ctx.guild.id)
+        if not queue.voice_client:
+            return await ctx.send("❌ البوت مش في روم")
+        queue.volume = volume / 100
+        if queue.voice_client.source:
+            queue.voice_client.source.volume = queue.volume
+        await ctx.send(f"🔊 الصوت: **{volume}%**")
 
 
 async def setup(bot):
