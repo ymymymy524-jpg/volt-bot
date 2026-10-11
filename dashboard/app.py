@@ -5,20 +5,36 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 import random
+import requests
 
-# تحميل المتغيرات من ملف .env
+# 🔐 Discord OAuth2
+from auth import (
+    get_login_url, 
+    exchange_code, 
+    get_user_info, 
+    get_user_guilds,
+    is_user_admin,
+)
+
+# تحميل المتغيرات
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('DASHBOARD_SECRET_KEY', 'default_secret_key_change_this')
 
+# ═══════════════════════════════════════
+# 🌐 إعدادات البوت API
+# ═══════════════════════════════════════
+BOT_API_URL = os.getenv("BOT_API_URL", "http://localhost:5001")
+BOT_API_SECRET = os.getenv("BOT_API_SECRET", "default_secret_123")
+
 # =================== دوال مساعدة ===================
 
 def login_required(f):
-    """Decorator للتأكد من تسجيل الدخول"""
+    """Decorator للتحقق من تسجيل الدخول عبر Discord"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'logged_in' not in session:
+        if 'user' not in session:
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -88,7 +104,7 @@ def get_all_users():
 # 📋 قائمة الأوامر الكاملة (129 أمر)
 # ═══════════════════════════════════════
 ALL_COMMANDS = [
-    # 👑 الإدارة (30)
+    # 👑 الإدارة (25)
     {"name": "ban", "description": "حظر عضو", "category": "الإدارة"},
     {"name": "kick", "description": "طرد عضو", "category": "الإدارة"},
     {"name": "unban", "description": "فك حظر عضو", "category": "الإدارة"},
@@ -194,7 +210,7 @@ ALL_COMMANDS = [
     {"name": "ai story", "description": "قصة", "category": "الذكاء الاصطناعي"},
     {"name": "ai analyze", "description": "تحليل", "category": "الذكاء الاصطناعي"},
     
-    # ⚙️ الإعدادات (30)
+    # ⚙️ الإعدادات (21)
     {"name": "add-emoji", "description": "إضافة إيموجي", "category": "الإعدادات"},
     {"name": "auto-message", "description": "رسالة تلقائية", "category": "الإعدادات"},
     {"name": "auto-reply", "description": "رد تلقائي", "category": "الإعدادات"},
@@ -211,7 +227,6 @@ ALL_COMMANDS = [
     {"name": "role-move", "description": "نقل الرتبة", "category": "الإعدادات"},
     {"name": "self-roles", "description": "الرتب الذاتية", "category": "الإعدادات"},
     {"name": "embed", "description": "Embed", "category": "الإعدادات"},
-    {"name": "server", "description": "معلومات السيرفر", "category": "الإعدادات"},
     {"name": "settings", "description": "الإعدادات", "category": "الإعدادات"},
     {"name": "setup", "description": "ضبط تلقائي", "category": "الإعدادات"},
     {"name": "shorts", "description": "اختصارات", "category": "الإعدادات"},
@@ -223,7 +238,9 @@ ALL_COMMANDS = [
     {"name": "avatar", "description": "الصورة", "category": "عام"},
     {"name": "banner", "description": "البانر", "category": "عام"},
     {"name": "user", "description": "معلومات عضو", "category": "عام"},
+    {"name": "server", "description": "معلومات السيرفر", "category": "عام"},
     {"name": "volt", "description": "رصيد Volt", "category": "عام"},
+    {"name": "crypto-top", "description": "أغنى الأعضاء", "category": "عام"},
 ]
 
 
@@ -234,45 +251,95 @@ ALL_COMMANDS = [
 def index():
     return render_template('index.html')
 
-@app.route('/login', methods=['GET', 'POST'])
+
+@app.route('/login')
 def login():
-    if request.method == 'POST':
-        password = request.form.get('password')
-        dashboard_password = os.getenv('DASHBOARD_PASSWORD', 'admin123')
-        
-        if password == dashboard_password:
-            session['logged_in'] = True
-            session['login_time'] = datetime.now().isoformat()
-            return redirect(url_for('index'))
-        else:
-            return render_template('login.html', error='كلمة السر غير صحيحة!')
+    """صفحة تسجيل الدخول بـ Discord"""
+    if 'user' in session:
+        return redirect(url_for('index'))
     
-    return render_template('login.html')
+    return render_template('login.html', discord_login_url=get_login_url())
+
+
+@app.route('/callback')
+def callback():
+    """Callback من Discord OAuth2"""
+    error = request.args.get('error')
+    if error:
+        return render_template('login.html', 
+                             error='تم إلغاء تسجيل الدخول',
+                             discord_login_url=get_login_url())
+    
+    code = request.args.get('code')
+    if not code:
+        return render_template('login.html', 
+                             error='لم يتم استلام الكود',
+                             discord_login_url=get_login_url())
+    
+    token_data = exchange_code(code)
+    if not token_data:
+        return render_template('login.html', 
+                             error='فشل في تبادل الكود',
+                             discord_login_url=get_login_url())
+    
+    access_token = token_data.get('access_token')
+    if not access_token:
+        return render_template('login.html', 
+                             error='لم يتم استلام التوكن',
+                             discord_login_url=get_login_url())
+    
+    user_info = get_user_info(access_token)
+    if not user_info:
+        return render_template('login.html', 
+                             error='فشل في جلب معلومات المستخدم',
+                             discord_login_url=get_login_url())
+    
+    user_guilds = get_user_guilds(access_token)
+    
+    session['user'] = {
+        'id': user_info.get('id'),
+        'username': user_info.get('username'),
+        'discriminator': user_info.get('discriminator', '0'),
+        'avatar': user_info.get('avatar'),
+        'access_token': access_token,
+    }
+    session['logged_in'] = True
+    session['login_time'] = datetime.now().isoformat()
+    session['guilds'] = user_guilds
+    session['is_admin'] = is_user_admin(access_token)
+    
+    return redirect(url_for('index'))
+
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
+
 @app.route('/commands')
 @login_required
 def commands():
     return render_template('commands.html')
+
 
 @app.route('/users')
 @login_required
 def users():
     return render_template('users.html')
 
+
 @app.route('/economy')
 @login_required
 def economy():
     return render_template('economy.html')
 
+
 @app.route('/logs')
 @login_required
 def logs():
     return render_template('logs.html')
+
 
 @app.route('/settings')
 @login_required
@@ -281,6 +348,16 @@ def settings():
 
 
 # =================== API Endpoints ===================
+
+@app.route('/api/user')
+@login_required
+def api_user():
+    return jsonify({
+        'success': True,
+        'user': session.get('user', {}),
+        'is_admin': session.get('is_admin', False)
+    })
+
 
 @app.route('/api/stats')
 @login_required
@@ -300,8 +377,8 @@ def api_stats():
             'datasets': [{
                 'label': 'النشاط اليومي',
                 'data': [random.randint(50, 200) for _ in range(7)],
-                'backgroundColor': 'rgba(54, 162, 235, 0.5)',
-                'borderColor': 'rgba(54, 162, 235, 1)',
+                'backgroundColor': 'rgba(139, 92, 246, 0.5)',
+                'borderColor': 'rgba(139, 92, 246, 1)',
                 'borderWidth': 2
             }]
         }
@@ -319,6 +396,7 @@ def api_stats():
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/users')
 @login_required
@@ -340,6 +418,7 @@ def api_users():
         return jsonify({'success': True, 'data': users_list})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/economy')
 @login_required
@@ -385,16 +464,13 @@ def api_economy():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-# ═══════════════════════════════════════
-# 📋 API الأوامر (المعدّل)
-# ═══════════════════════════════════════
+# =================== API الأوامر ===================
 
 @app.route('/api/commands')
 @login_required
 def api_commands():
-    """قائمة الأوامر مع اختصاراتها من commands_config.json"""
+    """قائمة الأوامر مع اختصاراتها"""
     try:
-        # جلب الاختصارات من commands_config.json
         config = load_json_file('commands_config.json')
         
         commands_list = []
@@ -413,6 +489,7 @@ def api_commands():
         return jsonify({'success': True, 'data': commands_list})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/commands/save', methods=['POST'])
 @login_required
@@ -441,30 +518,11 @@ def api_save_command():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/commands/delete', methods=['POST'])
-@login_required
-def api_delete_command():
-    """حذف اختصار أمر"""
-    try:
-        data = request.get_json()
-        cmd_name = data.get('name')
-        
-        config = load_json_file('commands_config.json')
-        
-        if cmd_name in config:
-            config[cmd_name]['shortcut'] = ''
-            save_json_file('commands_config.json', config)
-        
-        return jsonify({'success': True, 'message': f'تم حذف اختصار {cmd_name}'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-# =================== بقية الـ APIs ===================
 
 @app.route('/api/commands/toggle', methods=['POST'])
 @login_required
 def api_toggle_command():
+    """تفعيل/تعطيل أمر"""
     try:
         data = request.get_json()
         command_name = data.get('command')
@@ -485,9 +543,51 @@ def api_toggle_command():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+@app.route('/api/commands/reload', methods=['POST'])
+@login_required
+def api_reload_commands():
+    """إجبار البوت على إعادة تحميل الاختصارات فوراً"""
+    try:
+        # نلمس الملف عشان البوت يلاحظ التغيير
+        config_file = os.path.join('..', 'commands_config.json')
+        if not os.path.exists(config_file):
+            config_file = 'commands_config.json'
+        
+        if os.path.exists(config_file):
+            os.utime(config_file, None)
+        
+        # نحاول نبعت request للبوت (لو BOT_API_URL موجود)
+        bot_message = "تم لمس الملف - البوت هيعمل reload"
+        
+        if BOT_API_URL and BOT_API_URL != "http://localhost:5001":
+            try:
+                response = requests.post(
+                    f"{BOT_API_URL}/reload",
+                    headers={'X-API-Secret': BOT_API_SECRET},
+                    timeout=5
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    bot_message = data.get('message', 'تم إعادة التحميل')
+                else:
+                    bot_message = f"البوت رد بكود {response.status_code} - هيعمل reload تلقائي"
+            except Exception as e:
+                bot_message = f"تعذر الاتصال بالبوت: {str(e)} - هيعمل reload تلقائي"
+        
+        return jsonify({
+            'success': True,
+            'message': bot_message
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/users/<user_id>/balance', methods=['POST'])
 @login_required
 def api_update_balance(user_id):
+    """تعديل رصيد عضو"""
     try:
         data = request.get_json()
         new_balance = int(data.get('balance', 0))
@@ -518,6 +618,7 @@ def api_update_balance(user_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 @app.route('/api/logs')
 @login_required
 def api_logs():
@@ -541,6 +642,7 @@ def api_logs():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 @app.route('/api/settings', methods=['GET', 'POST'])
 @login_required
 def api_settings():
@@ -558,10 +660,10 @@ def api_settings():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-# =================== تشغيل التطبيق ===================
+# =================== تشغيل ===================
 
 if __name__ == '__main__':
     port = int(os.getenv('DASHBOARD_PORT', 5000))
     print(f"🚀 Dashboard يعمل على: http://localhost:{port}")
-    print(f"🔐 كلمة السر: {os.getenv('DASHBOARD_PASSWORD', 'admin123')}")
+    print(f"🔐 تسجيل الدخول عبر Discord")
     app.run(host='0.0.0.0', port=port, debug=True)

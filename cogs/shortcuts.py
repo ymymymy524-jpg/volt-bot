@@ -1,10 +1,21 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import json
 import os
+import threading
+from flask import Flask, jsonify, request
 
-# مسار ملف الإعدادات
+# ═══════════════════════════════════════
+# 📁 إعدادات
+# ═══════════════════════════════════════
 CONFIG_FILE = "commands_config.json"
+BOT_API_PORT = int(os.getenv("PORT", 5001))
+BOT_API_SECRET = os.getenv("BOT_API_SECRET", "default_secret_123")
+
+# ═══════════════════════════════════════
+# 🌐 Flask API Server
+# ═══════════════════════════════════════
+api_app = Flask(__name__)
 
 
 def load_config():
@@ -25,31 +36,118 @@ def save_config(data):
 
 
 class Shortcuts(commands.Cog):
-    """نظام الأوامر بدون بادئة"""
+    """نظام الأوامر بدون بادئة + Bot API"""
 
     def __init__(self, bot):
         self.bot = bot
         self.config = load_config()
-        # قاموس عكسي: الاختصار -> الأمر الأصلي
         self.shortcuts_map = {}
+        
+        # تحميل الاختصارات أول مرة
         self.reload_shortcuts()
+        
+        # بدء الـ API server
+        self.start_api_server()
+        
+        # بدء الـ auto-reload loop
+        self.auto_reload.start()
 
+    def cog_unload(self):
+        """إيقاف الـ loop عند إغلاق الـ Cog"""
+        try:
+            self.auto_reload.cancel()
+        except:
+            pass
+
+    # ═══════════════════════════════════════
+    # 🌐 API Server
+    # ═══════════════════════════════════════
+    def start_api_server(self):
+        """بدء Flask API في thread منفصل"""
+        cog = self
+
+        @api_app.route('/reload', methods=['POST'])
+        def reload_endpoint():
+            """إعادة تحميل الاختصارات"""
+            secret = request.headers.get('X-API-Secret')
+            if secret != BOT_API_SECRET:
+                return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+            
+            try:
+                cog.reload_shortcuts()
+                return jsonify({
+                    'success': True,
+                    'count': len(cog.shortcuts_map),
+                    'message': f'✅ تم تحميل {len(cog.shortcuts_map)} اختصار'
+                })
+            except Exception as e:
+                return jsonify({'success': False, 'error': str(e)}), 500
+
+        @api_app.route('/health', methods=['GET'])
+        def health():
+            """فحص حالة الـ API"""
+            return jsonify({
+                'success': True,
+                'status': 'online',
+                'shortcuts': len(cog.shortcuts_map),
+                'bot_user': str(cog.bot.user) if cog.bot.user else 'not ready'
+            })
+
+        @api_app.route('/', methods=['GET'])
+        def index():
+            """الصفحة الرئيسية"""
+            return jsonify({
+                'name': 'Volt System Bot API',
+                'status': 'online',
+                'endpoints': ['/reload', '/health']
+            })
+
+        def run_api():
+            api_app.run(
+                host='0.0.0.0',
+                port=BOT_API_PORT,
+                debug=False,
+                use_reloader=False,
+                threaded=True
+            )
+
+        api_thread = threading.Thread(target=run_api, daemon=True)
+        api_thread.start()
+        print(f"✅ Bot API شغال على port {BOT_API_PORT}")
+
+    # ═══════════════════════════════════════
+    # 🔄 إعادة تحميل الاختصارات
+    # ═══════════════════════════════════════
     def reload_shortcuts(self):
         """إعادة تحميل الاختصارات من الملف"""
         self.config = load_config()
         self.shortcuts_map = {}
-        
+
         for command_name, data in self.config.items():
             if not data.get("enabled", True):
                 continue
-            
             shortcut = data.get("shortcut", "").strip()
             if shortcut:
-                # نحوّل الاختصار لحروف صغيرة للمقارنة
                 self.shortcuts_map[shortcut.lower()] = command_name
-        
+
         print(f"✅ تم تحميل {len(self.shortcuts_map)} اختصار")
 
+    @tasks.loop(seconds=60)
+    async def auto_reload(self):
+        """إعادة تحميل دورية كل 60 ثانية (fallback)"""
+        try:
+            self.reload_shortcuts()
+        except Exception as e:
+            print(f"⚠️ خطأ في auto-reload: {e}")
+
+    @auto_reload.before_loop
+    async def before_auto_reload(self):
+        """انتظر لحد ما البوت يجهز"""
+        await self.bot.wait_until_ready()
+
+    # ═══════════════════════════════════════
+    # 📨 معالجة الرسائل
+    # ═══════════════════════════════════════
     @commands.Cog.listener()
     async def on_message(self, message):
         """مراقبة الرسائل للأوامر بدون بادئة"""
@@ -58,7 +156,7 @@ class Shortcuts(commands.Cog):
         if message.author.bot:
             return
         
-        # تجاهل الرسائل الخاصة (DM)
+        # تجاهل الرسائل الخاصة
         if not message.guild:
             return
         
@@ -67,40 +165,46 @@ class Shortcuts(commands.Cog):
         if not content:
             return
         
-        # تجاهل لو الرسالة بتبدأ بـ prefix عادي (عشان مايتعارضش)
+        # تجاهل لو بتبدأ بـ prefix عادي
         if content.startswith(("!", "/", ".", ",", "؟")):
             return
         
-        # تقسيم الرسالة لكلمات
+        # تقسيم الرسالة
         words = content.split()
         if not words:
             return
         
-        # أول كلمة في الرسالة
+        # أول كلمة
         first_word = words[0].lower()
         
-        # لو أول كلمة مش اختصار مسجل، تجاهل
+        # لو مش اختصار
         if first_word not in self.shortcuts_map:
             return
         
         # الأمر الأصلي
         command_name = self.shortcuts_map[first_word]
         
-        # باقي الرسالة (المعاملات)
-        args = words[1:]
+        # باقي الرسالة
+        args_text = " ".join(words[1:]) if len(words) > 1 else ""
         
-        # نبني الأمر النصي
-        fake_message_content = f"!{command_name}"
-        if args:
-            fake_message_content += " " + " ".join(args)
+        # ندوّر على الأمر
+        command = self.bot.get_command(command_name)
+        
+        if command is None:
+            print(f"⚠️ الأمر {command_name} مش موجود")
+            return
         
         # ننفذ الأمر
         try:
-            # نعمل نسخة من الرسالة بمحتوى جديد
-            message.content = fake_message_content
-            await self.bot.process_commands(message)
+            ctx = await self.bot.get_context(message)
+            if args_text:
+                await command.__call__(ctx, args_text)
+            else:
+                await command.__call__(ctx)
         except Exception as e:
-            print(f"⚠️ خطأ في تنفيذ الأمر {command_name}: {e}")
+            print(f"⚠️ خطأ في تنفيذ {command_name}: {e}")
+            import traceback
+            traceback.print_exc()
 
     # ═══════════════════════════════════════
     # 🛠️ أوامر إدارة الاختصارات
@@ -111,11 +215,11 @@ class Shortcuts(commands.Cog):
         """عرض قائمة الاختصارات"""
         if not self.shortcuts_map:
             return await ctx.send("📭 مفيش اختصارات مسجلة حالياً")
-        
+
         desc = ""
         for shortcut, command in list(self.shortcuts_map.items())[:30]:
             desc += f"`{shortcut}` → `/{command}`\n"
-        
+
         embed = discord.Embed(
             title="📋 الاختصارات المسجلة",
             description=desc,
@@ -124,39 +228,10 @@ class Shortcuts(commands.Cog):
         embed.set_footer(text=f"إجمالي: {len(self.shortcuts_map)} اختصار")
         await ctx.send(embed=embed)
 
-    @commands.command(name="اضف_اختصار", aliases=["add-shortcut"])
-    @commands.has_permissions(administrator=True)
-    async def add_shortcut(self, ctx, shortcut: str, command: str):
-        """إضافة اختصار جديد: !اضف_اختصار شغل play"""
-        if command not in self.config:
-            self.config[command] = {}
-        
-        self.config[command]["shortcut"] = shortcut
-        self.config[command]["enabled"] = True
-        save_config(self.config)
-        self.reload_shortcuts()
-        
-        await ctx.send(f"✅ تم إضافة الاختصار: `{shortcut}` → `/{command}`")
-
-    @commands.command(name="احذف_اختصار", aliases=["remove-shortcut"])
-    @commands.has_permissions(administrator=True)
-    async def remove_shortcut(self, ctx, shortcut: str):
-        """حذف اختصار"""
-        if shortcut.lower() not in self.shortcuts_map:
-            return await ctx.send(f"❌ الاختصار `{shortcut}` مش موجود")
-        
-        command = self.shortcuts_map[shortcut.lower()]
-        if command in self.config:
-            self.config[command]["shortcut"] = ""
-            save_config(self.config)
-            self.reload_shortcuts()
-        
-        await ctx.send(f"✅ تم حذف الاختصار: `{shortcut}`")
-
     @commands.command(name="حدث_الاختصارات", aliases=["reload-shortcuts"])
     @commands.has_permissions(administrator=True)
     async def reload(self, ctx):
-        """إعادة تحميل الاختصارات من الملف"""
+        """إعادة تحميل الاختصارات"""
         self.reload_shortcuts()
         await ctx.send(f"✅ تم إعادة تحميل {len(self.shortcuts_map)} اختصار")
 
