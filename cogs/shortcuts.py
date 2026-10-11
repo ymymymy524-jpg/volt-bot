@@ -44,7 +44,6 @@ class Shortcuts(commands.Cog):
     # 🔄 Reload
     # ═══════════════════════════════════════
     def reload_shortcuts(self):
-        """إعادة تحميل الاختصارات من الملف - بيرجع العدد"""
         self.config = load_config()
         self.shortcuts_map = {}
 
@@ -73,7 +72,6 @@ class Shortcuts(commands.Cog):
     # 🎯 دوال للـ API
     # ═══════════════════════════════════════
     def get_all_shortcuts(self):
-        """ترجيع كل الاختصارات (للـ API)"""
         return {
             "shortcuts": self.config,
             "map": self.shortcuts_map,
@@ -81,10 +79,8 @@ class Shortcuts(commands.Cog):
         }
 
     def update_shortcut(self, command_name: str, shortcut: str, enabled: bool = True):
-        """تحديث اختصار واحد"""
         shortcut = shortcut.strip().lower()
 
-        # التحقق من التفرد
         for cmd, data in self.config.items():
             if cmd != command_name and data.get("shortcut", "").lower() == shortcut:
                 raise ValueError(f"الاختصار `{shortcut}` مستخدم بالفعل مع `/{cmd}`")
@@ -98,8 +94,6 @@ class Shortcuts(commands.Cog):
         return True
 
     def bulk_update(self, shortcuts_dict: dict):
-        """تحديث مجموعة اختصارات مرة واحدة (زر Apply)"""
-        # التحقق من التفرد الأول
         shortcuts_seen = {}
         for cmd, data in shortcuts_dict.items():
             if not data.get("enabled", True):
@@ -113,7 +107,6 @@ class Shortcuts(commands.Cog):
                 )
             shortcuts_seen[shortcut] = cmd
 
-        # حفظ كل الاختصارات
         self.config = shortcuts_dict
         save_config(self.config)
         count = self.reload_shortcuts()
@@ -121,7 +114,6 @@ class Shortcuts(commands.Cog):
         return count
 
     def delete_shortcut(self, command_name: str):
-        """حذف اختصار"""
         if command_name in self.config:
             del self.config[command_name]
             save_config(self.config)
@@ -130,7 +122,7 @@ class Shortcuts(commands.Cog):
         return False
 
     # ═══════════════════════════════════════
-    # 📨 معالجة الرسائل
+    # 📨 معالجة الرسائل — المسؤول الوحيد عن process_commands
     # ═══════════════════════════════════════
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -141,40 +133,34 @@ class Shortcuts(commands.Cog):
         if not content:
             return
 
-        # تجاهل الرسائل اللي بتبدأ بـ prefix
-        if content.startswith(("!", "/", ".", ",", "؟", "?")):
+        # لو الرسالة بتبدأ بـ prefix → معالجة عادية (process_commands)
+        if content.startswith(("!", "/", ".", ",")):
+            await self.bot.process_commands(message)
             return
 
+        # لو اختصار
         words = content.split()
-        if not words:
-            return
-
         first_word = words[0].lower()
 
-        if first_word not in self.shortcuts_map:
-            return
+        if first_word in self.shortcuts_map:
+            command_name = self.shortcuts_map[first_word]
+            args_text = " ".join(words[1:]) if len(words) > 1 else ""
 
-        command_name = self.shortcuts_map[first_word]
-        args_text = " ".join(words[1:]) if len(words) > 1 else ""
+            command = self._find_command(command_name)
+            if command is None:
+                print(f"⚠️ الأمر {command_name} مش موجود")
+                return
 
-        # البحث عن الأمر (بيدعم sub-commands)
-        command = self._find_command(command_name)
-        if command is None:
-            print(f"⚠️ الأمر {command_name} مش موجود")
-            return
-
-        # التنفيذ
-        try:
-            ctx = await self.bot.get_context(message)
-            if args_text:
-                await command.__call__(ctx, args_text)
-            else:
-                await command.__call__(ctx)
-        except Exception as e:
-            print(f"⚠️ خطأ في تنفيذ {command_name}: {e}")
+            try:
+                ctx = await self.bot.get_context(message)
+                if args_text:
+                    await command.__call__(ctx, args_text)
+                else:
+                    await command.__call__(ctx)
+            except Exception as e:
+                print(f"⚠️ خطأ في تنفيذ {command_name}: {e}")
 
     def _find_command(self, command_name: str):
-        """البحث عن أمر بيدعم sub-commands"""
         command = self.bot.get_command(command_name)
         if command:
             return command
@@ -192,7 +178,6 @@ class Shortcuts(commands.Cog):
     @commands.command(name="اختصارات", aliases=["shortcuts"])
     @commands.has_permissions(administrator=True)
     async def list_shortcuts(self, ctx: commands.Context):
-        """عرض قائمة الاختصارات"""
         if not self.shortcuts_map:
             await ctx.send("📭 مفيش اختصارات مسجلة")
             return
@@ -213,7 +198,6 @@ class Shortcuts(commands.Cog):
     @commands.command(name="تحديث-اختصارات", aliases=["reload-shortcuts"])
     @commands.has_permissions(administrator=True)
     async def reload_cmd(self, ctx: commands.Context):
-        """إعادة تحميل الاختصارات"""
         count = self.reload_shortcuts()
         await ctx.send(f"✅ تم إعادة تحميل **{count}** اختصار")
 

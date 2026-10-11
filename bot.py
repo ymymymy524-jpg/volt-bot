@@ -32,14 +32,14 @@ INITIAL_EXTENSIONS = [
     "cogs.ai",
     "cogs.settings",
     "cogs.help",
-    "cogs.shortcuts",   # ← الأوامر بدون بادئة
+    "cogs.shortcuts",
 ]
 
 
 class MyBot(commands.Bot):
     def __init__(self):
         super().__init__(
-            command_prefix="!",  # ← مهم للأوامر النصية
+            command_prefix="!",
             intents=intents,
             help_command=None,
         )
@@ -78,7 +78,6 @@ class MyBot(commands.Bot):
         print(f"👥 المستخدمين: {sum(g.member_count or 0 for g in self.guilds)}")
         print("=" * 60)
 
-        # حالة البوت
         await self.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.watching,
@@ -138,17 +137,10 @@ async def on_command_error_handler(bot, ctx, error):
 async def main():
     bot = MyBot()
     
-    # ربط معالج الأخطاء
     bot.on_command_error = lambda ctx, error: on_command_error_handler(bot, ctx, error)
     
-    # معالج رسائل موحد للاختصارات
-    @bot.event
-    async def on_message(message):
-        if message.author.bot:
-            return
-        await bot.process_commands(message)
+    # ⚠️ اتشال on_message من هنا — الاختصارات في cogs/shortcuts.py
     
-    # شغل البوت والـ API مع بعض
     API_PORT = int(os.getenv("PORT", 8080))
     
     try:

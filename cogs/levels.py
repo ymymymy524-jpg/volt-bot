@@ -59,14 +59,14 @@ class Levels(commands.Cog):
 
     # ==========================================
     # 📩 Event: حساب XP عند الرسائل
+    # ⚠️ ملاحظة: process_commands مسؤولية cogs/shortcuts.py
     # ==========================================
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot or not message.guild:
             return
 
-        # ⚠️ مهم: لازم نستدعي process_commands عشان الأوامر تشتغل
-        await self.bot.process_commands(message)
+        # ⚠️ مفيش process_commands هنا — ده مسؤولية shortcuts.py
 
         guild_id = str(message.guild.id)
         user_id = str(message.author.id)
@@ -201,7 +201,6 @@ class Levels(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def setlevel_prefix(self, ctx: commands.Context, member: discord.Member, level: int):
         """تحديد مستوى عضو - يتطلب Administrator"""
-        # التحقق من النطاق
         if level < 0 or level > 1000:
             await ctx.send("❌ المستوى لازم يكون بين **0** و **1000**!", delete_after=8)
             return
