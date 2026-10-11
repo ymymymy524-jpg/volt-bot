@@ -60,6 +60,29 @@
     </div>
 </div>
 
+<!-- ⭐ زر Apply - تطبيق التعديلات على البوت -->
+<div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1)); border: 1px solid rgba(16, 185, 129, 0.3) !important;">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="mb-1 fw-bold">
+                <i class="fas fa-rocket text-success me-2"></i>
+                تطبيق التعديلات على البوت
+            </h6>
+            <p class="text-muted small mb-0">
+                بعد ما تعدّل الاختصارات، اضغط هنا عشان تشتغل فوراً على ديسكورد ⚡
+            </p>
+        </div>
+        <button 
+            class="btn btn-success btn-lg px-4" 
+            id="apply-btn"
+            onclick="applyChanges()"
+        >
+            <i class="fas fa-check-circle me-2"></i>
+            Apply
+        </button>
+    </div>
+</div>
+
 <!-- شريط البحث والفلترة -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
@@ -377,6 +400,49 @@
             alertDiv.style.opacity = '0';
             setTimeout(() => alertDiv.remove(), 300);
         }, 3000);
+    }
+
+    // ═══════════════════════════════════════
+    // ⭐ زر Apply - تطبيق التعديلات على البوت
+    // ═══════════════════════════════════════
+    async function applyChanges() {
+        const btn = document.getElementById('apply-btn');
+        const originalHTML = btn.innerHTML;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> جاري التطبيق...';
+        
+        try {
+            // نبني البيانات بالشكل اللي الـ API بيستقبله
+            const shortcutsData = {};
+            allCommands.forEach(cmd => {
+                shortcutsData[cmd.name] = {
+                    enabled: cmd.enabled,
+                    shortcut: cmd.shortcut || ''
+                };
+            });
+            
+            // نبعت للـ Flask (اللي هيبعت بدوره لـ Railway API)
+            const response = await fetch('/api/shortcuts/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ shortcuts: shortcutsData })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.status === 'ok') {
+                showNotification(`✅ ${result.message || 'تم التطبيق بنجاح'}`, 'success');
+            } else {
+                showNotification(`❌ ${result.error || result.detail || 'فشل التطبيق'}`, 'danger');
+            }
+        } catch (error) {
+            console.error('خطأ:', error);
+            showNotification('❌ حدث خطأ في الاتصال بالبوت', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
     }
 </script>
 {% endblock %}

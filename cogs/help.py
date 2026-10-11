@@ -1,10 +1,9 @@
 import discord
-from discord import app_commands
 from discord.ext import commands
 from config import Colors
 
 # ==========================================
-# ❓ نظام المساعدة (Help System)
+# ❓ نظام المساعدة (Help System) - Prefix !
 # ==========================================
 
 class HelpSelect(discord.ui.Select):
@@ -16,15 +15,15 @@ class HelpSelect(discord.ui.Select):
                 "title": "🛠️ الأوامر العامة",
                 "description": "أوامر المعلومات الأساسية والصور الشخصية",
                 "commands": [
-                    "`/ping` - عرض سرعة استجابة البوت",
-                    "`/avatar user/server` - عرض صورة العضو أو السيرفر",
-                    "`/banner user/server` - عرض بانر العضو أو السيرفر",
-                    "`/user` - عرض معلومات تفصيلية عن عضو",
-                    "`/server` - عرض معلومات وإحصائيات السيرفر",
-                    "`/daily` - استلام الرصيد اليومي",
-                    "`/rank` - عرض مستوى العضو وتقدمه",
-                    "`/top` - عرض أفضل 10 أعضاء في المستويات",
-                    "`/volt` - عرض أو تعديل رصيد Bitcoin"
+                    "`!ping` (`!p`) - عرض سرعة استجابة البوت",
+                    "`!avatar` (`!av`, `!صورة`) - عرض صورة العضو أو السيرفر",
+                    "`!banner` (`!bn`) - عرض بانر العضو أو السيرفر",
+                    "`!user` (`!u`, `!معلومات`) - عرض معلومات تفصيلية عن عضو",
+                    "`!server` (`!sv`) - عرض معلومات وإحصائيات السيرفر",
+                    "`!daily` (`!d`, `!يومي`) - استلام الرصيد اليومي",
+                    "`!rank` (`!r`, `!مستوى`) - عرض مستوى العضو وتقدمه",
+                    "`!top` (`!t`, `!توب`) - عرض أفضل 10 أعضاء في المستويات",
+                    "`!volt` (`!v`) - عرض أو تعديل رصيد Bitcoin"
                 ]
             },
             "moderation": {
@@ -32,11 +31,22 @@ class HelpSelect(discord.ui.Select):
                 "title": "👑 الإدارة",
                 "description": "أوامر إدارة الأعضاء والقنوات والرتب",
                 "commands": [
-                    "`/ban, /kick, /unban, /ban-all` - إدارة الحظر والطرد",
-                    "`/warn, /warnings` - إدارة الإنذارات",
-                    "`/mute, /unmute, /timeout` - كتم أو توقيت العضو",
-                    "`/clear, /slowmode, /lock, /unlock` - إدارة القنوات",
-                    "`/nick, /role, /role-all` - إدارة الأسماء والرتب"
+                    "`!ban` (`!b`, `!حظر`) - حظر عضو",
+                    "`!kick` (`!k`, `!طرد`) - طرد عضو",
+                    "`!unban` (`!ub`) - فك الحظر",
+                    "`!ban-all` - حظر شامل",
+                    "`!warn` (`!w`, `!انذار`) - إنذار عضو",
+                    "`!warnings` (`!ws`) - عرض إنذارات عضو",
+                    "`!mute` (`!m`, `!كتم`) - كتم عضو",
+                    "`!unmute` (`!um`) - فك الكتم",
+                    "`!timeout` (`!to`) - توقيت عضو",
+                    "`!clear` (`!c`, `!مسح`) - مسح الرسائل",
+                    "`!slowmode` (`!sm`) - الوضع البطيء",
+                    "`!lock` (`!l`, `!قفل`) - قفل القناة",
+                    "`!unlock` (`!ul`, `!فتح`) - فتح القناة",
+                    "`!nick` (`!n`) - تغيير اللقب",
+                    "`!role` (`!rl`) - إدارة الرتب",
+                    "`!role-all` - إعطاء رتبة للجميع"
                 ]
             },
             "protection": {
@@ -44,11 +54,12 @@ class HelpSelect(discord.ui.Select):
                 "title": "🛡️ الحماية",
                 "description": "أنظمة حماية السيرفر من السبام والاختراق",
                 "commands": [
-                    "`/protection auto` - تفعيل/تعطيل الحماية التلقائية",
-                    "`/protection spam` - حماية من السبام",
-                    "`/protection link` - حماية من روابط التشهير",
-                    "`/protection join` - حماية من انضمام الحسابات الجديدة",
-                    "`/protection hacked, bans, kicks, channels, roles, bots`"
+                    "`!protection auto` (`!حماية auto`) - تفعيل/تعطيل الحماية",
+                    "`!protection spam` - حماية من السبام",
+                    "`!protection link` - حماية من روابط التشهير",
+                    "`!protection join` - حماية من الحسابات الجديدة",
+                    "`!protection hacked` - حماية من الاختراق",
+                    "`!protection bans, kicks, channels, roles, bots`"
                 ]
             },
             "levels": {
@@ -56,9 +67,10 @@ class HelpSelect(discord.ui.Select):
                 "title": "📊 المستويات",
                 "description": "نظام الخبرة والمستويات وتخصيص المكافآت",
                 "commands": [
-                    "`/rank` - عرض مستوى العضو",
-                    "`/top` - عرض لوحة المتصدرين",
-                    "`/setlevel, /resetlevel` - إدارة المستويات (للإدارة)"
+                    "`!rank` (`!r`, `!مستوى`) - عرض مستوى العضو",
+                    "`!top` (`!t`, `!توب`) - عرض لوحة المتصدرين",
+                    "`!setlevel` (`!sl`) - تعيين مستوى (للإدارة)",
+                    "`!resetlevel` (`!rl`) - تصفير المستوى (للإدارة)"
                 ]
             },
             "welcome": {
@@ -66,10 +78,10 @@ class HelpSelect(discord.ui.Select):
                 "title": "👋 الترحيب",
                 "description": "إعداد رسائل الترحيب والمغادرة",
                 "commands": [
-                    "`/setwelcome` - تعيين قناة ورسالة الترحيب",
-                    "`/setgoodbye` - تعيين قناة ورسالة المغادرة",
-                    "`/testwelcome` - اختبار رسالة الترحيب",
-                    "`/welcome-set-status` - تفعيل أو تعطيل نظام الترحيب"
+                    "`!setwelcome` (`!sw`) - تعيين قناة ورسالة الترحيب",
+                    "`!setgoodbye` (`!sg`) - تعيين قناة ورسالة المغادرة",
+                    "`!testwelcome` (`!tw`) - اختبار رسالة الترحيب",
+                    "`!welcome-set-status` (`!wss`) - تفعيل/تعطيل الترحيب"
                 ]
             },
             "music": {
@@ -77,10 +89,14 @@ class HelpSelect(discord.ui.Select):
                 "title": "🎵 الموسيقى",
                 "description": "تشغيل وإدارة الموسيقى في القنوات الصوتية",
                 "commands": [
-                    "`/play` - تشغيل أغنية أو إضافة للقائمة",
-                    "`/pause, /resume` - إيقاف مؤقت أو استئناف",
-                    "`/skip, /stop` - تخطي الأغنية أو إيقاف التشغيل",
-                    "`/queue, /volume, /nowplaying` - إدارة قائمة التشغيل والصوت"
+                    "`!play` (`!p`) - تشغيل أغنية أو إضافة للقائمة",
+                    "`!pause` - إيقاف مؤقت",
+                    "`!resume` (`!res`) - استئناف",
+                    "`!skip` (`!s`) - تخطي الأغنية",
+                    "`!stop` (`!st`) - إيقاف التشغيل",
+                    "`!queue` (`!q`) - قائمة التشغيل",
+                    "`!volume` (`!vol`) - مستوى الصوت",
+                    "`!nowplaying` (`!np`) - الأغنية الحالية"
                 ]
             },
             "invites": {
@@ -88,10 +104,10 @@ class HelpSelect(discord.ui.Select):
                 "title": "📨 الدعوات",
                 "description": "تتبع دعوات الأعضاء وإحصائياتها",
                 "commands": [
-                    "`/invites` - عرض عدد دعواتك",
-                    "`/inviter` - معرفة من قام بدعوتك",
-                    "`/invitetop` - عرض أفضل الأعضاء في الدعوات",
-                    "`/resetinvites` - تصفير دعوات عضو (للإدارة)"
+                    "`!invites` (`!inv`, `!دعوات`) - عرض عدد دعواتك",
+                    "`!inviter` - معرفة من قام بدعوتك",
+                    "`!invitetop` (`!itop`) - أفضل الأعضاء في الدعوات",
+                    "`!resetinvites` (`!rinv`) - تصفير دعوات عضو"
                 ]
             },
             "tickets": {
@@ -99,10 +115,11 @@ class HelpSelect(discord.ui.Select):
                 "title": "🎫 التذاكر",
                 "description": "نظام فتح وإدارة تذاكر الدعم الفني",
                 "commands": [
-                    "`/ticket` - فتح تذكرة دعم جديدة",
-                    "`/close` - إغلاق التذكرة الحالية",
-                    "`/add, /remove` - إضافة أو إزالة أعضاء من التذكرة",
-                    "`/setticket` - إعداد قناة ورسالة نظام التذاكر"
+                    "`!ticket` (`!t`, `!تذكرة`) - فتح تذكرة دعم",
+                    "`!close` (`!cl`) - إغلاق التذكرة الحالية",
+                    "`!add` - إضافة عضو للتذكرة",
+                    "`!remove` (`!rm`) - إزالة عضو من التذكرة",
+                    "`!setticket` - إعداد نظام التذاكر"
                 ]
             },
             "games": {
@@ -110,9 +127,16 @@ class HelpSelect(discord.ui.Select):
                 "title": "🎮 الألعاب",
                 "description": "ألعاب تفاعلية جماعية وسريعة مع نظام Fizzy",
                 "commands": [
-                    "`/game bomb, button, chairs, colors, faster, flags, mafia, roulette`",
-                    "`/fizzy` - عرض رصيد Fizzy الخاص بك",
-                    "`/fizzytop` - عرض أفضل 10 لاعبين في Fizzy"
+                    "`!game bomb` (`!bomb`) - لعبة القنبلة",
+                    "`!game button` (`!button`) - لعبة الأزرار",
+                    "`!game chairs` - لعبة الكراسي",
+                    "`!game colors` (`!colors`) - لعبة الألوان",
+                    "`!game faster` (`!faster`) - لعبة السرعة",
+                    "`!game flags` (`!flags`) - لعبة الأعلام",
+                    "`!game mafia` (`!mafia`) - لعبة المافيا",
+                    "`!game roulette` (`!roulette`) - الروليت",
+                    "`!fizzy` (`!fz`) - رصيد Fizzy",
+                    "`!fizzytop` (`!fzt`) - أفضل 10 لاعبين Fizzy"
                 ]
             },
             "economy": {
@@ -120,10 +144,15 @@ class HelpSelect(discord.ui.Select):
                 "title": "💎 الاقتصاد",
                 "description": "نظام Bitcoin، العمل، التحويل، والمتجر",
                 "commands": [
-                    "`/balance` - عرض رصيدك أو رصيد عضو آخر",
-                    "`/daily, /work` - طرق كسب الـ Bitcoin",
-                    "`/transfer` - تحويل الرصيد لعضو آخر",
-                    "`/bitcoin-top, /bitcoin-history, /bitcoin-shop, /buy, /bitcoin-admin`"
+                    "`!balance` (`!bal`, `!b`, `!رصيد`) - عرض الرصيد",
+                    "`!daily` (`!d`, `!يومي`) - الرصيد اليومي",
+                    "`!work` (`!w`, `!عمل`) - العمل لكسب Bitcoin",
+                    "`!transfer` (`!tr`) - تحويل الرصيد",
+                    "`!bitcoin-top` (`!btop`) - أفضل الأثرياء",
+                    "`!bitcoin-history` (`!bh`) - سجل المعاملات",
+                    "`!bitcoin-shop` (`!shop`, `!متجر`) - المتجر",
+                    "`!buy` - شراء من المتجر",
+                    "`!bitcoin-admin` (`!badmin`) - إدارة الاقتصاد"
                 ]
             },
             "ai": {
@@ -131,11 +160,13 @@ class HelpSelect(discord.ui.Select):
                 "title": "🤖 الذكاء الاصطناعي",
                 "description": "أوامر مدعومة بـ Google Gemini AI",
                 "commands": [
-                    "`/ai ask` - طرح سؤال للذكاء الاصطناعي",
-                    "`/ai imagine` - توليد وصف أو فكرة",
-                    "`/ai translate` - ترجمة النصوص",
-                    "`/ai summarize` - تلخيص النصوص الطويلة",
-                    "`/ai code, /ai story, /ai analyze`"
+                    "`!ai ask` (`!ai سؤال`) - طرح سؤال للـ AI",
+                    "`!ai imagine` (`!ai تخيل`) - توليد وصف أو فكرة",
+                    "`!ai translate` (`!ai ترجم`) - ترجمة النصوص",
+                    "`!ai summarize` (`!ai لخص`) - تلخيص النصوص",
+                    "`!ai code` - مساعدة في الكود",
+                    "`!ai story` - كتابة قصة",
+                    "`!ai analyze` - تحليل نص"
                 ]
             },
             "settings": {
@@ -143,20 +174,32 @@ class HelpSelect(discord.ui.Select):
                 "title": "⚙️ الإعدادات",
                 "description": "إعدادات السيرفر المتقدمة والتخصيص",
                 "commands": [
-                    "`/add-emoji, /auto-message, /auto-reply, /automod`",
-                    "`/autorole, /change-log, /command-disable`",
-                    "`/level-up-msg, /log, /perms, /role-icon, /self-roles`",
-                    "`/embed, /server, /settings, /setup, /shorts, /end-premium`"
+                    "`!add-emoji` (`!ae`) - إضافة إيموجي",
+                    "`!auto-message` (`!am`) - رسائل تلقائية",
+                    "`!auto-reply` (`!ar`) - ردود تلقائية",
+                    "`!automod` - الإشراف التلقائي",
+                    "`!autorole` - رتبة تلقائية",
+                    "`!change-log` (`!clog`) - سجل التغييرات",
+                    "`!command-disable` (`!cd`) - تعطيل أمر",
+                    "`!level-up-msg` (`!lum`) - رسالة ترقية",
+                    "`!log` - إعداد السجلات",
+                    "`!perms` (`!p`) - الصلاحيات",
+                    "`!role-icon` - أيقونة الرتبة",
+                    "`!self-roles` (`!sr`) - رتب ذاتية",
+                    "`!embed` - إنشاء Embed",
+                    "`!settings` (`!set`) - الإعدادات العامة",
+                    "`!setup` - الإعداد الأولي",
+                    "`!end-premium` - إنهاء البريميوم"
                 ]
             }
         }
 
         options = [
             discord.SelectOption(
-                label=data["title"].split(" ", 1)[1], # إزالة الإيموجي من الاسم للعرض النظيف
+                label=data["title"].split(" ", 1)[1],
                 value=key,
                 emoji=data["emoji"],
-                description=data["description"][:100] # وصف مختصر للقائمة المنسدلة
+                description=data["description"][:100]
             )
             for key, data in self.sections.items()
         ]
@@ -171,14 +214,13 @@ class HelpSelect(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         selected_key = self.values[0]
         section = self.sections[selected_key]
-        
+
         embed = discord.Embed(
             title=section["title"],
             description=section["description"] + "\n\n**الأوامر المتاحة:**\n" + "\n".join(section["commands"]),
             color=Colors.INFO
         )
-        embed.set_footer(text="استخدم /help للعودة للقائمة الرئيسية")
-        
+        embed.set_footer(text="استخدم !help للعودة للقائمة الرئيسية")
         await interaction.response.edit_message(embed=embed, view=self.view)
 
 
@@ -186,42 +228,55 @@ class HelpView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=120)
         self.add_item(HelpSelect())
-        
-        # زر للعودة للقائمة الرئيسية
-        @discord.ui.button(label="🏠 القائمة الرئيسية", style=discord.ButtonStyle.secondary)
-        async def home_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-            embed = discord.Embed(
-                title="🤖 قائمة مساعدة البوت الشاملة",
-                description="مرحباً بك! اختر قسماً من القائمة المنسدلة أدناه لعرض الأوامر التفصيلية الخاصة به.\n\n"
-                            "💡 **ملاحظة:** جميع الأوامر هي Slash Commands (تبدأ بـ `/`).\n"
-                            "⚠️ بعض الأوامر تتطلب صلاحيات إدارية محددة.",
-                color=Colors.GOLD
-            )
-            embed.set_thumbnail(url=interaction.client.user.display_avatar.url)
-            await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="🏠 القائمة الرئيسية", style=discord.ButtonStyle.secondary)
+    async def home_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            title="🤖 قائمة مساعدة البوت الشاملة",
+            description="مرحباً بك! اختر قسماً من القائمة المنسدلة أدناه لعرض الأوامر التفصيلية الخاصة به.\n\n"
+                        "💡 **ملاحظة:** جميع الأوامر تبدأ بـ `!` (Prefix Commands).\n"
+                        "🔹 بعض الأوامر لها اختصارات قصيرة (مكتوبة بين قوسين).\n"
+                        "⚠️ بعض الأوامر تتطلب صلاحيات إدارية محددة.",
+            color=Colors.GOLD
+        )
+        embed.set_thumbnail(url=interaction.client.user.display_avatar.url)
+        embed.set_footer(text="!help | !h | !مساعدة")
+        await interaction.response.edit_message(embed=embed, view=self)
 
 
 class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def show_help(self, interaction: discord.Interaction):
-        """دالة لعرض قائمة المساعدة الرئيسية، يمكن استدعاؤها من cog آخر"""
+    def get_main_embed(self, user: discord.User = None) -> discord.Embed:
+        """إنشاء الإيمبد الرئيسي لقائمة المساعدة"""
         embed = discord.Embed(
             title="🤖 قائمة مساعدة البوت الشاملة",
             description="مرحباً بك! اختر قسماً من القائمة المنسدلة أدناه لعرض الأوامر التفصيلية الخاصة به.\n\n"
-                        "💡 **ملاحظة:** جميع الأوامر هي Slash Commands (تبدأ بـ `/`).\n"
+                        "💡 **ملاحظة:** جميع الأوامر تبدأ بـ `!` (Prefix Commands).\n"
+                        "🔹 بعض الأوامر لها اختصارات قصيرة (مكتوبة بين قوسين).\n"
                         "⚠️ بعض الأوامر تتطلب صلاحيات إدارية محددة.",
             color=Colors.GOLD
         )
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
-        
-        view = HelpView()
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        embed.set_footer(text="!help | !h | !مساعدة")
+        if user:
+            embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
+        return embed
 
-    @app_commands.command(name="help", description="❓ عرض قائمة الأوامر والمساعدة")
-    async def help_command(self, interaction: discord.Interaction):
-        await self.show_help(interaction)
+    # ==========================================
+    # 🔹 أمر المساعدة بالبادئة !
+    # ==========================================
+    @commands.command(
+        name="help",
+        aliases=["h", "مساعدة", "اوامر", "الاوامر", "?", "commands"],
+        description="❓ عرض قائمة الأوامر والمساعدة"
+    )
+    async def help_prefix(self, ctx: commands.Context):
+        """عرض قائمة المساعدة الرئيسية"""
+        embed = self.get_main_embed(ctx.author)
+        view = HelpView()
+        await ctx.send(embed=embed, view=view)
 
 
 async def setup(bot):

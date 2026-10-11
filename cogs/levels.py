@@ -1,5 +1,4 @@
 import discord
-from discord import app_commands
 from discord.ext import commands
 import json
 import os
@@ -7,6 +6,7 @@ import random
 
 # مسار ملف التخزين
 LEVELS_FILE = "levels.json"
+
 
 # دالة لتحميل البيانات من ملف JSON
 def load_data():
@@ -18,10 +18,12 @@ def load_data():
             return {}
     return {}
 
+
 # دالة لحفظ البيانات في ملف JSON
 def save_data(data):
     with open(LEVELS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+
 
 class Levels(commands.Cog):
     def __init__(self, bot):
@@ -29,18 +31,20 @@ class Levels(commands.Cog):
         self.data = load_data()
         self.cooldowns = {}
 
-    # دالة لحساب الـ XP المطلوب للترقية
+    # ==========================================
+    # 🔧 دوال مساعدة
+    # ==========================================
     def xp_needed(self, level):
+        """حساب الـ XP المطلوب للترقية"""
         return 100 + (level * 50)
 
-    # دالة لإنشاء Progress Bar نصي
     def progress_bar(self, current, total, length=10):
+        """إنشاء Progress Bar نصي"""
         percentage = current / total if total > 0 else 0
         filled = int(length * percentage)
         bar = "▰" * filled + "▱" * (length - filled)
         return f"{bar} {int(percentage * 100)}%"
 
-    # دالة لجلب بيانات عضو
     def get_user_data(self, guild_id, user_id):
         guild_id = str(guild_id)
         user_id = str(user_id)
@@ -50,22 +54,25 @@ class Levels(commands.Cog):
             self.data[guild_id][user_id] = {"xp": 0, "level": 0}
         return self.data[guild_id][user_id]
 
-    # دالة مساعدة لحفظ البيانات
     def save(self):
         save_data(self.data)
 
-    # حدث استقبال الرسائل لحساب XP
+    # ==========================================
+    # 📩 Event: حساب XP عند الرسائل
+    # ==========================================
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot or not message.guild:
             return
 
+        # ⚠️ مهم: لازم نستدعي process_commands عشان الأوامر تشتغل
         await self.bot.process_commands(message)
 
         guild_id = str(message.guild.id)
         user_id = str(message.author.id)
         now = discord.utils.utcnow()
 
+        # Cooldown لمدة 60 ثانية
         cooldown_key = (guild_id, user_id)
         if cooldown_key in self.cooldowns:
             last_time = self.cooldowns[cooldown_key]
@@ -74,14 +81,14 @@ class Levels(commands.Cog):
         self.cooldowns[cooldown_key] = now
 
         user_data = self.get_user_data(guild_id, user_id)
-        
+
         xp_gained = random.randint(5, 15)
         user_data["xp"] += xp_gained
 
         level = user_data["level"]
         needed = self.xp_needed(level)
         leveled_up = False
-        
+
         while user_data["xp"] >= needed:
             user_data["xp"] -= needed
             level += 1
@@ -99,14 +106,18 @@ class Levels(commands.Cog):
             except discord.HTTPException:
                 pass
 
-    # أمر /rank
-    @app_commands.command(name="rank", description="📊 عرض مستوى ورتبة عضو في السيرفر")
-    @app_commands.describe(member="العضو اللي عايز تشوف مستواه (اختياري)")
-    async def rank(self, interaction: discord.Interaction, member: discord.Member = None):
-        await interaction.response.defer()
-        
-        target = member or interaction.user
-        guild_id = str(interaction.guild.id)
+    # ==========================================
+    # 📊 أمر !rank - عرض المستوى
+    # ==========================================
+    @commands.command(
+        name="rank",
+        aliases=["r", "مستوى", "لفل", "level"],
+        description="📊 عرض مستوى ورتبة عضو في السيرفر"
+    )
+    async def rank_prefix(self, ctx: commands.Context, member: discord.Member = None):
+        """عرض مستوى عضو"""
+        target = member or ctx.author
+        guild_id = str(ctx.guild.id)
         user_id = str(target.id)
 
         user_data = self.get_user_data(guild_id, user_id)
@@ -114,10 +125,11 @@ class Levels(commands.Cog):
         xp = user_data["xp"]
         needed = self.xp_needed(level)
 
+        # حساب الترتيب
         all_users = self.data.get(guild_id, {})
         sorted_users = sorted(
-            all_users.items(), 
-            key=lambda x: (x[1]["level"], x[1]["xp"]), 
+            all_users.items(),
+            key=lambda x: (x[1]["level"], x[1]["xp"]),
             reverse=True
         )
         rank_pos = 1
@@ -137,31 +149,36 @@ class Levels(commands.Cog):
         embed.add_field(name="📈 التقدم", value=self.progress_bar(xp, needed), inline=False)
         embed.set_footer(text=f"المطلوب للترقية: {needed - xp} XP")
 
-        await interaction.followup.send(embed=embed)
+        await ctx.send(embed=embed)
 
-    # أمر /top
-    @app_commands.command(name="top", description="🏆 عرض أفضل 10 أعضاء في المستويات")
-    async def top(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        
-        guild_id = str(interaction.guild.id)
+    # ==========================================
+    # 🏆 أمر !top - أفضل 10 أعضاء
+    # ==========================================
+    @commands.command(
+        name="top",
+        aliases=["t", "توب", "افضل", "leaderboard", "lb"],
+        description="🏆 عرض أفضل 10 أعضاء في المستويات"
+    )
+    async def top_prefix(self, ctx: commands.Context):
+        """عرض لوحة المتصدرين"""
+        guild_id = str(ctx.guild.id)
         all_users = self.data.get(guild_id, {})
-        
+
         if not all_users:
-            await interaction.followup.send("❌ مفيش بيانات مستويات في السيرفر ده!")
+            await ctx.send("❌ مفيش بيانات مستويات في السيرفر ده!")
             return
 
         sorted_users = sorted(
-            all_users.items(), 
-            key=lambda x: (x[1]["level"], x[1]["xp"]), 
+            all_users.items(),
+            key=lambda x: (x[1]["level"], x[1]["xp"]),
             reverse=True
         )[:10]
-        
+
         medals = ["🥇", "🥈", "🥉"]
         description = ""
-        
+
         for i, (user_id, udata) in enumerate(sorted_users):
-            member = interaction.guild.get_member(int(user_id))
+            member = ctx.guild.get_member(int(user_id))
             name = member.display_name if member else f"Unknown User ({user_id})"
             medal = medals[i] if i < 3 else f"**{i+1}.**"
             description += f"{medal} **{name}** — المستوى: **{udata['level']}** | XP: **{udata['xp']}**\n"
@@ -171,19 +188,27 @@ class Levels(commands.Cog):
             description=description,
             color=discord.Color.gold()
         )
-        await interaction.followup.send(embed=embed)
+        await ctx.send(embed=embed)
 
-    # أمر /setlevel
-    @app_commands.command(name="setlevel", description="📊 تحديد مستوى عضو (للمشرفين)")
-    @app_commands.describe(
-        member="العضو اللي عايز تعدل مستواه",
-        level="المستوى الجديد (0 - 1000)"
+    # ==========================================
+    # 📊 أمر !setlevel - تحديد مستوى (للمشرفين)
+    # ==========================================
+    @commands.command(
+        name="setlevel",
+        aliases=["sl", "تحديد-مستوى", "عين-مستوى"],
+        description="📊 تحديد مستوى عضو (للمشرفين)"
     )
-    @app_commands.checks.has_permissions(administrator=True)
-    async def setlevel(self, interaction: discord.Interaction, member: discord.Member, level: app_commands.Range[int, 0, 1000]):
-        guild_id = str(interaction.guild.id)
+    @commands.has_permissions(administrator=True)
+    async def setlevel_prefix(self, ctx: commands.Context, member: discord.Member, level: int):
+        """تحديد مستوى عضو - يتطلب Administrator"""
+        # التحقق من النطاق
+        if level < 0 or level > 1000:
+            await ctx.send("❌ المستوى لازم يكون بين **0** و **1000**!", delete_after=8)
+            return
+
+        guild_id = str(ctx.guild.id)
         user_id = str(member.id)
-        
+
         user_data = self.get_user_data(guild_id, user_id)
         user_data["level"] = level
         user_data["xp"] = 0
@@ -194,16 +219,22 @@ class Levels(commands.Cog):
             description=f"تم تعيين مستوى **{member.mention}** إلى **{level}**",
             color=discord.Color.green()
         )
-        await interaction.response.send_message(embed=embed)
+        await ctx.send(embed=embed)
 
-    # أمر /resetlevel
-    @app_commands.command(name="resetlevel", description="📊 تصفير مستوى عضو (للمشرفين)")
-    @app_commands.describe(member="العضو اللي عايز تصفر مستواه")
-    @app_commands.checks.has_permissions(administrator=True)
-    async def resetlevel(self, interaction: discord.Interaction, member: discord.Member):
-        guild_id = str(interaction.guild.id)
+    # ==========================================
+    # 🔄 أمر !resetlevel - تصفير مستوى (للمشرفين)
+    # ==========================================
+    @commands.command(
+        name="resetlevel",
+        aliases=["rl", "تصفير-مستوى", "صفر-مستوى"],
+        description="📊 تصفير مستوى عضو (للمشرفين)"
+    )
+    @commands.has_permissions(administrator=True)
+    async def resetlevel_prefix(self, ctx: commands.Context, member: discord.Member):
+        """تصفير مستوى عضو - يتطلب Administrator"""
+        guild_id = str(ctx.guild.id)
         user_id = str(member.id)
-        
+
         user_data = self.get_user_data(guild_id, user_id)
         user_data["level"] = 0
         user_data["xp"] = 0
@@ -214,18 +245,26 @@ class Levels(commands.Cog):
             description=f"تم تصفير مستوى **{member.mention}**",
             color=discord.Color.orange()
         )
-        await interaction.response.send_message(embed=embed)
+        await ctx.send(embed=embed)
 
-    # معالجة الأخطاء
-    @setlevel.error
-    @resetlevel.error
-    async def on_admin_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
-        if isinstance(error, app_commands.MissingPermissions):
-            msg = "❌ مفيش عندك صلاحية Administrator!"
-            if interaction.response.is_done():
-                await interaction.followup.send(msg, ephemeral=True)
-            else:
-                await interaction.response.send_message(msg, ephemeral=True)
+    # ==========================================
+    # ⚠️ معالجة الأخطاء
+    # ==========================================
+    @setlevel_prefix.error
+    @resetlevel_prefix.error
+    async def on_admin_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("❌ مفيش عندك صلاحية **Administrator**!", delete_after=8)
+        elif isinstance(error, commands.MemberNotFound):
+            await ctx.send("❌ مش لاقي العضو ده في السيرفر!", delete_after=8)
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(
+                "❌ لازم تحدد العضو والمستوى!\n"
+                "**مثال:** `!setlevel @عضو 5`",
+                delete_after=8
+            )
+        elif isinstance(error, commands.BadArgument):
+            await ctx.send("❌ تأكد إن المستوى رقم صحيح!", delete_after=8)
 
 
 async def setup(bot):

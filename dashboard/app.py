@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 import random
+import requests  # ← 🆕 ضفناها عشان نكلم Railway API
 
 # 🔐 Discord OAuth2
 from auth import (
@@ -33,6 +34,15 @@ app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = 86400
 app.config['SESSION_COOKIE_NAME'] = 'volt_session'
+
+# ═══════════════════════════════════════
+# 🔗 API بتاع البوت على Railway
+# ═══════════════════════════════════════
+RAILWAY_API_URL = os.getenv(
+    "RAILWAY_API_URL",
+    "https://volt-bot-ijni.up.railway.app"
+)
+BOT_API_SECRET = os.getenv("BOT_API_SECRET", "volt_secret_2024")
 
 # =================== دوال مساعدة ===================
 
@@ -187,15 +197,9 @@ def callback():
                              error='فشل في جلب معلومات المستخدم',
                              discord_login_url=get_login_url())
     
-    # ═══════════════════════════════════════
-    # 🏰 اختيار أفضل سيرفر للمستخدم
-    # ═══════════════════════════════════════
     selected_guild = get_best_guild_for_user(access_token)
     guild_id = selected_guild.get('id') if selected_guild else None
     
-    # ═══════════════════════════════════════
-    # 💾 حفظ في Session (صغير الحجم)
-    # ═══════════════════════════════════════
     session['user'] = {
         'id': user_info.get('id'),
         'username': user_info.get('username'),
@@ -207,7 +211,7 @@ def callback():
     session['logged_in'] = True
     session['login_time'] = datetime.now().isoformat()
     session['is_admin'] = is_user_admin(access_token)
-    session['guild_id'] = guild_id  # ← نحفظ بس الـ ID
+    session['guild_id'] = guild_id
     
     return redirect(url_for('index'))
 
@@ -257,7 +261,6 @@ def leaderboard():
 
 @app.route('/api/user')
 def api_user():
-    """معلومات المستخدم الحالي"""
     if 'user' not in session:
         return jsonify({'success': False, 'user': None})
     
@@ -271,7 +274,6 @@ def api_user():
 
 @app.route('/api/guild-info')
 def api_guild_info():
-    """معلومات السيرفر الحالي"""
     try:
         guild_id = session.get('guild_id')
         
@@ -281,7 +283,6 @@ def api_guild_info():
                 'error': 'No guild selected'
             }), 404
         
-        # نجيب معلومات السيرفر من Discord API
         guild = get_guild_info(guild_id)
         
         if guild:
@@ -298,7 +299,6 @@ def api_guild_info():
 
 @app.route('/api/leaderboard')
 def api_leaderboard():
-    """أغنى 10 أعضاء"""
     try:
         bitcoin_data = load_json_file('bitcoin.json')
         
@@ -495,6 +495,86 @@ def api_toggle_command():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ═══════════════════════════════════════
+# ⭐ APPLY - تطبيق الاختصارات على البوت
+# ═══════════════════════════════════════
+@app.route('/api/shortcuts/apply', methods=['POST'])
+@login_required
+def api_apply_shortcuts():
+    """
+    ⭐ يستقبل الاختصارات من الـ Dashboard
+    ويبعتها للـ API بتاع البوت على Railway
+    """
+    try:
+        # البيانات من الـ Dashboard
+        data = request.get_json()
+        
+        if not data or 'shortcuts' not in data:
+            return jsonify({
+                'success': False,
+                'status': 'error',
+                'error': '❌ مفيش بيانات للاختصارات'
+            }), 400
+        
+        # ⚡ نبعت للـ Railway API
+        print(f"📤 جاري إرسال {len(data['shortcuts'])} اختصار للـ Railway...")
+        
+        response = requests.post(
+            f"{RAILWAY_API_URL}/api/shortcuts/apply",
+            json=data,
+            headers={
+                "Authorization": f"Bearer {BOT_API_SECRET}",
+                "Content-Type": "application/json"
+            },
+            timeout=15
+        )
+        
+        # ناخد الرد من Railway
+        try:
+            result = response.json()
+        except:
+            result = {"detail": response.text}
+        
+        print(f"📥 رد من Railway: {response.status_code} - {result}")
+        
+        if response.ok:
+            return jsonify({
+                'success': True,
+                'status': 'ok',
+                'message': result.get('message', f'✅ تم تطبيق الاختصارات'),
+                'count': result.get('count', 0)
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'status': 'error',
+                'error': result.get('detail', 'فشل التطبيق على البوت')
+            }), response.status_code
+        
+    except requests.exceptions.Timeout:
+        return jsonify({
+            'success': False,
+            'status': 'error',
+            'error': '❌ البوت مش مستجيب (timeout) - جرب تاني'
+        }), 504
+        
+    except requests.exceptions.ConnectionError as e:
+        print(f"❌ Connection Error: {e}")
+        return jsonify({
+            'success': False,
+            'status': 'error',
+            'error': '❌ مش قادر أوصل للبوت على Railway - تأكد إنه شغال'
+        }), 503
+        
+    except Exception as e:
+        print(f"❌ خطأ في /api/shortcuts/apply: {e}")
+        return jsonify({
+            'success': False,
+            'status': 'error',
+            'error': f'❌ خطأ: {str(e)}'
+        }), 500
+
+
 @app.route('/api/users/<user_id>/balance', methods=['POST'])
 @login_required
 def api_update_balance(user_id):
@@ -575,4 +655,5 @@ if __name__ == '__main__':
     port = int(os.getenv('DASHBOARD_PORT', 8000))
     print(f"🚀 Dashboard يعمل على: http://localhost:{port}")
     print(f"🔐 تسجيل الدخول عبر Discord OAuth2")
+    print(f"🔗 Railway API: {RAILWAY_API_URL}")
     app.run(host='0.0.0.0', port=port, debug=False)

@@ -7,15 +7,16 @@ import random
 import asyncio
 from typing import List, Optional
 
-# مسار ملف التخزين
+# ═══════════════════════════════════════
+# 📁 إعدادات
+# ═══════════════════════════════════════
 GAMES_FILE = "games.json"
 
-# الثوابت
 WIN_REWARD = 50
 MINI_WIN_REWARD = 5
 LOBBY_SECONDS = 45
 
-# دالة لتحميل البيانات من ملف JSON
+
 def load_data():
     if os.path.exists(GAMES_FILE):
         try:
@@ -25,14 +26,16 @@ def load_data():
             return {}
     return {}
 
-# دالة لحفظ البيانات في ملف JSON
+
 def save_data(data):
     with open(GAMES_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-# =================== LobbyView للألعاب الجماعية ===================
+
+# ═══════════════════════════════════════
+# 🎮 LobbyView للألعاب الجماعية
+# ═══════════════════════════════════════
 class LobbyView(discord.ui.View):
-    """View للانضمام/الخروج/بدء اللعبة الجماعية"""
     def __init__(self, game_name: str, min_players: int, max_players: int, callback, timeout: int = LOBBY_SECONDS):
         super().__init__(timeout=timeout)
         self.game_name = game_name
@@ -44,7 +47,6 @@ class LobbyView(discord.ui.View):
         self.message: Optional[discord.Message] = None
 
     async def update_message(self):
-        """تحديث رسالة اللوبي"""
         if not self.message:
             return
         embed = discord.Embed(
@@ -59,7 +61,6 @@ class LobbyView(discord.ui.View):
             pass
 
     def get_players_list(self):
-        """قائمة اللاعبين"""
         if not self.players:
             return "لا يوجد لاعبين بعد... اضغط على زر الانضمام!"
         lines = []
@@ -70,110 +71,97 @@ class LobbyView(discord.ui.View):
     @discord.ui.button(label="انضمام 🎯", style=discord.ButtonStyle.success, custom_id="join_btn")
     async def join_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.started:
-            await interaction.response.send_message("❌ اللعبة بدأت بالفعل!", ephemeral=True)
-            return
+            return await interaction.response.send_message("❌ اللعبة بدأت بالفعل!", ephemeral=True)
         if interaction.user in self.players:
-            await interaction.response.send_message("❌ أنت بالفعل في اللوبي!", ephemeral=True)
-            return
+            return await interaction.response.send_message("❌ أنت بالفعل في اللوبي!", ephemeral=True)
         if len(self.players) >= self.max_players:
-            await interaction.response.send_message("❌ اللوبي ممتلئ!", ephemeral=True)
-            return
+            return await interaction.response.send_message("❌ اللوبي ممتلئ!", ephemeral=True)
         self.players.append(interaction.user)
-        await interaction.response.send_message(f"✅ {interaction.user.mention} انضم للعبة!", ephemeral=True)
+        await interaction.response.send_message(f"✅ انضممت للعبة!", ephemeral=True)
         await self.update_message()
 
     @discord.ui.button(label="خروج 🚪", style=discord.ButtonStyle.danger, custom_id="leave_btn")
     async def leave_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.started:
-            await interaction.response.send_message("❌ اللعبة بدأت بالفعل!", ephemeral=True)
-            return
+            return await interaction.response.send_message("❌ اللعبة بدأت بالفعل!", ephemeral=True)
         if interaction.user not in self.players:
-            await interaction.response.send_message("❌ أنت مش في اللوبي!", ephemeral=True)
-            return
+            return await interaction.response.send_message("❌ أنت مش في اللوبي!", ephemeral=True)
         self.players.remove(interaction.user)
-        await interaction.response.send_message(f"👋 {interaction.user.mention} خرج من اللعبة!", ephemeral=True)
+        await interaction.response.send_message(f"👋 خرجت من اللعبة!", ephemeral=True)
         await self.update_message()
 
     @discord.ui.button(label="بدء اللعبة ▶️", style=discord.ButtonStyle.primary, custom_id="start_btn")
     async def start_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.started:
-            await interaction.response.send_message("❌ اللعبة بدأت بالفعل!", ephemeral=True)
-            return
+            return await interaction.response.send_message("❌ اللعبة بدأت بالفعل!", ephemeral=True)
         if len(self.players) < self.min_players:
-            await interaction.response.send_message(
-                f"❌ لازم {self.min_players} لاعبين على الأقل! (الحالي: {len(self.players)})",
-                ephemeral=True
+            return await interaction.response.send_message(
+                f"❌ لازم {self.min_players} لاعبين على الأقل! (الحالي: {len(self.players)})", ephemeral=True
             )
-            return
-        # التحقق من أن المضغوط هو صاحب اللوبي (أول واحد انضم)
         if interaction.user != self.players[0]:
-            await interaction.response.send_message("❌ فقط صاحب اللوبي يقدر يبدأ اللعبة!", ephemeral=True)
-            return
+            return await interaction.response.send_message("❌ فقط صاحب اللوبي يقدر يبدأ اللعبة!", ephemeral=True)
         self.started = True
         self.stop()
         await interaction.response.send_message("🚀 جاري بدء اللعبة...", ephemeral=True)
-        # تشغيل اللعبة
         try:
             await self.callback(self.players, self.message)
         except Exception as e:
             await self.message.channel.send(f"❌ حدث خطأ في اللعبة: {e}")
 
     async def on_timeout(self):
-        """عند انتهاء وقت اللوبي"""
         if self.started:
             return
-        if len(self.players) < self.min_players:
-            if self.message:
-                embed = discord.Embed(
-                    title=f"⏰ انتهى وقت اللوبي - {self.game_name}",
-                    description="لم يصل عدد اللاعبين للحد الأدنى!",
-                    color=discord.Color.red()
-                )
-                try:
-                    await self.message.edit(embed=embed, view=None)
-                except:
-                    pass
+        if len(self.players) < self.min_players and self.message:
+            embed = discord.Embed(
+                title=f"⏰ انتهى وقت اللوبي - {self.game_name}",
+                description="لم يصل عدد اللاعبين للحد الأدنى!",
+                color=discord.Color.red()
+            )
+            try:
+                await self.message.edit(embed=embed, view=None)
+            except:
+                pass
 
 
-# =================== دوال الألعاب الجماعية ===================
+# ═══════════════════════════════════════
+# 🎮 الألعاب الجماعية
+# ═══════════════════════════════════════
 
-async def g_bomb(players: List[discord.Member], message: discord.Message, bot):
-    """لعبة القنبلة الموقوتة"""
+async def g_bomb(players, message, bot):
+    """القنبلة الموقوتة"""
     channel = message.channel
     current_players = list(players)
     fuse = random.randint(3, 8)
     current_holder = random.choice(current_players)
-    
+
     embed = discord.Embed(
-        title="💣 لعبة القنبلة الموقوتة",
+        title="💣 القنبلة الموقوتة",
         description=f"القنبلة مع {current_holder.mention}!\nالفتيل: {fuse} تمريرة",
         color=discord.Color.red()
     )
     msg = await channel.send(embed=embed)
-    
+
     passes = 0
     while len(current_players) > 1:
         await asyncio.sleep(random.uniform(1.5, 3.0))
         passes += 1
-        
-        # اختيار لاعب عشوائي آخر
+
         others = [p for p in current_players if p != current_holder]
         if not others:
             break
         current_holder = random.choice(others)
-        
+
         embed = discord.Embed(
             title="💣 القنبلة تنتقل!",
-            description=f"القنبلة الآن مع {current_holder.mention}!\nالتمريرات: {passes}/{fuse}",
+            description=f"مع {current_holder.mention}!\nالتمريرات: {passes}/{fuse}",
             color=discord.Color.orange()
         )
         try:
             await msg.edit(embed=embed)
         except:
             pass
-        
+
         if passes >= fuse:
-            # انفجار!
             embed = discord.Embed(
                 title="💥 انفجرت القنبلة!",
                 description=f"{current_holder.mention} خرج من اللعبة!",
@@ -187,7 +175,7 @@ async def g_bomb(players: List[discord.Member], message: discord.Message, bot):
             fuse = random.randint(3, 8)
             passes = 0
             await asyncio.sleep(2)
-    
+
     if current_players:
         winner = current_players[0]
         await add_fizzy(bot, winner.id, WIN_REWARD)
@@ -199,44 +187,36 @@ async def g_bomb(players: List[discord.Member], message: discord.Message, bot):
         await channel.send(embed=embed)
 
 
-async def g_button(players: List[discord.Member], message: discord.Message, bot):
-    """لعبة زر الحظ"""
+async def g_button(players, message, bot):
+    """زر الحظ"""
     channel = message.channel
     current_players = list(players)
-    
+
     while len(current_players) > 1:
-        # إنشاء 9 أزرار، واحد خاسر
         loser_index = random.randint(0, 8)
         view = discord.ui.View(timeout=30)
-        
+
         for i in range(9):
-            btn = discord.ui.Button(
-                label=str(i + 1),
-                style=discord.ButtonStyle.secondary,
-                custom_id=f"btn_{i}"
-            )
+            btn = discord.ui.Button(label=str(i + 1), style=discord.ButtonStyle.secondary, custom_id=f"btn_{i}")
             view.add_item(btn)
-        
+
         embed = discord.Embed(
-            title="🎲 لعبة زر الحظ",
+            title="🎲 زر الحظ",
             description="اختر زراً! واحد منهم خاسر 😈",
             color=discord.Color.purple()
         )
         msg = await channel.send(embed=embed, view=view)
-        
-        # انتظار اختيار كل لاعب
+
         for player in current_players:
-            choice = None
             try:
                 def check(interaction):
                     return interaction.user.id == player.id and interaction.message.id == msg.id
-                
                 interaction = await bot.wait_for("interaction", check=check, timeout=30)
                 choice = int(interaction.data["custom_id"].split("_")[1])
                 await interaction.response.send_message("✅ تم اختيارك!", ephemeral=True)
             except asyncio.TimeoutError:
                 choice = random.randint(0, 8)
-            
+
             if choice == loser_index:
                 embed = discord.Embed(
                     title="💀 حظ سيء!",
@@ -246,9 +226,9 @@ async def g_button(players: List[discord.Member], message: discord.Message, bot)
                 await channel.send(embed=embed)
                 current_players.remove(player)
                 break
-        
+
         await asyncio.sleep(2)
-    
+
     if current_players:
         winner = current_players[0]
         await add_fizzy(bot, winner.id, WIN_REWARD)
@@ -260,27 +240,26 @@ async def g_button(players: List[discord.Member], message: discord.Message, bot)
         await channel.send(embed=embed)
 
 
-async def g_chairs(players: List[discord.Member], message: discord.Message, bot):
-    """لعبة الكراسي الموسيقية"""
+async def g_chairs(players, message, bot):
+    """الكراسي الموسيقية"""
     channel = message.channel
     current_players = list(players)
-    
+
     while len(current_players) > 1:
         chairs = len(current_players) - 1
         survivors = random.sample(current_players, chairs)
         eliminated = [p for p in current_players if p not in survivors]
-        
+
         embed = discord.Embed(
             title="🪑 الكراسي الموسيقية",
-            description=f"الكراسي المتاحة: {chairs}\n\n" + 
-                       "\n".join([f"❌ {p.mention} مفيش عنده كرسي!" for p in eliminated]),
+            description=f"الكراسي المتاحة: {chairs}\n\n" + "\n".join([f"❌ {p.mention} مفيش عنده كرسي!" for p in eliminated]),
             color=discord.Color.orange()
         )
         await channel.send(embed=embed)
-        
+
         current_players = survivors
         await asyncio.sleep(3)
-    
+
     if current_players:
         winner = current_players[0]
         await add_fizzy(bot, winner.id, WIN_REWARD)
@@ -292,74 +271,68 @@ async def g_chairs(players: List[discord.Member], message: discord.Message, bot)
         await channel.send(embed=embed)
 
 
-async def g_mafia(players: List[discord.Member], message: discord.Message, bot):
-    """لعبة المافيا"""
+async def g_mafia(players, message, bot):
+    """المافيا"""
     channel = message.channel
     current_players = list(players)
-    
-    # توزيع الأدوار
+
     roles = ["مافيا 🗡️", "طبيب 💊", "محقق 🔍"] + ["مواطن 👤"] * (len(current_players) - 3)
     random.shuffle(roles)
-    
     player_roles = dict(zip(current_players, roles))
-    
-    # إرسال DM لكل لاعب بدوره
+
     for player, role in player_roles.items():
         try:
             await player.send(f"🎭 دورك في لعبة المافيا: **{role}**")
         except:
             pass
-    
+
     embed = discord.Embed(
         title="🎭 بدأت لعبة المافيا!",
-        description=f"عدد اللاعبين: {len(current_players)}\nتم إرسال الأدوار في الرسائل الخاصة!",
+        description=f"عدد اللاعبين: {len(current_players)}\nتم إرسال الأدوار!",
         color=discord.Color.dark_purple()
     )
     await channel.send(embed=embed)
-    
-    # حلقة الليل والنهار
+
     round_num = 1
+    winner = None
     while len([p for p, r in player_roles.items() if r == "مافيا 🗡️"]) > 0:
         embed = discord.Embed(
             title=f"🌙 الليل - الجولة {round_num}",
-            description="المافيا تختار ضحيتها... (محاكاة)",
+            description="المافيا تختار ضحيتها...",
             color=discord.Color.dark_blue()
         )
         await channel.send(embed=embed)
         await asyncio.sleep(5)
-        
-        # المافيا تقتل شخص عشوائي (ليس مافيا)
+
         civilians = [p for p, r in player_roles.items() if r != "مافيا 🗡️"]
         if not civilians:
             break
-        
+
         victim = random.choice(civilians)
         del player_roles[victim]
-        
+
         embed = discord.Embed(
             title=f"☀️ النهار - الجولة {round_num}",
-            description=f"تم العثور على جثة {victim.mention}! 💀\n\nالناجون:\n" + 
-                       "\n".join([f"• {p.mention}" for p in player_roles.keys()]),
+            description=f"تم العثور على جثة {victim.mention}! 💀",
             color=discord.Color.orange()
         )
         await channel.send(embed=embed)
         await asyncio.sleep(5)
-        
-        # تصويت عشوائي
+
         if len(player_roles) > 2:
             voted = random.choice(list(player_roles.keys()))
+            role = player_roles.get(voted, "مجهول")
             del player_roles[voted]
             embed = discord.Embed(
                 title="⚖️ تم التصويت!",
-                description=f"تم إعدام {voted.mention}!\nدوره كان: **{player_roles.get(voted, 'مجهول')}**",
+                description=f"تم إعدام {voted.mention}!\nدوره كان: **{role}**",
                 color=discord.Color.red()
             )
             await channel.send(embed=embed)
             await asyncio.sleep(3)
-        
+
         round_num += 1
-    
-    # تحديد الفائز
+
     mafia_left = [p for p, r in player_roles.items() if r == "مافيا 🗡️"]
     if mafia_left:
         winner = mafia_left[0]
@@ -376,32 +349,31 @@ async def g_mafia(players: List[discord.Member], message: discord.Message, bot):
             description=f"{winner.mention if winner else 'لا أحد'} فاز بـ **{WIN_REWARD} Fizzy** 💰",
             color=discord.Color.green()
         )
-    
+
     await channel.send(embed=embed)
     if winner:
         await add_fizzy(bot, winner.id, WIN_REWARD)
 
 
-async def g_roulette(players: List[discord.Member], message: discord.Message, bot):
+async def g_roulette(players, message, bot):
     """الروليت الروسية"""
     channel = message.channel
     current_players = list(players)
-    
+
     embed = discord.Embed(
         title="🔫 الروليت الروسية",
         description="كل واحد يسحب الزناد... احتمال 1/6!",
         color=discord.Color.dark_gray()
     )
-    msg = await channel.send(embed=embed)
-    
+    await channel.send(embed=embed)
+
     while len(current_players) > 1:
         for player in list(current_players):
             await asyncio.sleep(2)
-            # احتمال 1/6
             if random.randint(1, 6) == 1:
                 embed = discord.Embed(
                     title="💀 بام!",
-                    description=f"{player.mention} سحب الزناد والمسدس أطلق! 💥",
+                    description=f"{player.mention} المسدس أطلق! 💥",
                     color=discord.Color.dark_red()
                 )
                 await channel.send(embed=embed)
@@ -414,7 +386,7 @@ async def g_roulette(players: List[discord.Member], message: discord.Message, bo
                     color=discord.Color.green()
                 )
                 await channel.send(embed=embed)
-    
+
     if current_players:
         winner = current_players[0]
         await add_fizzy(bot, winner.id, WIN_REWARD)
@@ -426,10 +398,12 @@ async def g_roulette(players: List[discord.Member], message: discord.Message, bo
         await channel.send(embed=embed)
 
 
-# =================== دوال الألعاب السريعة ===================
+# ═══════════════════════════════════════
+# ⚡ الألعاب السريعة
+# ═══════════════════════════════════════
 
-async def g_colors(message: discord.Message, bot):
-    """لعبة تخمين الألوان"""
+async def g_colors(message, bot):
+    """تخمين الألوان"""
     colors = {
         "🔴 أحمر": discord.Color.red(),
         "🔵 أزرق": discord.Color.blue(),
@@ -437,12 +411,12 @@ async def g_colors(message: discord.Message, bot):
         "🟡 أصفر": discord.Color.gold(),
         "🟣 بنفسجي": discord.Color.purple()
     }
-    
+
     correct = random.choice(list(colors.keys()))
     correct_color = colors[correct]
-    
+
     view = discord.ui.View(timeout=15)
-    for color_name, color_obj in colors.items():
+    for color_name in colors.keys():
         btn = discord.ui.Button(
             label=color_name.split(" ")[1],
             emoji=color_name.split(" ")[0],
@@ -450,21 +424,21 @@ async def g_colors(message: discord.Message, bot):
             custom_id=f"color_{color_name}"
         )
         view.add_item(btn)
-    
+
     embed = discord.Embed(
         title="🎨 تخمين اللون!",
         description="أي لون هو الصح؟ أول واحد يدوس الصح يكسب!",
         color=correct_color
     )
     msg = await message.channel.send(embed=embed, view=view)
-    
+
     def check(interaction):
         return interaction.message.id == msg.id
-    
+
     try:
         interaction = await bot.wait_for("interaction", check=check, timeout=15)
         chosen = interaction.data["custom_id"].replace("color_", "")
-        
+
         if chosen == correct:
             await add_fizzy(bot, interaction.user.id, MINI_WIN_REWARD)
             embed = discord.Embed(
@@ -476,79 +450,74 @@ async def g_colors(message: discord.Message, bot):
         else:
             embed = discord.Embed(
                 title="❌ إجابة خاطئة!",
-                description=f"الإجابة الصحيحة كانت: {correct}",
+                description=f"الإجابة: {correct}",
                 color=discord.Color.red()
             )
             await interaction.response.send_message(embed=embed)
     except asyncio.TimeoutError:
         embed = discord.Embed(
             title="⏰ انتهى الوقت!",
-            description=f"الإجابة الصحيحة كانت: {correct}",
+            description=f"الإجابة: {correct}",
             color=discord.Color.orange()
         )
         await msg.edit(embed=embed, view=None)
 
 
-async def g_faster(message: discord.Message, bot):
-    """لعبة الأسرع في الكتابة"""
+async def g_faster(message, bot):
+    """الأسرع في الكتابة"""
     words = ["python", "discord", "fizzy", "game", "winner", "fast", "speed", "keyboard"]
     word = random.choice(words)
-    
+
     embed = discord.Embed(
         title="⚡ الأسرع في الكتابة!",
         description=f"اكتب الكلمة دي الأول: **{word}**",
         color=discord.Color.yellow()
     )
-    msg = await message.channel.send(embed=embed)
-    
+    await message.channel.send(embed=embed)
+
     def check(m):
         return m.channel.id == message.channel.id and m.content.lower() == word.lower() and not m.author.bot
-    
+
     try:
         winner_msg = await bot.wait_for("message", check=check, timeout=20)
         await add_fizzy(bot, winner_msg.author.id, MINI_WIN_REWARD)
         embed = discord.Embed(
             title="🏆 الفائز!",
-            description=f"{winner_msg.author.mention} كتب الكلمة الأول وكسب **{MINI_WIN_REWARD} Fizzy** 💰",
+            description=f"{winner_msg.author.mention} كسب **{MINI_WIN_REWARD} Fizzy** 💰",
             color=discord.Color.gold()
         )
         await message.channel.send(embed=embed)
     except asyncio.TimeoutError:
         embed = discord.Embed(
             title="⏰ انتهى الوقت!",
-            description=f"ماحدش قدر يكتب الكلمة: **{word}**",
+            description=f"الكلمة كانت: **{word}**",
             color=discord.Color.orange()
         )
         await message.channel.send(embed=embed)
 
 
-async def g_flags(message: discord.Message, bot):
-    """لعبة تخمين الأعلام"""
+async def g_flags(message, bot):
+    """تخمين الأعلام"""
     flags = {
-        "🇪🇬": "مصر",
-        "🇸🇦": "السعودية",
-        "🇺🇸": "أمريكا",
-        "🇫🇷": "فرنسا",
-        "🇯🇵": "اليابان",
-        "🇩🇪": "ألمانيا",
-        "🇬🇧": "بريطانيا",
-        "🇧🇷": "البرازيل"
+        "🇪🇬": "مصر", "🇸🇦": "السعودية", "🇺🇸": "أمريكا",
+        "🇫🇷": "فرنسا", "🇯🇵": "اليابان", "🇩🇪": "ألمانيا",
+        "🇬🇧": "بريطانيا", "🇧🇷": "البرازيل"
     }
-    
+
     flag_emoji, country = random.choice(list(flags.items()))
-    
+
     embed = discord.Embed(
         title="🏳️ تخمين العلم!",
-        description=f"أي دولة العلم ده؟ {flag_emoji}\n\nاكتب اسم الدولة!",
+        description=f"أي دولة العلم ده؟ {flag_emoji}",
         color=discord.Color.blue()
     )
-    msg = await message.channel.send(embed=embed)
-    
+    await message.channel.send(embed=embed)
+
     def check(m):
-        return (m.channel.id == message.channel.id and 
-                m.content.strip().lower() == country.lower() and 
+        return (m.channel.id == message.channel.id and
+                m.content.strip().lower() == country.lower() and
                 not m.author.bot)
-    
+
     try:
         winner_msg = await bot.wait_for("message", check=check, timeout=20)
         await add_fizzy(bot, winner_msg.author.id, MINI_WIN_REWARD)
@@ -561,28 +530,31 @@ async def g_flags(message: discord.Message, bot):
     except asyncio.TimeoutError:
         embed = discord.Embed(
             title="⏰ انتهى الوقت!",
-            description=f"الإجابة الصحيحة كانت: **{country}**",
+            description=f"الإجابة: **{country}**",
             color=discord.Color.orange()
         )
         await message.channel.send(embed=embed)
 
 
-# =================== دوال مساعدة ===================
+# ═══════════════════════════════════════
+# 🛠️ دوال مساعدة
+# ═══════════════════════════════════════
 
 async def add_fizzy(bot, user_id: int, amount: int):
-    """إضافة Fizzy لعضو"""
     cog = bot.get_cog("Games")
     if cog:
         cog.add_fizzy_to_user(user_id, amount)
 
 
-# =================== Cog الرئيسي ===================
+# ═══════════════════════════════════════
+# 🎮 الـ Cog الرئيسي
+# ═══════════════════════════════════════
 
 class Games(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.data = load_data()
-        self.active_games = set()  # لتتبع الألعاب النشطة في كل channel
+        self.active_games = set()
 
     def get_user_data(self, user_id):
         user_id = str(user_id)
@@ -598,38 +570,23 @@ class Games(commands.Cog):
     def save(self):
         save_data(self.data)
 
-    # أمر /game لبدء لعبة
-    @app_commands.command(name="game", description="بدء لعبة جماعية أو سريعة")
-    @app_commands.describe(game="اختر اللعبة")
-    @app_commands.choices(game=[
-        app_commands.Choice(name="💣 القنبلة (2-10)", value="bomb"),
-        app_commands.Choice(name="🎲 زر الحظ (2-8)", value="button"),
-        app_commands.Choice(name="🪑 الكراسي (3-10)", value="chairs"),
-        app_commands.Choice(name="🎨 الألوان (سريعة)", value="colors"),
-        app_commands.Choice(name="⚡ الأسرع (سريعة)", value="faster"),
-        app_commands.Choice(name="🏳️ الأعلام (سريعة)", value="flags"),
-        app_commands.Choice(name="🎭 المافيا (5-15)", value="mafia"),
-        app_commands.Choice(name="🔫 الروليت (2-6)", value="roulette"),
-    ])
-    async def game(self, interaction: discord.Interaction, game: app_commands.Choice[str]):
+    async def _run_game(self, interaction, game_name):
+        """تشغيل لعبة من الاسم"""
         channel_id = interaction.channel.id
-        
-        # التحقق من عدم وجود لعبة نشطة
+
         if channel_id in self.active_games:
             embed = discord.Embed(
                 title="❌ يوجد لعبة نشطة",
                 description="استنى اللعبة الحالية تخلص!",
                 color=discord.Color.red()
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-        
+            return await interaction.response.send_message(embed=embed, ephemeral=True)
+
         self.active_games.add(channel_id)
-        game_name = game.value
-        
+
         # الألعاب السريعة
         if game_name in ["colors", "faster", "flags"]:
-            await interaction.response.send_message(f"🎮 جاري بدء لعبة **{game.name}**...")
+            await interaction.response.send_message(f"🎮 جاري بدء اللعبة...")
             try:
                 if game_name == "colors":
                     await g_colors(interaction.channel, self.bot)
@@ -640,7 +597,7 @@ class Games(commands.Cog):
             finally:
                 self.active_games.discard(channel_id)
             return
-        
+
         # الألعاب الجماعية
         game_configs = {
             "bomb": ("💣 القنبلة الموقوتة", 2, 10, g_bomb),
@@ -649,93 +606,190 @@ class Games(commands.Cog):
             "mafia": ("🎭 المافيا", 5, 15, g_mafia),
             "roulette": ("🔫 الروليت الروسية", 2, 6, g_roulette),
         }
-        
+
         title, min_p, max_p, callback = game_configs[game_name]
-        
-        # إنشاء اللوبي
+
         async def game_callback(players, msg):
             try:
-                if game_name == "bomb":
-                    await g_bomb(players, msg, self.bot)
-                elif game_name == "button":
-                    await g_button(players, msg, self.bot)
-                elif game_name == "chairs":
-                    await g_chairs(players, msg, self.bot)
-                elif game_name == "mafia":
-                    await g_mafia(players, msg, self.bot)
-                elif game_name == "roulette":
-                    await g_roulette(players, msg, self.bot)
+                await callback(players, msg, self.bot)
             finally:
                 self.active_games.discard(channel_id)
-        
+
         lobby = LobbyView(title, min_p, max_p, game_callback)
         embed = discord.Embed(
             title=f"🎮 {title}",
             description=lobby.get_players_list(),
             color=discord.Color.blue()
         )
-        embed.set_footer(text=f"اللاعبين: 0/{max_p} | الحد الأدنى: {min_p} | يبدأ خلال {LOBBY_SECONDS} ثانية")
-        
+        embed.set_footer(text=f"اللاعبين: 0/{max_p} | الحد الأدنى: {min_p}")
+
         await interaction.response.send_message(embed=embed, view=lobby)
         lobby.message = await interaction.original_response()
-        
-        # انتظار انتهاء اللوبي
         await lobby.wait()
         if not lobby.started:
             self.active_games.discard(channel_id)
 
-    # أمر /fizzy لعرض رصيد Fizzy
+    # ═══════════════════════════════════════
+    # 🌐 Slash Commands
+    # ═══════════════════════════════════════
+
+    @app_commands.command(name="game", description="بدء لعبة")
+    @app_commands.describe(game="اختر اللعبة")
+    @app_commands.choices(game=[
+        app_commands.Choice(name="💣 القنبلة (2-10)", value="bomb"),
+        app_commands.Choice(name="🎲 زر الحظ (2-8)", value="button"),
+        app_commands.Choice(name="🪑 الكراسي (3-10)", value="chairs"),
+        app_commands.Choice(name="🎨 الألوان", value="colors"),
+        app_commands.Choice(name="⚡ الأسرع", value="faster"),
+        app_commands.Choice(name="🏳️ الأعلام", value="flags"),
+        app_commands.Choice(name="🎭 المافيا (5-15)", value="mafia"),
+        app_commands.Choice(name="🔫 الروليت (2-6)", value="roulette"),
+    ])
+    async def game_slash(self, interaction: discord.Interaction, game: app_commands.Choice[str]):
+        await self._run_game(interaction, game.value)
+
     @app_commands.command(name="fizzy", description="عرض رصيد Fizzy")
-    @app_commands.describe(member="العضو (اختياري)")
-    async def fizzy(self, interaction: discord.Interaction, member: discord.Member = None):
+    async def fizzy_slash(self, interaction: discord.Interaction, member: discord.Member = None):
         target = member or interaction.user
         user_data = self.get_user_data(target.id)
-        balance = user_data["fizzy"]
-        
         embed = discord.Embed(
             title=f"💰 رصيد Fizzy - {target.display_name}",
-            description=f"رصيدك الحالي: **{balance} Fizzy** 💎",
+            description=f"رصيدك: **{user_data['fizzy']} Fizzy** 💎",
             color=discord.Color.green()
         )
         embed.set_thumbnail(url=target.display_avatar.url)
         await interaction.response.send_message(embed=embed)
 
-    # أمر /fizzytop لأفضل 10 لاعبين
-    @app_commands.command(name="fizzytop", description="أفضل 10 لاعبين في Fizzy")
-    async def fizzytop(self, interaction: discord.Interaction):
+    @app_commands.command(name="fizzytop", description="أفضل 10 لاعبين")
+    async def fizzytop_slash(self, interaction: discord.Interaction):
         if not self.data:
-            await interaction.response.send_message("❌ مفيش لاعبين لسه!")
-            return
-        
-        sorted_users = sorted(
-            self.data.items(),
-            key=lambda x: x[1]["fizzy"],
-            reverse=True
-        )[:10]
-        
+            return await interaction.response.send_message("❌ مفيش لاعبين!")
+        sorted_users = sorted(self.data.items(), key=lambda x: x[1]["fizzy"], reverse=True)[:10]
         medals = ["🥇", "🥈", "🥉"]
-        description = ""
-        
-        for i, (user_id, udata) in enumerate(sorted_users):
+        desc = ""
+        for i, (uid, udata) in enumerate(sorted_users):
             if udata["fizzy"] == 0:
                 continue
-            member = interaction.guild.get_member(int(user_id))
-            name = member.display_name if member else f"Unknown ({user_id})"
+            member = interaction.guild.get_member(int(uid))
+            name = member.display_name if member else f"Unknown"
             medal = medals[i] if i < 3 else f"**{i+1}.**"
-            description += f"{medal} **{name}** — 💎 {udata['fizzy']} Fizzy\n"
-        
-        if not description:
-            await interaction.response.send_message("❌ مفيش لاعبين عندهم Fizzy!")
-            return
-        
-        embed = discord.Embed(
-            title="🏆 أفضل 10 لاعبين في Fizzy",
-            description=description,
-            color=discord.Color.gold()
-        )
+            desc += f"{medal} **{name}** — 💎 {udata['fizzy']}\n"
+        embed = discord.Embed(title="🏆 أفضل 10 لاعبين", description=desc or "لا توجد بيانات", color=discord.Color.gold())
         await interaction.response.send_message(embed=embed)
 
+    # ═══════════════════════════════════════
+    # 📨 Text Commands (للاختصارات)
+    # ═══════════════════════════════════════
 
-# دالة تحميل الـ Cog للبوت
+    @commands.command(name="bomb")
+    async def bomb_text(self, ctx):
+        """!bomb — القنبلة"""
+        await self._run_game_text(ctx, "bomb")
+
+    @commands.command(name="button")
+    async def button_text(self, ctx):
+        """!button — زر الحظ"""
+        await self._run_game_text(ctx, "button")
+
+    @commands.command(name="chairs")
+    async def chairs_text(self, ctx):
+        """!chairs — الكراسي"""
+        await self._run_game_text(ctx, "chairs")
+
+    @commands.command(name="colors")
+    async def colors_text(self, ctx):
+        """!colors — الألوان"""
+        await g_colors(ctx, self.bot)
+
+    @commands.command(name="faster")
+    async def faster_text(self, ctx):
+        """!faster — الأسرع"""
+        await g_faster(ctx, self.bot)
+
+    @commands.command(name="flags")
+    async def flags_text(self, ctx):
+        """!flags — الأعلام"""
+        await g_flags(ctx, self.bot)
+
+    @commands.command(name="mafia")
+    async def mafia_text(self, ctx):
+        """!mafia — المافيا"""
+        await self._run_game_text(ctx, "mafia")
+
+    @commands.command(name="roulette")
+    async def roulette_text(self, ctx):
+        """!roulette — الروليت"""
+        await self._run_game_text(ctx, "roulette")
+
+    async def _run_game_text(self, ctx, game_name):
+        """تشغيل لعبة من نص (مع LobbyView)"""
+        channel_id = ctx.channel.id
+
+        if channel_id in self.active_games:
+            return await ctx.send("❌ يوجد لعبة نشطة!")
+
+        self.active_games.add(channel_id)
+
+        game_configs = {
+            "bomb": ("💣 القنبلة الموقوتة", 2, 10, g_bomb),
+            "button": ("🎲 زر الحظ", 2, 8, g_button),
+            "chairs": ("🪑 الكراسي الموسيقية", 3, 10, g_chairs),
+            "mafia": ("🎭 المافيا", 5, 15, g_mafia),
+            "roulette": ("🔫 الروليت الروسية", 2, 6, g_roulette),
+        }
+
+        title, min_p, max_p, callback = game_configs[game_name]
+
+        async def game_callback(players, msg):
+            try:
+                await callback(players, msg, self.bot)
+            finally:
+                self.active_games.discard(channel_id)
+
+        lobby = LobbyView(title, min_p, max_p, game_callback)
+        embed = discord.Embed(
+            title=f"🎮 {title}",
+            description=lobby.get_players_list(),
+            color=discord.Color.blue()
+        )
+        embed.set_footer(text=f"اللاعبين: 0/{max_p} | الحد الأدنى: {min_p}")
+
+        lobby.message = await ctx.send(embed=embed, view=lobby)
+        await lobby.wait()
+        if not lobby.started:
+            self.active_games.discard(channel_id)
+
+    @commands.command(name="fizzy")
+    async def fizzy_text(self, ctx, member: discord.Member = None):
+        """!fizzy — رصيد Fizzy"""
+        target = member or ctx.author
+        user_data = self.get_user_data(target.id)
+        embed = discord.Embed(
+            title=f"💰 رصيد Fizzy - {target.display_name}",
+            description=f"رصيدك: **{user_data['fizzy']} Fizzy** 💎",
+            color=discord.Color.green()
+        )
+        embed.set_thumbnail(url=target.display_avatar.url)
+        await ctx.send(embed=embed)
+
+    @commands.command(name="fizzytop")
+    async def fizzytop_text(self, ctx):
+        """!fizzytop — أفضل 10 لاعبين"""
+        if not self.data:
+            return await ctx.send("❌ مفيش لاعبين!")
+        sorted_users = sorted(self.data.items(), key=lambda x: x[1]["fizzy"], reverse=True)[:10]
+        medals = ["🥇", "🥈", "🥉"]
+        desc = ""
+        for i, (uid, udata) in enumerate(sorted_users):
+            if udata["fizzy"] == 0:
+                continue
+            member = ctx.guild.get_member(int(uid))
+            name = member.display_name if member else f"Unknown"
+            medal = medals[i] if i < 3 else f"**{i+1}.**"
+            desc += f"{medal} **{name}** — 💎 {udata['fizzy']}\n"
+        embed = discord.Embed(title="🏆 أفضل 10 لاعبين", description=desc or "لا توجد بيانات", color=discord.Color.gold())
+        await ctx.send(embed=embed)
+
+
 async def setup(bot):
     await bot.add_cog(Games(bot))

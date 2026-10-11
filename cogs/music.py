@@ -1,12 +1,10 @@
 import discord
-from discord import app_commands
 from discord.ext import commands
 import asyncio
 import yt_dlp
 import os
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-from typing import Optional
 
 # ═══════════════════════════════════════
 # 🎧 إعدادات Spotify
@@ -49,7 +47,7 @@ FFMPEG_OPTIONS = {
 
 
 # ═══════════════════════════════════════
-# 🔍 دوال Spotify
+# 🔍 دالة Spotify
 # ═══════════════════════════════════════
 def search_spotify(query: str):
     if not sp:
@@ -94,6 +92,9 @@ class Music(commands.Cog):
         self.bot = bot
         self.queues = {}
 
+    # ═══════════════════════════════════════
+    # 🔧 دوال مساعدة
+    # ═══════════════════════════════════════
     def get_queue(self, guild_id):
         if guild_id not in self.queues:
             self.queues[guild_id] = MusicQueue()
@@ -162,19 +163,16 @@ class Music(commands.Cog):
         if song.get('thumbnail'):
             embed.set_thumbnail(url=song['thumbnail'])
         try:
-            await channel.send(embed=embed)
+            if channel:
+                await channel.send(embed=embed)
         except:
             pass
 
-    # ═══════════════════════════════════════
-    # 🎵 منطق play (مشترك)
-    # ═══════════════════════════════════════
-    async def _play_logic(self, guild, user, voice_channel, query, respond):
-        """منطق التشغيل - مشترك بين Slash و Text"""
+    async def _play_logic(self, ctx: commands.Context, query: str):
+        """منطق التشغيل - مشترك"""
         search_query = query
         spotify_info = None
 
-        # لو Spotify أو بحث عادي
         if "spotify.com" in query or (sp and not query.startswith(('http://', 'https://'))):
             spotify_info = search_spotify(query)
             if spotify_info and "search_query" in spotify_info:
@@ -182,24 +180,24 @@ class Music(commands.Cog):
 
         song = await self.search_song(search_query)
         if song is None:
-            await respond("❌ لم يتم العثور على الأغنية")
+            await ctx.send("❌ لم يتم العثور على الأغنية")
             return
 
-        queue = self.get_queue(guild.id)
+        queue = self.get_queue(ctx.guild.id)
 
-        # الانضمام
-        if not guild.voice_client:
+        # الانضمام للقناة الصوتية
+        if not ctx.guild.voice_client:
             try:
-                queue.voice_client = await voice_channel.connect()
+                queue.voice_client = await ctx.author.voice.channel.connect()
             except Exception as e:
-                await respond(f"❌ خطأ في الانضمام: {e}")
+                await ctx.send(f"❌ خطأ في الانضمام: {e}")
                 return
         else:
-            queue.voice_client = guild.voice_client
+            queue.voice_client = ctx.guild.voice_client
 
         if not queue.is_playing:
             queue.queue.append(song)
-            await self.play_next(guild.id, respond.__self__.channel if hasattr(respond, '__self__') else None)
+            await self.play_next(ctx.guild.id, ctx.channel)
             embed = discord.Embed(
                 title="🎵 جاري التشغيل",
                 description=f"**[{song['title']}]({song['webpage_url']})**\nبواسطة: {song['uploader']}",
@@ -209,7 +207,7 @@ class Music(commands.Cog):
                 embed.set_thumbnail(url=spotify_info["thumbnail"])
             elif song.get('thumbnail'):
                 embed.set_thumbnail(url=song['thumbnail'])
-            await respond(embed=embed)
+            await ctx.send(embed=embed)
         else:
             queue.queue.append(song)
             embed = discord.Embed(
@@ -219,174 +217,102 @@ class Music(commands.Cog):
             )
             if song.get('thumbnail'):
                 embed.set_thumbnail(url=song['thumbnail'])
-            await respond(embed=embed)
+            await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════
-    # 🎵 SLASH COMMANDS
+    # 🎵 الأوامر الأساسية
     # ═══════════════════════════════════════
-    @app_commands.command(name="play", description="🎵 تشغيل أغنية")
-    @app_commands.describe(query="اسم الأغنية أو الرابط")
-    async def play_slash(self, interaction: discord.Interaction, query: str):
-        await interaction.response.defer()
-        if not interaction.user.voice:
-            return await interaction.followup.send("❌ لازم تكون في روم صوتي!")
 
-        async def respond(content=None, embed=None):
-            if embed:
-                await interaction.followup.send(embed=embed)
-            else:
-                await interaction.followup.send(content)
-
-        await self._play_logic(
-            interaction.guild,
-            interaction.user,
-            interaction.user.voice.channel,
-            query,
-            respond
-        )
-
-    @app_commands.command(name="skip", description="⏭️ تخطي الأغنية")
-    async def skip_slash(self, interaction: discord.Interaction):
-        queue = self.get_queue(interaction.guild.id)
-        if not queue.voice_client or not queue.is_playing:
-            return await interaction.response.send_message("❌ مفيش حاجة شغالة", ephemeral=True)
-        queue.voice_client.stop()
-        await interaction.response.send_message("⏭️ تم التخطي")
-
-    @app_commands.command(name="stop", description="⏹️ إيقاف التشغيل")
-    async def stop_slash(self, interaction: discord.Interaction):
-        queue = self.get_queue(interaction.guild.id)
-        if not queue.voice_client:
-            return await interaction.response.send_message("❌ البوت مش في روم صوتي", ephemeral=True)
-        queue.queue.clear()
-        queue.current = None
-        queue.is_playing = False
-        await queue.voice_client.disconnect()
-        await interaction.response.send_message("⏹️ تم الإيقاف")
-
-    @app_commands.command(name="pause", description="⏸️ إيقاف مؤقت")
-    async def pause_slash(self, interaction: discord.Interaction):
-        queue = self.get_queue(interaction.guild.id)
-        if not queue.voice_client or not queue.is_playing:
-            return await interaction.response.send_message("❌ مفيش حاجة شغالة", ephemeral=True)
-        queue.voice_client.pause()
-        queue.is_paused = True
-        await interaction.response.send_message("⏸️ تم الإيقاف المؤقت")
-
-    @app_commands.command(name="resume", description="▶️ استكمال")
-    async def resume_slash(self, interaction: discord.Interaction):
-        queue = self.get_queue(interaction.guild.id)
-        if not queue.voice_client or not queue.is_paused:
-            return await interaction.response.send_message("❌ مفيش حاجة موقوفة", ephemeral=True)
-        queue.voice_client.resume()
-        queue.is_paused = False
-        await interaction.response.send_message("▶️ تم الاستكمال")
-
-    @app_commands.command(name="queue", description="📋 قائمة التشغيل")
-    async def queue_slash(self, interaction: discord.Interaction):
-        queue = self.get_queue(interaction.guild.id)
-        if not queue.current and not queue.queue:
-            return await interaction.response.send_message("📭 القائمة فاضية")
-        desc = ""
-        if queue.current:
-            desc += f"🎵 **الآن:** {queue.current['title']}\n\n"
-        for i, song in enumerate(queue.queue[:10], 1):
-            desc += f"`{i}.` {song['title']}\n"
-        embed = discord.Embed(title="🎶 قائمة التشغيل", description=desc, color=0x9B59B6)
-        await interaction.response.send_message(embed=embed)
-
-    @app_commands.command(name="nowplaying", description="🎵 الأغنية الحالية")
-    async def nowplaying_slash(self, interaction: discord.Interaction):
-        queue = self.get_queue(interaction.guild.id)
-        if not queue.current:
-            return await interaction.response.send_message("❌ مفيش حاجة شغالة", ephemeral=True)
-        embed = discord.Embed(
-            title="🎵 الأغنية الحالية",
-            description=f"**{queue.current['title']}**",
-            color=0x1DB954
-        )
-        if queue.current.get('thumbnail'):
-            embed.set_thumbnail(url=queue.current['thumbnail'])
-        await interaction.response.send_message(embed=embed)
-
-    @app_commands.command(name="volume", description="🔊 تعديل الصوت")
-    @app_commands.describe(volume="مستوى الصوت (0-100)")
-    async def volume_slash(self, interaction: discord.Interaction, volume: app_commands.Range[int, 0, 100]):
-        queue = self.get_queue(interaction.guild.id)
-        if not queue.voice_client:
-            return await interaction.response.send_message("❌ البوت مش في روم", ephemeral=True)
-        queue.volume = volume / 100
-        if queue.voice_client.source:
-            queue.voice_client.source.volume = queue.volume
-        await interaction.response.send_message(f"🔊 الصوت: **{volume}%**")
-
-    # ═══════════════════════════════════════
-    # 🎵 TEXT COMMANDS (للاختصارات)
-    # ═══════════════════════════════════════
-    @commands.command(name="play", aliases=["p"])
-    async def play_text(self, ctx, *, query: str = None):
-        """!play - تشغيل أغنية"""
+    @commands.command(
+        name="play",
+        aliases=["p", "شغل", "شغ"],
+        description="🎵 تشغيل أغنية أو إضافتها للقائمة"
+    )
+    async def play(self, ctx: commands.Context, *, query: str = None):
+        """تشغيل أغنية"""
         if not query:
-            return await ctx.send("❌ اكتب اسم الأغنية! مثال: `شغ despacito`")
+            await ctx.send("❌ اكتب اسم الأغنية! مثال: `!شغل despacito`", delete_after=8)
+            return
         if not ctx.author.voice:
-            return await ctx.send("❌ لازم تكون في روم صوتي!")
+            await ctx.send("❌ لازم تكون في روم صوتي!", delete_after=8)
+            return
 
-        async def respond(content=None, embed=None):
-            if embed:
-                await ctx.send(embed=embed)
-            else:
-                await ctx.send(content)
+        async with ctx.typing():
+            await self._play_logic(ctx, query)
 
-        await self._play_logic(
-            ctx.guild,
-            ctx.author,
-            ctx.author.voice.channel,
-            query,
-            respond
-        )
-
-    @commands.command(name="skip")
-    async def skip_text(self, ctx):
+    @commands.command(
+        name="skip",
+        aliases=["s", "تخطي", "سكيب"],
+        description="⏭️ تخطي الأغنية الحالية"
+    )
+    async def skip(self, ctx: commands.Context):
+        """تخطي الأغنية"""
         queue = self.get_queue(ctx.guild.id)
         if not queue.voice_client or not queue.is_playing:
-            return await ctx.send("❌ مفيش حاجة شغالة")
+            await ctx.send("❌ مفيش حاجة شغالة", delete_after=6)
+            return
         queue.voice_client.stop()
         await ctx.send("⏭️ تم التخطي")
 
-    @commands.command(name="stop")
-    async def stop_text(self, ctx):
+    @commands.command(
+        name="stop",
+        aliases=["st", "ايقاف", "وقف"],
+        description="⏹️ إيقاف التشغيل ومسح القائمة"
+    )
+    async def stop(self, ctx: commands.Context):
+        """إيقاف التشغيل"""
         queue = self.get_queue(ctx.guild.id)
         if not queue.voice_client:
-            return await ctx.send("❌ البوت مش في روم")
+            await ctx.send("❌ البوت مش في روم صوتي", delete_after=6)
+            return
         queue.queue.clear()
         queue.current = None
         queue.is_playing = False
+        queue.is_paused = False
         await queue.voice_client.disconnect()
         await ctx.send("⏹️ تم الإيقاف")
 
-    @commands.command(name="pause")
-    async def pause_text(self, ctx):
+    @commands.command(
+        name="pause",
+        aliases=["pa", "ايقاف-مؤقت"],
+        description="⏸️ إيقاف مؤقت"
+    )
+    async def pause(self, ctx: commands.Context):
+        """إيقاف مؤقت"""
         queue = self.get_queue(ctx.guild.id)
         if not queue.voice_client or not queue.is_playing:
-            return await ctx.send("❌ مفيش حاجة شغالة")
+            await ctx.send("❌ مفيش حاجة شغالة", delete_after=6)
+            return
         queue.voice_client.pause()
         queue.is_paused = True
         await ctx.send("⏸️ تم الإيقاف المؤقت")
 
-    @commands.command(name="resume")
-    async def resume_text(self, ctx):
+    @commands.command(
+        name="resume",
+        aliases=["res", "استكمال", "كمل"],
+        description="▶️ استكمال التشغيل"
+    )
+    async def resume(self, ctx: commands.Context):
+        """استكمال التشغيل"""
         queue = self.get_queue(ctx.guild.id)
         if not queue.voice_client or not queue.is_paused:
-            return await ctx.send("❌ مفيش حاجة موقوفة")
+            await ctx.send("❌ مفيش حاجة موقوفة", delete_after=6)
+            return
         queue.voice_client.resume()
         queue.is_paused = False
         await ctx.send("▶️ تم الاستكمال")
 
-    @commands.command(name="queue")
-    async def queue_text(self, ctx):
+    @commands.command(
+        name="queue",
+        aliases=["q", "قائمة", "القائمة"],
+        description="📋 عرض قائمة التشغيل"
+    )
+    async def queue_cmd(self, ctx: commands.Context):
+        """عرض القائمة"""
         queue = self.get_queue(ctx.guild.id)
         if not queue.current and not queue.queue:
-            return await ctx.send("📭 القائمة فاضية")
+            await ctx.send("📭 القائمة فاضية")
+            return
         desc = ""
         if queue.current:
             desc += f"🎵 **الآن:** {queue.current['title']}\n\n"
@@ -395,11 +321,17 @@ class Music(commands.Cog):
         embed = discord.Embed(title="🎶 قائمة التشغيل", description=desc, color=0x9B59B6)
         await ctx.send(embed=embed)
 
-    @commands.command(name="nowplaying", aliases=["np"])
-    async def nowplaying_text(self, ctx):
+    @commands.command(
+        name="nowplaying",
+        aliases=["np", "الحالية", "الان"],
+        description="🎵 عرض الأغنية الحالية"
+    )
+    async def nowplaying(self, ctx: commands.Context):
+        """الأغنية الحالية"""
         queue = self.get_queue(ctx.guild.id)
         if not queue.current:
-            return await ctx.send("❌ مفيش حاجة شغالة")
+            await ctx.send("❌ مفيش حاجة شغالة", delete_after=6)
+            return
         embed = discord.Embed(
             title="🎵 الأغنية الحالية",
             description=f"**{queue.current['title']}**",
@@ -409,19 +341,59 @@ class Music(commands.Cog):
             embed.set_thumbnail(url=queue.current['thumbnail'])
         await ctx.send(embed=embed)
 
-    @commands.command(name="volume", aliases=["vol"])
-    async def volume_text(self, ctx, volume: int = None):
+    @commands.command(
+        name="volume",
+        aliases=["vol", "صوت", "الصوت"],
+        description="🔊 تعديل مستوى الصوت (0-100)"
+    )
+    async def volume(self, ctx: commands.Context, volume: int = None):
+        """تعديل الصوت"""
         if volume is None:
-            return await ctx.send("❌ اكتب مستوى الصوت (0-100)")
+            queue = self.get_queue(ctx.guild.id)
+            current = int(queue.volume * 100)
+            await ctx.send(f"🔊 مستوى الصوت الحالي: **{current}%**")
+            return
         if volume < 0 or volume > 100:
-            return await ctx.send("❌ الصوت من 0 لـ 100")
+            await ctx.send("❌ الصوت من **0** لـ **100**", delete_after=6)
+            return
         queue = self.get_queue(ctx.guild.id)
         if not queue.voice_client:
-            return await ctx.send("❌ البوت مش في روم")
+            await ctx.send("❌ البوت مش في روم", delete_after=6)
+            return
         queue.volume = volume / 100
         if queue.voice_client.source:
             queue.voice_client.source.volume = queue.volume
         await ctx.send(f"🔊 الصوت: **{volume}%**")
+
+    # ═══════════════════════════════════════
+    # 🔀 أمر إضافي: تبديل/خلط القائمة
+    # ═══════════════════════════════════════
+    @commands.command(
+        name="shuffle",
+        aliases=["sh", "خلط", "عشوائي"],
+        description="🔀 خلط قائمة التشغيل"
+    )
+    async def shuffle(self, ctx: commands.Context):
+        """خلط القائمة"""
+        import random
+        queue = self.get_queue(ctx.guild.id)
+        if len(queue.queue) < 2:
+            await ctx.send("❌ القائمة مش كفاية للخلط", delete_after=6)
+            return
+        random.shuffle(queue.queue)
+        await ctx.send("🔀 تم خلط القائمة")
+
+    # ═══════════════════════════════════════
+    # ⚠️ معالجة الأخطاء
+    # ═══════════════════════════════════════
+    async def cog_command_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(f"❌ ناقص بيانات: `{error.param.name}`", delete_after=8)
+        elif isinstance(error, commands.BadArgument):
+            await ctx.send("❌ تأكد من البيانات المدخلة!", delete_after=8)
+        elif isinstance(error, commands.CommandInvokeError):
+            await ctx.send("❌ حصل خطأ أثناء تنفيذ الأمر!", delete_after=8)
+            print(f"❌ {error}")
 
 
 async def setup(bot):

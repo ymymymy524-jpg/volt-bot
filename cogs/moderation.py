@@ -1,5 +1,4 @@
 import discord
-from discord import app_commands
 from discord.ext import commands
 import json
 import os
@@ -7,7 +6,7 @@ from datetime import timedelta
 from config import Colors
 
 # ==========================================
-# 👑 أوامر الإدارة (Moderation Commands)
+# 👑 أوامر الإدارة (Moderation Commands) - Prefix !
 # ==========================================
 
 class Moderation(commands.Cog):
@@ -16,6 +15,9 @@ class Moderation(commands.Cog):
         self.warnings_file = "warnings.json"
         self._load_warnings()
 
+    # ==========================================
+    # 🔧 دوال مساعدة
+    # ==========================================
     def _load_warnings(self):
         if os.path.exists(self.warnings_file):
             with open(self.warnings_file, "r", encoding="utf-8") as f:
@@ -28,62 +30,73 @@ class Moderation(commands.Cog):
             json.dump(self.warnings, f, ensure_ascii=False, indent=2)
 
     # ==========================================
-    # 🔨 مجموعة أوامر الحظر (Ban Group)
+    # 🔨 أوامر الحظر (Ban)
     # ==========================================
-    ban_group = app_commands.Group(
+    @commands.command(
         name="ban",
-        description="🔨 أوامر الحظر",
-        default_permissions=discord.Permissions(ban_members=True)
+        aliases=["b", "حظر"],
+        description="🔨 حظر عضو من السيرفر"
     )
-
-    @ban_group.command(name="user", description="🔨 حظر عضو من السيرفر")
-    @app_commands.describe(member="العضو المراد حظره", reason="سبب الحظر")
-    async def ban_user(self, interaction: discord.Interaction, member: discord.Member, reason: str = "لا يوجد سبب"):
-        if member.top_role >= interaction.user.top_role:
-            await interaction.response.send_message("❌ لا يمكنك حظر عضو رتبته مساوية أو أعلى من رتبتك!", ephemeral=True)
+    @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
+    async def ban(self, ctx: commands.Context, member: discord.Member, *, reason: str = "لا يوجد سبب"):
+        """حظر عضو من السيرفر"""
+        if member.top_role >= ctx.author.top_role and ctx.author != ctx.guild.owner:
+            await ctx.send("❌ لا يمكنك حظر عضو رتبته مساوية أو أعلى من رتبتك!", delete_after=8)
             return
-        
+
         try:
-            await member.ban(reason=f"{interaction.user} | {reason}")
+            await member.ban(reason=f"{ctx.author} | {reason}")
             embed = discord.Embed(
                 title="✅ تم الحظر بنجاح",
-                description=f"🔨 **{member.mention}** تم حظره من السيرفر\n\n**السبب:** {reason}\n**بواسطة:** {interaction.user.mention}",
+                description=f"🔨 **{member.mention}** تم حظره من السيرفر\n\n**السبب:** {reason}\n**بواسطة:** {ctx.author.mention}",
                 color=Colors.SUCCESS
             )
         except Exception as e:
             embed = discord.Embed(title="❌ فشل الحظر", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
 
-    @ban_group.command(name="all", description="🔨 حظر جميع الأعضاء الذين لديهم رتبة معينة")
-    @app_commands.describe(role="الرتبة التي سيتم حظر أعضائها", reason="سبب الحظر")
-    async def ban_all(self, interaction: discord.Interaction, role: discord.Role, reason: str = "لا يوجد سبب"):
-        await interaction.response.defer(ephemeral=True)
-        
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name="ban-all",
+        aliases=["ball", "حظر-الكل"],
+        description="🔨 حظر جميع الأعضاء الذين لديهم رتبة معينة"
+    )
+    @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
+    async def ban_all(self, ctx: commands.Context, role: discord.Role, *, reason: str = "لا يوجد سبب"):
+        """حظر جميع أعضاء رتبة معينة"""
+        msg = await ctx.send("⏳ جاري تنفيذ الحظر الجماعي...")
+
         banned = 0
         failed = 0
         for member in role.members:
-            if member.top_role < interaction.guild.me.top_role and not member.bot:
+            if member.top_role < ctx.guild.me.top_role and not member.bot:
                 try:
-                    await member.ban(reason=f"{interaction.user} | {reason}")
+                    await member.ban(reason=f"{ctx.author} | {reason}")
                     banned += 1
                 except:
                     failed += 1
-        
+
         embed = discord.Embed(
             title="✅ تم تنفيذ الحظر الجماعي",
             description=f"🔨 تم حظر أعضاء رتبة **{role.name}**\n\n✅ **نجح:** `{banned}`\n❌ **فشل:** `{failed}`",
             color=Colors.SUCCESS
         )
-        await interaction.followup.send(embed=embed)
+        await msg.edit(content=None, embed=embed)
 
-    @app_commands.command(name="unban", description="🔓 إلغاء حظر عضو من السيرفر")
-    @app_commands.describe(user_id="معرف العضو المراد إلغاء حظره", reason="سبب إلغاء الحظر")
-    @app_commands.default_permissions(ban_members=True)
-    async def unban(self, interaction: discord.Interaction, user_id: str, reason: str = "لا يوجد سبب"):
+    @commands.command(
+        name="unban",
+        aliases=["ub", "فك-الحظر"],
+        description="🔓 إلغاء حظر عضو من السيرفر"
+    )
+    @commands.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
+    async def unban(self, ctx: commands.Context, user_id: str, *, reason: str = "لا يوجد سبب"):
+        """إلغاء حظر عضو"""
         try:
             user = await self.bot.fetch_user(int(user_id))
-            await interaction.guild.unban(user, reason=f"{interaction.user} | {reason}")
+            await ctx.guild.unban(user, reason=f"{ctx.author} | {reason}")
             embed = discord.Embed(
                 title="✅ تم إلغاء الحظر",
                 description=f"🔓 **{user}** تم إلغاء حظره من السيرفر",
@@ -91,24 +104,31 @@ class Moderation(commands.Cog):
             )
         except discord.NotFound:
             embed = discord.Embed(title="❌ فشل", description="العضو غير محظور أو المعرف خاطئ", color=Colors.ERROR)
+        except ValueError:
+            embed = discord.Embed(title="❌ فشل", description="آيدي غير صحيح!", color=Colors.ERROR)
         except Exception as e:
             embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
+
+        await ctx.send(embed=embed)
 
     # ==========================================
-    # 👢 أمر الطرد
+    # 👢 أمر الطرد (Kick)
     # ==========================================
-    @app_commands.command(name="kick", description="👢 طرد عضو من السيرفر")
-    @app_commands.describe(member="العضو المراد طرده", reason="سبب الطرد")
-    @app_commands.default_permissions(kick_members=True)
-    async def kick(self, interaction: discord.Interaction, member: discord.Member, reason: str = "لا يوجد سبب"):
-        if member.top_role >= interaction.user.top_role:
-            await interaction.response.send_message("❌ لا يمكنك طرد عضو رتبته مساوية أو أعلى من رتبتك!", ephemeral=True)
+    @commands.command(
+        name="kick",
+        aliases=["k", "طرد"],
+        description="👢 طرد عضو من السيرفر"
+    )
+    @commands.has_permissions(kick_members=True)
+    @commands.bot_has_permissions(kick_members=True)
+    async def kick(self, ctx: commands.Context, member: discord.Member, *, reason: str = "لا يوجد سبب"):
+        """طرد عضو من السيرفر"""
+        if member.top_role >= ctx.author.top_role and ctx.author != ctx.guild.owner:
+            await ctx.send("❌ لا يمكنك طرد عضو رتبته مساوية أو أعلى من رتبتك!", delete_after=8)
             return
-        
+
         try:
-            await member.kick(reason=f"{interaction.user} | {reason}")
+            await member.kick(reason=f"{ctx.author} | {reason}")
             embed = discord.Embed(
                 title="✅ تم الطرد بنجاح",
                 description=f"👢 **{member.mention}** تم طرده من السيرفر\n\n**السبب:** {reason}",
@@ -116,109 +136,123 @@ class Moderation(commands.Cog):
             )
         except Exception as e:
             embed = discord.Embed(title="❌ فشل الطرد", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
+
+        await ctx.send(embed=embed)
 
     # ==========================================
-    # ⚠️ مجموعة أوامر الإنذارات (Warn Group)
+    # ⚠️ أوامر الإنذارات (Warn)
     # ==========================================
-    warn_group = app_commands.Group(
+    @commands.group(
         name="warn",
+        aliases=["w", "انذار", "تحذير"],
         description="⚠️ أوامر الإنذارات",
-        default_permissions=discord.Permissions(moderate_members=True)
+        invoke_without_command=True
     )
+    @commands.has_permissions(moderate_members=True)
+    async def warn_group(self, ctx: commands.Context):
+        """عرض المساعدة لأوامر الإنذار"""
+        embed = discord.Embed(
+            title="⚠️ أوامر الإنذارات",
+            description=(
+                "`!warn add @عضو سبب` - إعطاء إنذار\n"
+                "`!warn list @عضو` - عرض الإنذارات\n"
+                "`!warn clear @عضو` - مسح الإنذارات"
+            ),
+            color=Colors.WARNING
+        )
+        await ctx.send(embed=embed)
 
-    @warn_group.command(name="add", description="⚠️ إعطاء إنذار لعضو")
-    @app_commands.describe(member="العضو المراد إنذاره", reason="سبب الإنذار")
-    async def warn_add(self, interaction: discord.Interaction, member: discord.Member, reason: str):
-        guild_id = str(interaction.guild.id)
+    @warn_group.command(name="add", aliases=["+", "اضف"], description="⚠️ إعطاء إنذار لعضو")
+    async def warn_add(self, ctx: commands.Context, member: discord.Member, *, reason: str):
+        """إعطاء إنذار لعضو"""
+        guild_id = str(ctx.guild.id)
         user_id = str(member.id)
-        
+
         if guild_id not in self.warnings:
             self.warnings[guild_id] = {}
         if user_id not in self.warnings[guild_id]:
             self.warnings[guild_id][user_id] = []
-        
+
         warn_entry = {
-            "moderator": str(interaction.user),
+            "moderator": str(ctx.author),
             "reason": reason,
             "date": discord.utils.utcnow().isoformat()
         }
         self.warnings[guild_id][user_id].append(warn_entry)
         self._save_warnings()
-        
+
         total = len(self.warnings[guild_id][user_id])
-        
+
         embed = discord.Embed(
             title="✅ تم إعطاء الإنذار",
             description=f"⚠️ **{member.mention}** حصل على إنذار\n\n**السبب:** {reason}\n**عدد الإنذارات:** `{total}`",
             color=Colors.WARNING
         )
-        await interaction.response.send_message(embed=embed)
+        await ctx.send(embed=embed)
 
-    @warn_group.command(name="list", description="📋 عرض إنذارات عضو")
-    @app_commands.describe(member="العضو المراد عرض إنذاراته")
-    async def warn_list(self, interaction: discord.Interaction, member: discord.Member):
-        guild_id = str(interaction.guild.id)
+    @warn_group.command(name="list", aliases=["ls", "عرض"], description="📋 عرض إنذارات عضو")
+    async def warn_list(self, ctx: commands.Context, member: discord.Member):
+        """عرض إنذارات عضو"""
+        guild_id = str(ctx.guild.id)
         user_id = str(member.id)
-        
+
         warnings = self.warnings.get(guild_id, {}).get(user_id, [])
-        
+
         if not warnings:
             embed = discord.Embed(
                 title="📋 إنذارات العضو",
                 description=f"✅ **{member.mention}** ليس لديه أي إنذارات",
                 color=Colors.SUCCESS
             )
-            await interaction.response.send_message(embed=embed)
+            await ctx.send(embed=embed)
             return
-        
+
         embed = discord.Embed(
             title=f"📋 إنذارات {member.display_name}",
             description=f"إجمالي الإنذارات: `{len(warnings)}`",
             color=Colors.WARNING
         )
-        
+
         for i, w in enumerate(warnings[:25], 1):
             embed.add_field(
                 name=f"#{i} - {w['date'][:10]}",
                 value=f"**السبب:** {w['reason']}\n**بواسطة:** {w['moderator']}",
                 inline=False
             )
-        
-        await interaction.response.send_message(embed=embed)
 
-    @warn_group.command(name="clear", description="🗑️ مسح إنذارات عضو")
-    @app_commands.describe(member="العضو المراد مسح إنذاراته")
-    async def warn_clear(self, interaction: discord.Interaction, member: discord.Member):
-        guild_id = str(interaction.guild.id)
+        await ctx.send(embed=embed)
+
+    @warn_group.command(name="clear", aliases=["reset", "مسح"], description="🗑️ مسح إنذارات عضو")
+    async def warn_clear(self, ctx: commands.Context, member: discord.Member):
+        """مسح جميع إنذارات عضو"""
+        guild_id = str(ctx.guild.id)
         user_id = str(member.id)
-        
+
         if guild_id in self.warnings and user_id in self.warnings[guild_id]:
             del self.warnings[guild_id][user_id]
             self._save_warnings()
-        
+
         embed = discord.Embed(
             title="✅ تم المسح",
             description=f"🗑️ تم مسح جميع إنذارات **{member.mention}**",
             color=Colors.SUCCESS
         )
-        await interaction.response.send_message(embed=embed)
+        await ctx.send(embed=embed)
 
     # ==========================================
-    # 🔇 مجموعة أوامر الكتم (Mute Group)
+    # 🔇 أوامر الكتم (Mute)
     # ==========================================
-    mute_group = app_commands.Group(
+    @commands.command(
         name="mute",
-        description="🔇 أوامر الكتم",
-        default_permissions=discord.Permissions(moderate_members=True)
+        aliases=["m", "كتم"],
+        description="🔇 كتم عضو (Timeout)"
     )
-
-    @mute_group.command(name="user", description="🔇 كتم عضو (Timeout)")
-    @app_commands.describe(member="العضو المراد كتمه", duration="المدة بالدقائق", reason="سبب الكتم")
-    async def mute_user(self, interaction: discord.Interaction, member: discord.Member, duration: int = 60, reason: str = "لا يوجد سبب"):
+    @commands.has_permissions(moderate_members=True)
+    @commands.bot_has_permissions(moderate_members=True)
+    async def mute(self, ctx: commands.Context, member: discord.Member, duration: int = 60, *, reason: str = "لا يوجد سبب"):
+        """كتم عضو لمدة محددة بالدقائق"""
         try:
-            await member.timeout(timedelta(minutes=duration), reason=f"{interaction.user} | {reason}")
+            await member.timeout(timedelta(minutes=duration), reason=f"{ctx.author} | {reason}")
             embed = discord.Embed(
                 title="✅ تم الكتم",
                 description=f"🔇 **{member.mention}** تم كتمه لمدة `{duration}` دقيقة\n\n**السبب:** {reason}",
@@ -226,33 +260,44 @@ class Moderation(commands.Cog):
             )
         except Exception as e:
             embed = discord.Embed(title="❌ فشل الكتم", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
 
-    @mute_group.command(name="all", description="🔇 كتم جميع أعضاء رتبة معينة")
-    @app_commands.describe(role="الرتبة المراد كتم أعضائها", duration="المدة بالدقائق")
-    async def mute_all(self, interaction: discord.Interaction, role: discord.Role, duration: int = 60):
-        await interaction.response.defer(ephemeral=True)
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name="mute-all",
+        aliases=["mall", "كتم-الكل"],
+        description="🔇 كتم جميع أعضاء رتبة معينة"
+    )
+    @commands.has_permissions(moderate_members=True)
+    @commands.bot_has_permissions(moderate_members=True)
+    async def mute_all(self, ctx: commands.Context, role: discord.Role, duration: int = 60):
+        """كتم جميع أعضاء رتبة"""
+        msg = await ctx.send("⏳ جاري الكتم الجماعي...")
         muted = 0
         for member in role.members:
-            if member.top_role < interaction.guild.me.top_role and not member.bot:
+            if member.top_role < ctx.guild.me.top_role and not member.bot:
                 try:
-                    await member.timeout(timedelta(minutes=duration), reason=f"كتم جماعي بواسطة {interaction.user}")
+                    await member.timeout(timedelta(minutes=duration), reason=f"كتم جماعي بواسطة {ctx.author}")
                     muted += 1
                 except:
                     pass
-        
+
         embed = discord.Embed(
             title="✅ تم الكتم الجماعي",
             description=f"🔇 تم كتم `{muted}` عضو من رتبة **{role.name}**",
             color=Colors.SUCCESS
         )
-        await interaction.followup.send(embed=embed)
+        await msg.edit(content=None, embed=embed)
 
-    @app_commands.command(name="unmute", description="🔊 إلغاء كتم عضو")
-    @app_commands.describe(member="العضو المراد إلغاء كتمه")
-    @app_commands.default_permissions(moderate_members=True)
-    async def unmute(self, interaction: discord.Interaction, member: discord.Member):
+    @commands.command(
+        name="unmute",
+        aliases=["um", "فك-الكتم"],
+        description="🔊 إلغاء كتم عضو"
+    )
+    @commands.has_permissions(moderate_members=True)
+    @commands.bot_has_permissions(moderate_members=True)
+    async def unmute(self, ctx: commands.Context, member: discord.Member):
+        """إلغاء كتم عضو"""
         try:
             await member.timeout(None)
             embed = discord.Embed(
@@ -262,28 +307,36 @@ class Moderation(commands.Cog):
             )
         except Exception as e:
             embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
+
+        await ctx.send(embed=embed)
 
     # ==========================================
-    # ⏱️ مجموعة أوامر Timeout
+    # ⏱️ أوامر Timeout
     # ==========================================
-    timeout_group = app_commands.Group(
+    @commands.command(
         name="timeout",
-        description="⏱️ أوامر التوقيت",
-        default_permissions=discord.Permissions(moderate_members=True)
+        aliases=["to", "توقيت"],
+        description="⏱️ تعيين Timeout لعضو (ساعات ودقائق)"
     )
-
-    @timeout_group.command(name="set", description="⏱️ تعيين Timeout لعضو")
-    @app_commands.describe(member="العضو", hours="الساعات", minutes="الدقائق", reason="السبب")
-    async def timeout_set(self, interaction: discord.Interaction, member: discord.Member, hours: int = 0, minutes: int = 0, reason: str = "لا يوجد سبب"):
+    @commands.has_permissions(moderate_members=True)
+    @commands.bot_has_permissions(moderate_members=True)
+    async def timeout_set(
+        self,
+        ctx: commands.Context,
+        member: discord.Member,
+        hours: int = 0,
+        minutes: int = 0,
+        *,
+        reason: str = "لا يوجد سبب"
+    ):
+        """تعيين Timeout لعضو"""
         total_minutes = hours * 60 + minutes
         if total_minutes <= 0:
-            await interaction.response.send_message("❌ يجب تحديد مدة صحيحة!", ephemeral=True)
+            await ctx.send("❌ يجب تحديد مدة صحيحة!", delete_after=8)
             return
-        
+
         try:
-            await member.timeout(timedelta(minutes=total_minutes), reason=f"{interaction.user} | {reason}")
+            await member.timeout(timedelta(minutes=total_minutes), reason=f"{ctx.author} | {reason}")
             embed = discord.Embed(
                 title="✅ تم التوقيت",
                 description=f"⏱️ **{member.mention}** تم توقيته لمدة `{hours}h {minutes}m`",
@@ -291,13 +344,18 @@ class Moderation(commands.Cog):
             )
         except Exception as e:
             embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name="untimeout", description="⏱️ إلغاء Timeout لعضو")
-    @app_commands.describe(member="العضو")
-    @app_commands.default_permissions(moderate_members=True)
-    async def untimeout(self, interaction: discord.Interaction, member: discord.Member):
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name="untimeout",
+        aliases=["uto", "الغاء-التوقيت"],
+        description="⏱️ إلغاء Timeout لعضو"
+    )
+    @commands.has_permissions(moderate_members=True)
+    @commands.bot_has_permissions(moderate_members=True)
+    async def untimeout(self, ctx: commands.Context, member: discord.Member):
+        """إلغاء Timeout لعضو"""
         try:
             await member.timeout(None)
             embed = discord.Embed(
@@ -307,20 +365,25 @@ class Moderation(commands.Cog):
             )
         except Exception as e:
             embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
+
+        await ctx.send(embed=embed)
 
     # ==========================================
-    # 🎤 أوامر كتم الصوت
+    # 🎤 كتم الصوت
     # ==========================================
-    @app_commands.command(name="voice-mute", description="🎤 كتم صوت عضو في القناة الصوتية")
-    @app_commands.describe(member="العضو المراد كتم صوته")
-    @app_commands.default_permissions(mute_members=True)
-    async def voice_mute(self, interaction: discord.Interaction, member: discord.Member):
+    @commands.command(
+        name="voicemute",
+        aliases=["vm", "كتم-صوت"],
+        description="🎤 كتم صوت عضو في القناة الصوتية"
+    )
+    @commands.has_permissions(mute_members=True)
+    @commands.bot_has_permissions(mute_members=True)
+    async def voice_mute(self, ctx: commands.Context, member: discord.Member):
+        """كتم صوت عضو"""
         if not member.voice:
-            await interaction.response.send_message("❌ العضو ليس في قناة صوتية!", ephemeral=True)
+            await ctx.send("❌ العضو ليس في قناة صوتية!", delete_after=8)
             return
-        
+
         try:
             await member.edit(mute=True)
             embed = discord.Embed(
@@ -330,17 +393,22 @@ class Moderation(commands.Cog):
             )
         except Exception as e:
             embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
 
-    @app_commands.command(name="voice-deafen", description="🎧 منع عضو من سماع الصوت في القناة")
-    @app_commands.describe(member="العضو")
-    @app_commands.default_permissions(mute_members=True)
-    async def voice_deafen(self, interaction: discord.Interaction, member: discord.Member):
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name="voicedeafen",
+        aliases=["vd", "منع-السماع"],
+        description="🎧 منع عضو من سماع الصوت"
+    )
+    @commands.has_permissions(deafen_members=True)
+    @commands.bot_has_permissions(deafen_members=True)
+    async def voice_deafen(self, ctx: commands.Context, member: discord.Member):
+        """منع عضو من سماع الصوت"""
         if not member.voice:
-            await interaction.response.send_message("❌ العضو ليس في قناة صوتية!", ephemeral=True)
+            await ctx.send("❌ العضو ليس في قناة صوتية!", delete_after=8)
             return
-        
+
         try:
             await member.edit(deafen=True)
             embed = discord.Embed(
@@ -350,103 +418,149 @@ class Moderation(commands.Cog):
             )
         except Exception as e:
             embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
+
+        await ctx.send(embed=embed)
 
     # ==========================================
-    # 🧹 مجموعة أوامر القنوات
+    # 🧹 أوامر القنوات (Channel)
     # ==========================================
-    channel_group = app_commands.Group(
-        name="channel",
-        description="🧹 أوامر إدارة القنوات",
-        default_permissions=discord.Permissions(manage_channels=True)
+    @commands.command(
+        name="clear",
+        aliases=["c", "مسح", "purge"],
+        description="🧹 حذف عدد من الرسائل من القناة"
     )
+    @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True)
+    async def clear(self, ctx: commands.Context, amount: int, member: discord.Member = None):
+        """حذف عدد من الرسائل"""
+        if amount < 1 or amount > 1000:
+            await ctx.send("❌ العدد لازم يكون بين **1** و **1000**!", delete_after=8)
+            return
 
-    @channel_group.command(name="clear", description="🧹 حذف عدد من الرسائل من القناة")
-    @app_commands.describe(amount="عدد الرسائل (1-1000)", member="حذف رسائل عضو معين فقط")
-    async def channel_clear(self, interaction: discord.Interaction, amount: app_commands.Range[int, 1, 1000], member: discord.Member = None):
-        await interaction.response.defer(ephemeral=True)
-        
         try:
+            await ctx.message.delete()
             if member:
                 def check(m): return m.author.id == member.id
-                deleted = await interaction.channel.purge(limit=amount, check=check)
+                deleted = await ctx.channel.purge(limit=amount, check=check)
             else:
-                deleted = await interaction.channel.purge(limit=amount)
-            
+                deleted = await ctx.channel.purge(limit=amount)
+
             embed = discord.Embed(
                 title="✅ تم الحذف",
                 description=f"🧹 تم حذف `{len(deleted)}` رسالة",
                 color=Colors.SUCCESS
             )
+            await ctx.send(embed=embed, delete_after=5)
         except Exception as e:
-            embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.followup.send(embed=embed, ephemeral=True)
+            await ctx.send(f"❌ فشل: {e}", delete_after=8)
 
-    @channel_group.command(name="slowmode", description="🐌 تعيين الوضع البطيء للقناة")
-    @app_commands.describe(seconds="المدة بالثواني (0 لإيقاف)")
-    async def channel_slowmode(self, interaction: discord.Interaction, seconds: app_commands.Range[int, 0, 21600]):
+    @commands.command(
+        name="slowmode",
+        aliases=["sm", "وضع-بطيء"],
+        description="🐌 تعيين الوضع البطيء للقناة"
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.bot_has_permissions(manage_channels=True)
+    async def slowmode(self, ctx: commands.Context, seconds: int = 0):
+        """تعيين الوضع البطيء"""
+        if seconds < 0 or seconds > 21600:
+            await ctx.send("❌ المدة لازم تكون بين **0** و **21600** ثانية!", delete_after=8)
+            return
+
         try:
-            await interaction.channel.edit(slowmode_delay=seconds)
+            await ctx.channel.edit(slowmode_delay=seconds)
             if seconds == 0:
                 msg = "🐌 تم إيقاف الوضع البطيء"
             else:
                 msg = f"🐌 تم تعيين الوضع البطيء إلى `{seconds}` ثانية"
-            
+
             embed = discord.Embed(title="✅ تم", description=msg, color=Colors.SUCCESS)
         except Exception as e:
             embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
 
-    @channel_group.command(name="lock", description="🔒 قفل القناة")
-    async def channel_lock(self, interaction: discord.Interaction):
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name="lock",
+        aliases=["l", "قفل"],
+        description="🔒 قفل القناة"
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.bot_has_permissions(manage_channels=True)
+    async def lock(self, ctx: commands.Context):
+        """قفل القناة"""
         try:
-            await interaction.channel.set_permissions(interaction.guild.default_role, send_messages=False)
+            await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
             embed = discord.Embed(title="✅ تم القفل", description="🔒 تم قفل القناة", color=Colors.SUCCESS)
         except Exception as e:
             embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
 
-    @channel_group.command(name="unlock", description="🔓 فتح القناة")
-    async def channel_unlock(self, interaction: discord.Interaction):
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name="unlock",
+        aliases=["ul", "فتح"],
+        description="🔓 فتح القناة"
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.bot_has_permissions(manage_channels=True)
+    async def unlock(self, ctx: commands.Context):
+        """فتح القناة"""
         try:
-            await interaction.channel.set_permissions(interaction.guild.default_role, send_messages=None)
+            await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=None)
             embed = discord.Embed(title="✅ تم الفتح", description="🔓 تم فتح القناة", color=Colors.SUCCESS)
         except Exception as e:
             embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
 
-    @channel_group.command(name="hide", description="👻 إخفاء القناة")
-    async def channel_hide(self, interaction: discord.Interaction):
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name="hide",
+        aliases=["اخفاء"],
+        description="👻 إخفاء القناة"
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.bot_has_permissions(manage_channels=True)
+    async def hide(self, ctx: commands.Context):
+        """إخفاء القناة"""
         try:
-            await interaction.channel.set_permissions(interaction.guild.default_role, view_channel=False)
+            await ctx.channel.set_permissions(ctx.guild.default_role, view_channel=False)
             embed = discord.Embed(title="✅ تم الإخفاء", description="👻 تم إخفاء القناة", color=Colors.SUCCESS)
         except Exception as e:
             embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
 
-    @channel_group.command(name="unhide", description="👁️ إظهار القناة")
-    async def channel_unhide(self, interaction: discord.Interaction):
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name="unhide",
+        aliases=["اظهار"],
+        description="👁️ إظهار القناة"
+    )
+    @commands.has_permissions(manage_channels=True)
+    @commands.bot_has_permissions(manage_channels=True)
+    async def unhide(self, ctx: commands.Context):
+        """إظهار القناة"""
         try:
-            await interaction.channel.set_permissions(interaction.guild.default_role, view_channel=None)
+            await ctx.channel.set_permissions(ctx.guild.default_role, view_channel=None)
             embed = discord.Embed(title="✅ تم الإظهار", description="👁️ تم إظهار القناة", color=Colors.SUCCESS)
         except Exception as e:
             embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
 
-    @channel_group.command(name="move", description="🔀 نقل عضو لقناة صوتية")
-    @app_commands.describe(member="العضو المراد نقله", channel="القناة الصوتية الهدف")
-    async def channel_move(self, interaction: discord.Interaction, member: discord.Member, channel: discord.VoiceChannel):
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name="move",
+        aliases=["نقل"],
+        description="🔀 نقل عضو لقناة صوتية"
+    )
+    @commands.has_permissions(move_members=True)
+    @commands.bot_has_permissions(move_members=True)
+    async def move(self, ctx: commands.Context, member: discord.Member, channel: discord.VoiceChannel):
+        """نقل عضو لقناة صوتية"""
         if not member.voice:
-            await interaction.response.send_message("❌ العضو ليس في قناة صوتية!", ephemeral=True)
+            await ctx.send("❌ العضو ليس في قناة صوتية!", delete_after=8)
             return
-        
+
         try:
             await member.move_to(channel)
             embed = discord.Embed(
@@ -456,16 +570,21 @@ class Moderation(commands.Cog):
             )
         except Exception as e:
             embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
+
+        await ctx.send(embed=embed)
 
     # ==========================================
-    # 👤 أوامر إدارة الأعضاء
+    # ✏️ أمر تغيير الاسم (Nick)
     # ==========================================
-    @app_commands.command(name="nick", description="✏️ تغيير اسم عضو في السيرفر")
-    @app_commands.describe(member="العضو", nickname="الاسم الجديد (اتركه فارغاً للإعادة)")
-    @app_commands.default_permissions(manage_nicknames=True)
-    async def nick(self, interaction: discord.Interaction, member: discord.Member, nickname: str = None):
+    @commands.command(
+        name="nick",
+        aliases=["n", "اسم", "لقب"],
+        description="✏️ تغيير اسم عضو في السيرفر"
+    )
+    @commands.has_permissions(manage_nicknames=True)
+    @commands.bot_has_permissions(manage_nicknames=True)
+    async def nick(self, ctx: commands.Context, member: discord.Member, *, nickname: str = None):
+        """تغيير اسم عضو"""
         try:
             await member.edit(nick=nickname)
             if nickname:
@@ -475,8 +594,42 @@ class Moderation(commands.Cog):
             embed = discord.Embed(title="✅ تم", description=msg, color=Colors.SUCCESS)
         except Exception as e:
             embed = discord.Embed(title="❌ فشل", description=f"الخطأ: {e}", color=Colors.ERROR)
-        
-        await interaction.response.send_message(embed=embed)
+
+        await ctx.send(embed=embed)
+
+    # ==========================================
+    # ⚠️ معالجة الأخطاء (Error Handler)
+    # ==========================================
+    async def cog_command_error(self, ctx: commands.Context, error):
+        """معالجة شاملة لكل أخطاء الـ Cog"""
+        if isinstance(error, commands.MissingPermissions):
+            perms = ", ".join(error.missing_permissions)
+            await ctx.send(
+                f"❌ مفيش عندك الصلاحيات دي: `{perms}`",
+                delete_after=8
+            )
+        elif isinstance(error, commands.BotMissingPermissions):
+            perms = ", ".join(error.missing_permissions)
+            await ctx.send(
+                f"❌ البوت مفيش عنده الصلاحيات دي: `{perms}`",
+                delete_after=8
+            )
+        elif isinstance(error, commands.MemberNotFound):
+            await ctx.send("❌ مش لاقي العضو ده في السيرفر!", delete_after=8)
+        elif isinstance(error, commands.RoleNotFound):
+            await ctx.send("❌ مش لاقي الرتبة دي!", delete_after=8)
+        elif isinstance(error, commands.ChannelNotFound):
+            await ctx.send("❌ مش لاقي القناة دي!", delete_after=8)
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(
+                f"❌ ناقص بيانات: `{error.param.name}`",
+                delete_after=8
+            )
+        elif isinstance(error, commands.BadArgument):
+            await ctx.send("❌ تأكد من البيانات المدخلة!", delete_after=8)
+        else:
+            # لأخطاء تانية، نطبعها في الكونسول
+            print(f"❌ خطأ في أمر {ctx.command}: {error}")
 
 
 async def setup(bot):
