@@ -1,16 +1,11 @@
 {% extends "base.html" %}
 
+{% block page_title %}
+<i class="fas fa-coins text-warning me-2"></i>
+إدارة الاقتصاد
+{% endblock %}
+
 {% block content %}
-<!-- عنوان الصفحة -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold">
-        <i class="fas fa-coins text-warning me-2"></i>
-        إدارة الاقتصاد
-    </h2>
-    <button class="btn btn-outline-primary btn-sm" onclick="loadEconomy()">
-        <i class="fas fa-sync-alt me-1"></i> تحديث
-    </button>
-</div>
 
 <!-- كروت الإحصائيات -->
 <div class="row g-3 mb-4">
@@ -76,7 +71,7 @@
     </div>
 </div>
 
-<!-- إعدادات Bitcoin -->
+<!-- إعدادات Crypto + المتجر -->
 <div class="row g-4 mb-4">
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm">
@@ -92,72 +87,36 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold">الحد الأدنى للمكافأة اليومية</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light">₿</span>
-                                <input 
-                                    type="number" 
-                                    class="form-control" 
-                                    id="daily-min" 
-                                    min="1"
-                                    value="100"
-                                    required
-                                >
+                                <span class="input-group-text bg-dark">₿</span>
+                                <input type="number" class="form-control" id="daily-min" min="1" value="100" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">الحد الأقصى للمكافأة اليومية</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light">₿</span>
-                                <input 
-                                    type="number" 
-                                    class="form-control" 
-                                    id="daily-max" 
-                                    min="1"
-                                    value="500"
-                                    required
-                                >
+                                <span class="input-group-text bg-dark">₿</span>
+                                <input type="number" class="form-control" id="daily-max" min="1" value="500" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">الحد الأدنى للعمل</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light">₿</span>
-                                <input 
-                                    type="number" 
-                                    class="form-control" 
-                                    id="work-min" 
-                                    min="1"
-                                    value="50"
-                                    required
-                                >
+                                <span class="input-group-text bg-dark">₿</span>
+                                <input type="number" class="form-control" id="work-min" min="1" value="50" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">الحد الأقصى للعمل</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-light">₿</span>
-                                <input 
-                                    type="number" 
-                                    class="form-control" 
-                                    id="work-max" 
-                                    min="1"
-                                    value="200"
-                                    required
-                                >
+                                <span class="input-group-text bg-dark">₿</span>
+                                <input type="number" class="form-control" id="work-max" min="1" value="200" required>
                             </div>
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">رسوم التحويل (%)</label>
                             <div class="input-group">
-                                <input 
-                                    type="number" 
-                                    class="form-control" 
-                                    id="transfer-fee" 
-                                    min="0"
-                                    max="100"
-                                    value="0"
-                                    required
-                                >
-                                <span class="input-group-text bg-light">%</span>
+                                <input type="number" class="form-control" id="transfer-fee" min="0" max="100" value="0" required>
+                                <span class="input-group-text bg-dark">%</span>
                             </div>
                             <div class="form-text">رسوم إضافية تُخصم من التحويلات (اختياري)</div>
                         </div>
@@ -172,7 +131,6 @@
         </div>
     </div>
 
-    <!-- إدارة المتجر -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-dark border-0 py-3">
@@ -182,27 +140,13 @@
                 </h5>
             </div>
             <div class="card-body">
-                <!-- نموذج إضافة عنصر -->
                 <form id="add-item-form" class="mb-3">
                     <div class="row g-2">
                         <div class="col-md-5">
-                            <input 
-                                type="text" 
-                                class="form-control" 
-                                id="item-name" 
-                                placeholder="اسم العنصر"
-                                required
-                            >
+                            <input type="text" class="form-control" id="item-name" placeholder="اسم العنصر" required>
                         </div>
                         <div class="col-md-4">
-                            <input 
-                                type="number" 
-                                class="form-control" 
-                                id="item-price" 
-                                placeholder="السعر"
-                                min="1"
-                                required
-                            >
+                            <input type="number" class="form-control" id="item-price" placeholder="السعر" min="1" required>
                         </div>
                         <div class="col-md-3">
                             <button type="submit" class="btn btn-success w-100">
@@ -212,7 +156,6 @@
                     </div>
                 </form>
 
-                <!-- قائمة العناصر -->
                 <div class="list-group" id="shop-items-list">
                     <div class="text-center text-muted py-3">
                         <i class="fas fa-spinner fa-spin"></i> جاري التحميل...
@@ -234,7 +177,7 @@
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead class="table-light">
+                <thead>
                     <tr>
                         <th class="ps-4">المستخدم</th>
                         <th>النوع</th>
@@ -246,9 +189,7 @@
                 <tbody id="transactions-table-body">
                     <tr>
                         <td colspan="5" class="text-center py-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">جاري التحميل...</span>
-                            </div>
+                            <div class="spinner-border text-primary" role="status"></div>
                             <p class="text-muted mt-2">جاري تحميل المعاملات...</p>
                         </td>
                     </tr>
@@ -261,7 +202,6 @@
 
 {% block scripts %}
 <script>
-    // تحميل بيانات الاقتصاد
     async function loadEconomy() {
         try {
             const response = await fetch('/api/economy');
@@ -270,23 +210,18 @@
             if (result.success) {
                 const data = result.data;
                 
-                // تحديث الإحصائيات
                 document.getElementById('total-balance').textContent = data.total_balance.toLocaleString('ar-EG') + ' ₿';
                 document.getElementById('total-earned').textContent = data.total_earned.toLocaleString('ar-EG') + ' ₿';
                 document.getElementById('total-spent').textContent = data.total_spent.toLocaleString('ar-EG') + ' ₿';
                 document.getElementById('total-users').textContent = data.total_users.toLocaleString('ar-EG');
                 
-                // تحديث الإعدادات
                 document.getElementById('daily-min').value = data.settings.daily_min;
                 document.getElementById('daily-max').value = data.settings.daily_max;
                 document.getElementById('work-min').value = data.settings.work_min;
                 document.getElementById('work-max').value = data.settings.work_max;
                 document.getElementById('transfer-fee').value = data.settings.transfer_fee;
                 
-                // تحديث المعاملات
                 renderTransactions(data.recent_transactions);
-                
-                // تحميل عناصر المتجر
                 loadShopItems();
             }
         } catch (error) {
@@ -295,7 +230,6 @@
         }
     }
 
-    // عرض المعاملات
     function renderTransactions(transactions) {
         const tbody = document.getElementById('transactions-table-body');
         
@@ -319,11 +253,9 @@
             
             return `
                 <tr>
-                    <td class="ps-4 align-middle">
-                        <code class="small">${tx.user_id}</code>
-                    </td>
+                    <td class="ps-4 align-middle"><code class="small">${tx.user_id}</code></td>
                     <td class="align-middle">
-                        <span class="badge bg-${color} bg-opacity-10 text-${color}">
+                        <span class="badge bg-${color}">
                             <i class="${icon} me-1"></i>
                             ${getTransactionType(tx.type)}
                         </span>
@@ -334,15 +266,12 @@
                             ${amountSign}${tx.amount.toLocaleString('ar-EG')} ₿
                         </span>
                     </td>
-                    <td class="align-middle">
-                        <small class="text-muted">${formatTime(tx.timestamp)}</small>
-                    </td>
+                    <td class="align-middle"><small class="text-muted">${formatTime(tx.timestamp)}</small></td>
                 </tr>
             `;
         }).join('');
     }
 
-    // تحميل عناصر المتجر
     function loadShopItems() {
         const items = [
             { id: 'crown', name: '👑 تاج', price: 5000 },
@@ -357,30 +286,17 @@
         
         const container = document.getElementById('shop-items-list');
         
-        if (items.length === 0) {
-            container.innerHTML = `
-                <div class="text-center text-muted py-3">
-                    <i class="fas fa-store-slash fa-2x mb-2"></i>
-                    <p class="mb-0">لا توجد عناصر في المتجر</p>
-                </div>
-            `;
-            return;
-        }
-        
         container.innerHTML = items.map(item => `
-            <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="list-group-item bg-transparent d-flex justify-content-between align-items-center">
                 <div>
                     <strong>${item.name}</strong>
                     <small class="text-muted d-block">ID: ${item.id}</small>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-warning bg-opacity-10 text-warning">
+                    <span class="badge bg-warning">
                         💎 ${item.price.toLocaleString('ar-EG')} ₿
                     </span>
-                    <button 
-                        class="btn btn-sm btn-outline-danger"
-                        onclick="deleteShopItem('${item.id}')"
-                    >
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteShopItem('${item.id}')">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -388,14 +304,12 @@
         `).join('');
     }
 
-    // حذف عنصر من المتجر
     function deleteShopItem(itemId) {
         if (confirm('هل أنت متأكد من حذف هذا العنصر؟')) {
             showNotification('تم حذف العنصر (محاكاة)', 'success');
         }
     }
 
-    // حفظ الإعدادات
     document.getElementById('economy-settings-form').addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -407,7 +321,6 @@
             transfer_fee: parseInt(document.getElementById('transfer-fee').value)
         };
         
-        // التحقق من صحة القيم
         if (settings.daily_min > settings.daily_max) {
             showNotification('الحد الأدنى يجب أن يكون أقل من الحد الأقصى', 'warning');
             return;
@@ -421,9 +334,7 @@
         try {
             const response = await fetch('/api/settings', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(settings)
             });
             
@@ -435,12 +346,10 @@
                 showNotification(result.error || 'حدث خطأ', 'danger');
             }
         } catch (error) {
-            console.error('خطأ:', error);
             showNotification('حدث خطأ في الاتصال', 'danger');
         }
     });
 
-    // إضافة عنصر جديد
     document.getElementById('add-item-form').addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -454,44 +363,33 @@
         
         showNotification(`تم إضافة "${name}" بسعر ${price} ₿ (محاكاة)`, 'success');
         
-        // مسح الحقول
         document.getElementById('item-name').value = '';
         document.getElementById('item-price').value = '';
     });
 
-    // دوال مساعدة
     function getTransactionIcon(type) {
         const icons = {
-            'daily': 'fas fa-gift',
-            'work': 'fas fa-briefcase',
-            'transfer_in': 'fas fa-arrow-down',
-            'transfer_out': 'fas fa-arrow-up',
-            'buy': 'fas fa-shopping-cart',
-            'admin': 'fas fa-user-cog'
+            'daily': 'fas fa-gift', 'work': 'fas fa-briefcase',
+            'transfer_in': 'fas fa-arrow-down', 'transfer_out': 'fas fa-arrow-up',
+            'buy': 'fas fa-shopping-cart', 'admin': 'fas fa-user-cog'
         };
         return icons[type] || 'fas fa-circle';
     }
 
     function getTransactionColor(type) {
         const colors = {
-            'daily': 'success',
-            'work': 'primary',
-            'transfer_in': 'info',
-            'transfer_out': 'warning',
-            'buy': 'secondary',
-            'admin': 'danger'
+            'daily': 'success', 'work': 'primary',
+            'transfer_in': 'info', 'transfer_out': 'warning',
+            'buy': 'secondary', 'admin': 'danger'
         };
         return colors[type] || 'secondary';
     }
 
     function getTransactionType(type) {
         const types = {
-            'daily': 'مكافأة يومية',
-            'work': 'عمل',
-            'transfer_in': 'تحويل وارد',
-            'transfer_out': 'تحويل صادر',
-            'buy': 'شراء',
-            'admin': 'تعديل إداري'
+            'daily': 'مكافأة يومية', 'work': 'عمل',
+            'transfer_in': 'تحويل وارد', 'transfer_out': 'تحويل صادر',
+            'buy': 'شراء', 'admin': 'تعديل إداري'
         };
         return types[type] || type;
     }
@@ -511,25 +409,21 @@
 
     function showNotification(message, type) {
         const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3 shadow`;
+        alertDiv.className = `alert alert-${type} position-fixed top-0 end-0 m-3 shadow`;
         alertDiv.style.zIndex = '9999';
         alertDiv.style.minWidth = '300px';
         alertDiv.innerHTML = `
-            <div class="d-flex align-items-center">
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
-                <span>${message}</span>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+            ${message}
         `;
         document.body.appendChild(alertDiv);
         
         setTimeout(() => {
-            alertDiv.classList.remove('show');
-            setTimeout(() => alertDiv.remove(), 150);
+            alertDiv.style.opacity = '0';
+            setTimeout(() => alertDiv.remove(), 300);
         }, 3000);
     }
 
-    // تحميل البيانات عند فتح الصفحة
     document.addEventListener('DOMContentLoaded', loadEconomy);
 </script>
 {% endblock %}

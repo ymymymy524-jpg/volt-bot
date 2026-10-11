@@ -1,16 +1,11 @@
 {% extends "base.html" %}
 
+{% block page_title %}
+<i class="fas fa-chart-line text-primary me-2"></i>
+لوحة التحكم الرئيسية
+{% endblock %}
+
 {% block content %}
-<!-- عنوان الصفحة -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold">
-        <i class="fas fa-chart-line text-primary me-2"></i>
-        لوحة التحكم الرئيسية
-    </h2>
-    <button class="btn btn-outline-primary btn-sm" onclick="loadStats()">
-        <i class="fas fa-sync-alt me-1"></i> تحديث البيانات
-    </button>
-</div>
 
 <!-- كروت الإحصائيات -->
 <div class="row g-4 mb-4">
@@ -37,7 +32,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="text-muted mb-1 small">إجمالي Bitcoin</p>
+                        <p class="text-muted mb-1 small">إجمالي Crypto</p>
                         <h3 class="fw-bold mb-0" id="total-balance">0 ₿</h3>
                     </div>
                     <div class="stats-icon bg-warning bg-opacity-10 text-warning">
@@ -143,7 +138,6 @@
     let activityChart = null;
     let currencyChart = null;
 
-    // تحميل الإحصائيات من API
     async function loadStats() {
         try {
             const response = await fetch('/api/stats');
@@ -152,19 +146,13 @@
             if (result.success) {
                 const data = result.data;
                 
-                // تحديث كروت الإحصائيات
                 document.getElementById('total-users').textContent = data.total_users.toLocaleString('ar-EG');
                 document.getElementById('total-balance').textContent = data.total_balance.toLocaleString('ar-EG') + ' ₿';
                 document.getElementById('total-levels').textContent = data.total_levels.toLocaleString('ar-EG');
                 document.getElementById('uptime').textContent = data.uptime;
                 
-                // تحديث الرسم البياني
                 updateActivityChart(data.chart_data);
-                
-                // تحميل آخر الأحداث
                 loadRecentActivity();
-                
-                // تحميل بيانات العملات
                 loadCurrencyChart(data.total_balance, data.total_fizzy);
             }
         } catch (error) {
@@ -173,13 +161,10 @@
         }
     }
 
-    // تحديث رسم النشاط البياني
     function updateActivityChart(chartData) {
         const ctx = document.getElementById('activityChart').getContext('2d');
         
-        if (activityChart) {
-            activityChart.destroy();
-        }
+        if (activityChart) activityChart.destroy();
         
         activityChart = new Chart(ctx, {
             type: 'bar',
@@ -194,47 +179,26 @@
                     legend: {
                         display: true,
                         position: 'top',
-                        labels: {
-                            font: {
-                                family: 'Cairo',
-                                size: 14
-                            }
-                        }
+                        labels: { font: { family: 'Cairo', size: 14 } }
                     }
                 },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            font: {
-                                family: 'Cairo'
-                            }
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            font: {
-                                family: 'Cairo'
-                            }
-                        }
-                    }
+                    y: { beginAtZero: true, ticks: { font: { family: 'Cairo' } } },
+                    x: { ticks: { font: { family: 'Cairo' } } }
                 }
             }
         });
     }
 
-    // تحميل رسم العملات البياني
     function loadCurrencyChart(totalBitcoin, totalFizzy) {
         const ctx = document.getElementById('currencyChart').getContext('2d');
         
-        if (currencyChart) {
-            currencyChart.destroy();
-        }
+        if (currencyChart) currencyChart.destroy();
         
         currencyChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Bitcoin ₿', 'Fizzy 💎'],
+                labels: ['Crypto ₿', 'Fizzy 💎'],
                 datasets: [{
                     data: [totalBitcoin, totalFizzy],
                     backgroundColor: [
@@ -255,10 +219,7 @@
                     legend: {
                         position: 'bottom',
                         labels: {
-                            font: {
-                                family: 'Cairo',
-                                size: 14
-                            },
+                            font: { family: 'Cairo', size: 14 },
                             padding: 20
                         }
                     }
@@ -267,7 +228,6 @@
         });
     }
 
-    // تحميل آخر الأحداث
     async function loadRecentActivity() {
         try {
             const response = await fetch('/api/logs');
@@ -293,7 +253,7 @@
                     const time = formatTime(log.timestamp);
                     
                     return `
-                        <div class="list-group-item border-0 py-3">
+                        <div class="list-group-item border-0 py-3 bg-transparent">
                             <div class="d-flex align-items-center">
                                 <div class="activity-icon bg-${color} bg-opacity-10 text-${color} me-3">
                                     <i class="${icon}"></i>
@@ -319,7 +279,6 @@
         }
     }
 
-    // دوال مساعدة
     function getActivityIcon(action) {
         const icons = {
             'daily': 'fas fa-gift',
@@ -347,7 +306,7 @@
     function getActivityText(action) {
         const texts = {
             'daily': 'حصل على المكافأة اليومية',
-            'work': 'عمل وكسب Bitcoin',
+            'work': 'عمل وكسب Crypto',
             'transfer_in': 'استقبل تحويل',
             'transfer_out': 'أرسل تحويل',
             'buy': 'اشترى عنصر من المتجر',
@@ -379,15 +338,10 @@
         `;
         document.body.appendChild(alertDiv);
         
-        setTimeout(() => {
-            alertDiv.remove();
-        }, 3000);
+        setTimeout(() => alertDiv.remove(), 3000);
     }
 
-    // تحميل البيانات عند فتح الصفحة
     document.addEventListener('DOMContentLoaded', loadStats);
-    
-    // تحديث تلقائي كل 30 ثانية
     setInterval(loadStats, 30000);
 </script>
 {% endblock %}
