@@ -19,7 +19,6 @@
     <!-- CSS مخصص -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
-    <!-- CSS للـ Landing -->
     <style>
         /* ═══════════════════════════════════════ */
         /* 🌌 Landing Page */
@@ -32,6 +31,7 @@
             overflow-x: hidden;
             margin: 0;
             padding: 0;
+            min-height: 100vh;
         }
 
         body::before {
@@ -57,18 +57,6 @@
             position: relative;
             min-height: 100vh;
             overflow-x: hidden;
-        }
-
-        .landing-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: 
-                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 40%);
         }
 
         .landing-content {
@@ -264,70 +252,6 @@
             margin: 0;
         }
 
-        /* Login Section */
-        .login-section {
-            padding: 60px 30px 100px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        .login-card-modern {
-            background: rgba(19, 19, 31, 0.9);
-            backdrop-filter: blur(30px);
-            border: 1px solid rgba(139, 92, 246, 0.4);
-            border-radius: 25px;
-            padding: 50px 40px;
-            width: 100%;
-            max-width: 450px;
-            box-shadow: 0 20px 70px rgba(139, 92, 246, 0.3);
-            position: relative;
-            overflow: hidden;
-            text-align: center;
-        }
-
-        .login-card-modern::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #8b5cf6, #ec4899, #06b6d4, #8b5cf6);
-            background-size: 300% 100%;
-            animation: gradientMove 3s linear infinite;
-        }
-
-        .login-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 25px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #8b5cf6, #ec4899);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
-        }
-
-        .login-icon i {
-            font-size: 2rem;
-            color: #ffffff !important;
-        }
-
-        .login-heading {
-            font-size: 1.8rem;
-            font-weight: 900;
-            color: #ffffff;
-            margin-bottom: 10px;
-        }
-
-        .login-subheading {
-            color: #94a3b8;
-            margin-bottom: 30px;
-        }
-
         /* Loading */
         .loading-screen {
             position: fixed;
@@ -441,37 +365,19 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .landing-title {
-                font-size: 2rem;
-            }
-            
-            .landing-subtitle {
-                font-size: 1rem;
-            }
-            
+            .landing-title { font-size: 2rem; }
+            .landing-subtitle { font-size: 1rem; }
             .landing-actions {
                 flex-direction: column;
                 gap: 15px;
             }
-            
             .btn-landing {
                 padding: 15px 30px;
                 font-size: 1rem;
                 width: 100%;
             }
-            
-            .logo-icon {
-                width: 50px;
-                height: 50px;
-            }
-            
-            .logo-text {
-                font-size: 1.4rem;
-            }
-            
-            .login-card-modern {
-                padding: 35px 25px;
-            }
+            .logo-icon { width: 50px; height: 50px; }
+            .logo-text { font-size: 1.4rem; }
         }
     </style>
 </head>
@@ -491,8 +397,6 @@
     <!-- 🌌 Landing Page -->
     <div class="landing-container">
         
-        <div class="landing-bg"></div>
-
         <div class="landing-content">
             
             <!-- الشعار -->
@@ -515,6 +419,8 @@
 
             <!-- الأزرار -->
             <div class="landing-actions fade-in">
+                
+                <!-- زر إضافة البوت -->
                 <a href="https://discord.com/oauth2/authorize?client_id=1558484342299295764&permissions=8&scope=bot%20applications.commands" 
                    target="_blank" 
                    class="btn btn-landing">
@@ -522,12 +428,12 @@
                     إضافة البوت
                 </a>
                 
-                <a href="#login-section" 
-                   class="btn btn-landing" 
-                   onclick="scrollToLogin(event)">
-                    <i class="fas fa-sign-in-alt me-2"></i>
+                <!-- زر تسجيل الدخول بـ Discord -->
+                <a href="{{ discord_login_url }}" class="btn btn-landing">
+                    <i class="fab fa-discord me-2"></i>
                     تسجيل الدخول
                 </a>
+                
             </div>
 
             <!-- المميزات -->
@@ -545,7 +451,7 @@
                         <i class="fas fa-shield-alt"></i>
                     </div>
                     <h5>آمن تماماً</h5>
-                    <p>حماية متقدمة لبياناتك وسيرفرك</p>
+                    <p>تسجيل دخول آمن عبر Discord</p>
                 </div>
                 
                 <div class="feature-card">
@@ -557,56 +463,6 @@
                 </div>
             </div>
 
-        </div>
-
-        <!-- قسم تسجيل الدخول -->
-        <div class="login-section" id="login-section">
-            <div class="login-card-modern pop-up">
-                
-                <div class="login-icon">
-                    <i class="fas fa-robot"></i>
-                </div>
-                
-                <h3 class="login-heading">تسجيل الدخول</h3>
-                <p class="login-subheading">أدخل كلمة السر للوصول إلى لوحة تحكم Volt</p>
-
-                {% if error %}
-                <div class="alert alert-danger d-flex align-items-center shadow-sm" role="alert">
-                    <i class="fas fa-exclamation-triangle me-2 ms-2"></i>
-                    <div>{{ error }}</div>
-                </div>
-                {% endif %}
-
-                <form method="POST" action="{{ url_for('login') }}">
-                    <div class="mb-4 text-start">
-                        <label for="password" class="form-label fw-bold small text-muted">كلمة السر</label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-dark border-secondary">
-                                <i class="fas fa-lock text-primary"></i>
-                            </span>
-                            <input 
-                                type="password" 
-                                class="form-control bg-dark border-secondary text-white" 
-                                id="password" 
-                                name="password" 
-                                placeholder="أدخل كلمة السر هنا" 
-                                required 
-                                autofocus
-                            >
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3">
-                        <i class="fas fa-sign-in-alt me-2"></i> دخول
-                    </button>
-                </form>
-
-                <div class="mt-4 text-muted small">
-                    <i class="fas fa-shield-alt me-1"></i> 
-                    اتصال آمن ومشفر
-                </div>
-
-            </div>
         </div>
 
     </div>
@@ -625,18 +481,6 @@
                 }
             }, 800);
         });
-
-        // Scroll to Login
-        function scrollToLogin(e) {
-            e.preventDefault();
-            document.getElementById('login-section').scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
-            setTimeout(() => {
-                document.getElementById('password').focus();
-            }, 500);
-        }
 
         // Scroll Animations
         const observer = new IntersectionObserver((entries) => {

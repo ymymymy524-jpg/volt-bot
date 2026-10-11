@@ -5,7 +5,6 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 import random
-import requests
 
 # 🔐 Discord OAuth2
 from auth import (
@@ -14,6 +13,9 @@ from auth import (
     get_user_info, 
     get_user_guilds,
     is_user_admin,
+    get_avatar_url,
+    get_user_display_name,
+    discord_login_required,
 )
 
 # تحميل المتغيرات
@@ -21,12 +23,6 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('DASHBOARD_SECRET_KEY', 'default_secret_key_change_this')
-
-# ═══════════════════════════════════════
-# 🌐 إعدادات البوت API
-# ═══════════════════════════════════════
-BOT_API_URL = os.getenv("BOT_API_URL", "http://localhost:5001")
-BOT_API_SECRET = os.getenv("BOT_API_SECRET", "default_secret_123")
 
 # =================== دوال مساعدة ===================
 
@@ -38,6 +34,7 @@ def login_required(f):
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
+
 
 def load_json_file(filename):
     """تحميل بيانات من ملف JSON"""
@@ -53,6 +50,7 @@ def load_json_file(filename):
     except json.JSONDecodeError:
         return {}
 
+
 def save_json_file(filename, data):
     """حفظ بيانات في ملف JSON"""
     filepath = os.path.join('..', filename)
@@ -61,6 +59,7 @@ def save_json_file(filename, data):
     
     with open(filepath, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+
 
 def get_all_users():
     """جلب جميع المستخدمين من كل الملفات"""
@@ -101,10 +100,10 @@ def get_all_users():
 
 
 # ═══════════════════════════════════════
-# 📋 قائمة الأوامر الكاملة (129 أمر)
+# 📋 قائمة الأوامر الكاملة
 # ═══════════════════════════════════════
 ALL_COMMANDS = [
-    # 👑 الإدارة (25)
+    # 👑 الإدارة
     {"name": "ban", "description": "حظر عضو", "category": "الإدارة"},
     {"name": "kick", "description": "طرد عضو", "category": "الإدارة"},
     {"name": "unban", "description": "فك حظر عضو", "category": "الإدارة"},
@@ -131,7 +130,7 @@ ALL_COMMANDS = [
     {"name": "role", "description": "رتبة لعضو", "category": "الإدارة"},
     {"name": "prefix", "description": "تغيير البادئة", "category": "الإدارة"},
     
-    # 🛡️ الحماية (10)
+    # 🛡️ الحماية
     {"name": "protection auto", "description": "حماية تلقائية", "category": "الحماية"},
     {"name": "protection spam", "description": "حماية السبام", "category": "الحماية"},
     {"name": "protection link", "description": "حماية الروابط", "category": "الحماية"},
@@ -143,13 +142,13 @@ ALL_COMMANDS = [
     {"name": "protection roles", "description": "حماية الرتب", "category": "الحماية"},
     {"name": "protection bots", "description": "حماية البوتات", "category": "الحماية"},
     
-    # 📊 المستويات (4)
+    # 📊 المستويات
     {"name": "rank", "description": "مستواك", "category": "المستويات"},
     {"name": "top", "description": "أفضل الأعضاء", "category": "المستويات"},
     {"name": "setlevel", "description": "تحديد مستوى", "category": "المستويات"},
     {"name": "resetlevel", "description": "تصفير مستوى", "category": "المستويات"},
     
-    # 🎵 الموسيقى (8)
+    # 🎵 الموسيقى
     {"name": "play", "description": "تشغيل أغنية", "category": "الموسيقى"},
     {"name": "pause", "description": "إيقاف مؤقت", "category": "الموسيقى"},
     {"name": "resume", "description": "استكمال", "category": "الموسيقى"},
@@ -159,26 +158,26 @@ ALL_COMMANDS = [
     {"name": "volume", "description": "تعديل الصوت", "category": "الموسيقى"},
     {"name": "nowplaying", "description": "الأغنية الحالية", "category": "الموسيقى"},
     
-    # 📨 الدعوات (4)
+    # 📨 الدعوات
     {"name": "invites", "description": "عدد الدعوات", "category": "الدعوات"},
     {"name": "inviter", "description": "مين دعاك", "category": "الدعوات"},
     {"name": "invitetop", "description": "أفضل الداعين", "category": "الدعوات"},
     {"name": "resetinvites", "description": "تصفير الدعوات", "category": "الدعوات"},
     
-    # 🎫 التذاكر (5)
+    # 🎫 التذاكر
     {"name": "ticket", "description": "فتح تذكرة", "category": "التذاكر"},
     {"name": "close", "description": "إغلاق التذكرة", "category": "التذاكر"},
     {"name": "add", "description": "إضافة عضو", "category": "التذاكر"},
     {"name": "remove", "description": "إزالة عضو", "category": "التذاكر"},
     {"name": "setticket", "description": "تحديد الروم", "category": "التذاكر"},
     
-    # 👋 الترحيب (4)
+    # 👋 الترحيب
     {"name": "setwelcome", "description": "روم الترحيب", "category": "الترحيب"},
     {"name": "setgoodbye", "description": "روم الوداع", "category": "الترحيب"},
     {"name": "testwelcome", "description": "تجربة الترحيب", "category": "الترحيب"},
     {"name": "welcome-set-status", "description": "حالة الترحيب", "category": "الترحيب"},
     
-    # 🎮 الألعاب (10)
+    # 🎮 الألعاب
     {"name": "game", "description": "الألعاب", "category": "الألعاب"},
     {"name": "bomb", "description": "القنبلة", "category": "الألعاب"},
     {"name": "button", "description": "زر الحظ", "category": "الألعاب"},
@@ -190,7 +189,7 @@ ALL_COMMANDS = [
     {"name": "roulette", "description": "الروليت", "category": "الألعاب"},
     {"name": "fizzy", "description": "رصيد Fizzy", "category": "الألعاب"},
     
-    # 💎 الاقتصاد (9)
+    # 💎 الاقتصاد
     {"name": "balance", "description": "الرصيد", "category": "الاقتصاد"},
     {"name": "daily", "description": "المكافأة اليومية", "category": "الاقتصاد"},
     {"name": "work", "description": "العمل", "category": "الاقتصاد"},
@@ -201,7 +200,7 @@ ALL_COMMANDS = [
     {"name": "buy", "description": "شراء", "category": "الاقتصاد"},
     {"name": "bitcoin-admin", "description": "إدارة", "category": "الاقتصاد"},
     
-    # 🤖 الذكاء الاصطناعي (7)
+    # 🤖 الذكاء الاصطناعي
     {"name": "ai ask", "description": "سؤال", "category": "الذكاء الاصطناعي"},
     {"name": "ai imagine", "description": "توليد صورة", "category": "الذكاء الاصطناعي"},
     {"name": "ai translate", "description": "ترجمة", "category": "الذكاء الاصطناعي"},
@@ -210,7 +209,7 @@ ALL_COMMANDS = [
     {"name": "ai story", "description": "قصة", "category": "الذكاء الاصطناعي"},
     {"name": "ai analyze", "description": "تحليل", "category": "الذكاء الاصطناعي"},
     
-    # ⚙️ الإعدادات (21)
+    # ⚙️ الإعدادات
     {"name": "add-emoji", "description": "إضافة إيموجي", "category": "الإعدادات"},
     {"name": "auto-message", "description": "رسالة تلقائية", "category": "الإعدادات"},
     {"name": "auto-reply", "description": "رد تلقائي", "category": "الإعدادات"},
@@ -232,7 +231,7 @@ ALL_COMMANDS = [
     {"name": "shorts", "description": "اختصارات", "category": "الإعدادات"},
     {"name": "end-premium", "description": "إلغاء بريميوم", "category": "الإعدادات"},
     
-    # 🛠️ الأوامر العامة (8)
+    # 🛠️ عام
     {"name": "ping", "description": "سرعة البوت", "category": "عام"},
     {"name": "help", "description": "المساعدة", "category": "عام"},
     {"name": "avatar", "description": "الصورة", "category": "عام"},
@@ -244,7 +243,7 @@ ALL_COMMANDS = [
 ]
 
 
-# =================== Routes - الصفحات ===================
+# =================== Routes ===================
 
 @app.route('/')
 @login_required
@@ -301,6 +300,8 @@ def callback():
         'username': user_info.get('username'),
         'discriminator': user_info.get('discriminator', '0'),
         'avatar': user_info.get('avatar'),
+        'avatar_url': get_avatar_url(user_info),
+        'display_name': get_user_display_name(user_info),
         'access_token': access_token,
     }
     session['logged_in'] = True
@@ -347,7 +348,7 @@ def settings():
     return render_template('settings.html')
 
 
-# =================== API Endpoints ===================
+# =================== APIs ===================
 
 @app.route('/api/user')
 @login_required
@@ -464,20 +465,15 @@ def api_economy():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-# =================== API الأوامر ===================
-
 @app.route('/api/commands')
 @login_required
 def api_commands():
-    """قائمة الأوامر مع اختصاراتها"""
     try:
         config = load_json_file('commands_config.json')
-        
         commands_list = []
         for cmd in ALL_COMMANDS:
             cmd_name = cmd['name']
             cmd_config = config.get(cmd_name, {})
-            
             commands_list.append({
                 'name': cmd_name,
                 'description': cmd_config.get('description', cmd['description']),
@@ -485,7 +481,6 @@ def api_commands():
                 'enabled': cmd_config.get('enabled', True),
                 'shortcut': cmd_config.get('shortcut', '')
             })
-        
         return jsonify({'success': True, 'data': commands_list})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -494,7 +489,6 @@ def api_commands():
 @app.route('/api/commands/save', methods=['POST'])
 @login_required
 def api_save_command():
-    """حفظ اختصار أمر"""
     try:
         data = request.get_json()
         cmd_name = data.get('name')
@@ -503,7 +497,6 @@ def api_save_command():
         enabled = data.get('enabled', True)
         
         config = load_json_file('commands_config.json')
-        
         if cmd_name not in config:
             config[cmd_name] = {}
         
@@ -513,7 +506,6 @@ def api_save_command():
             config[cmd_name]['description'] = description
         
         save_json_file('commands_config.json', config)
-        
         return jsonify({'success': True, 'message': f'تم حفظ الأمر {cmd_name}'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -522,14 +514,12 @@ def api_save_command():
 @app.route('/api/commands/toggle', methods=['POST'])
 @login_required
 def api_toggle_command():
-    """تفعيل/تعطيل أمر"""
     try:
         data = request.get_json()
         command_name = data.get('command')
         enabled = data.get('enabled')
         
         config = load_json_file('commands_config.json')
-        
         if command_name not in config:
             config[command_name] = {}
         
@@ -538,7 +528,7 @@ def api_toggle_command():
         
         return jsonify({
             'success': True,
-            'message': f'تم {"تفعيل" if enabled else "تعطيل"} الأمر {command_name}'
+            'message': f'تم {"تفعيل" if enabled else "تعطيل"} الأمر'
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -547,7 +537,7 @@ def api_toggle_command():
 @app.route('/api/commands/reload', methods=['POST'])
 @login_required
 def api_reload_commands():
-    """إجبار البوت على إعادة تحميل الاختصارات فوراً"""
+    """محاكاة إعادة تحميل (البوت يعمل reload كل 60 ثانية)"""
     try:
         # نلمس الملف عشان البوت يلاحظ التغيير
         config_file = os.path.join('..', 'commands_config.json')
@@ -557,28 +547,9 @@ def api_reload_commands():
         if os.path.exists(config_file):
             os.utime(config_file, None)
         
-        # نحاول نبعت request للبوت (لو BOT_API_URL موجود)
-        bot_message = "تم لمس الملف - البوت هيعمل reload"
-        
-        if BOT_API_URL and BOT_API_URL != "http://localhost:5001":
-            try:
-                response = requests.post(
-                    f"{BOT_API_URL}/reload",
-                    headers={'X-API-Secret': BOT_API_SECRET},
-                    timeout=5
-                )
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    bot_message = data.get('message', 'تم إعادة التحميل')
-                else:
-                    bot_message = f"البوت رد بكود {response.status_code} - هيعمل reload تلقائي"
-            except Exception as e:
-                bot_message = f"تعذر الاتصال بالبوت: {str(e)} - هيعمل reload تلقائي"
-        
         return jsonify({
             'success': True,
-            'message': bot_message
+            'message': '✅ تم الحفظ - البوت هيعمل reload خلال 60 ثانية'
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -587,7 +558,6 @@ def api_reload_commands():
 @app.route('/api/users/<user_id>/balance', methods=['POST'])
 @login_required
 def api_update_balance(user_id):
-    """تعديل رصيد عضو"""
     try:
         data = request.get_json()
         new_balance = int(data.get('balance', 0))
@@ -613,7 +583,6 @@ def api_update_balance(user_id):
         bitcoin_data[user_id]['transactions'].append(transaction)
         
         save_json_file('bitcoin.json', bitcoin_data)
-        
         return jsonify({'success': True, 'message': f'تم تحديث رصيد {user_id}'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -663,7 +632,7 @@ def api_settings():
 # =================== تشغيل ===================
 
 if __name__ == '__main__':
-    port = int(os.getenv('DASHBOARD_PORT', 5000))
+    port = int(os.getenv('DASHBOARD_PORT', 8000))
     print(f"🚀 Dashboard يعمل على: http://localhost:{port}")
-    print(f"🔐 تسجيل الدخول عبر Discord")
-    app.run(host='0.0.0.0', port=port, debug=True)
+    print(f"🔐 تسجيل الدخول عبر Discord OAuth2")
+    app.run(host='0.0.0.0', port=port, debug=False)
