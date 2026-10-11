@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- عنوان الصفحة -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold">
         <i class="fas fa-terminal text-primary me-2"></i>
@@ -82,13 +81,18 @@
             <div class="col-md-6">
                 <select class="form-select" id="category-filter" onchange="filterCommands()">
                     <option value="all">📂 جميع الأقسام</option>
-                    <option value="levels">📊 المستويات</option>
-                    <option value="economy">💰 الاقتصاد</option>
-                    <option value="games">🎮 الألعاب</option>
-                    <option value="music">🎵 الموسيقى</option>
-                    <option value="tickets">🎫 التذاكر</option>
-                    <option value="invites">🎟️ الدعوات</option>
-                    <option value="ai">🤖 الذكاء الاصطناعي</option>
+                    <option value="الإدارة">👑 الإدارة</option>
+                    <option value="الحماية">🛡️ الحماية</option>
+                    <option value="المستويات">📊 المستويات</option>
+                    <option value="الموسيقى">🎵 الموسيقى</option>
+                    <option value="الدعوات">📨 الدعوات</option>
+                    <option value="التذاكر">🎫 التذاكر</option>
+                    <option value="الترحيب">👋 الترحيب</option>
+                    <option value="الألعاب">🎮 الألعاب</option>
+                    <option value="الاقتصاد">💎 الاقتصاد</option>
+                    <option value="الذكاء الاصطناعي">🤖 الذكاء الاصطناعي</option>
+                    <option value="الإعدادات">⚙️ الإعدادات</option>
+                    <option value="عام">🛠️ عام</option>
                 </select>
             </div>
         </div>
@@ -106,22 +110,21 @@
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead class="table-light">
+                <thead class="table-dark">
                     <tr>
                         <th class="ps-4">#</th>
                         <th>اسم الأمر</th>
                         <th>الوصف</th>
                         <th>القسم</th>
+                        <th class="text-center">الاختصار</th>
                         <th class="text-center">الحالة</th>
-                        <th class="text-center pe-4">الإجراءات</th>
+                        <th class="text-center pe-4">حفظ</th>
                     </tr>
                 </thead>
                 <tbody id="commands-table-body">
                     <tr>
-                        <td colspan="6" class="text-center py-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">جاري التحميل...</span>
-                            </div>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
                             <p class="text-muted mt-2">جاري تحميل الأوامر...</p>
                         </td>
                     </tr>
@@ -131,20 +134,34 @@
     </div>
 </div>
 
-<!-- Modal لتأكيد التعطيل -->
-<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+<!-- Modal تعديل الأمر -->
+<div class="modal fade" id="editModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold" id="confirmModalLabel">تأكيد العملية</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">✏️ تعديل الأمر</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p id="confirmModalText" class="mb-0"></p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">اسم الأمر</label>
+                    <input type="text" id="edit-name" class="form-control" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">الاختصار (عربي أو إنجليزي)</label>
+                    <input type="text" id="edit-shortcut" class="form-control" placeholder="مثال: شغ">
+                    <small class="text-muted">اكتب الاختصار اللي عايزه (من غير ! أو /)</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">الوصف</label>
+                    <input type="text" id="edit-description" class="form-control">
+                </div>
             </div>
-            <div class="modal-footer border-0">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <button type="button" class="btn btn-primary" id="confirmModalBtn">تأكيد</button>
+                <button type="button" class="btn btn-primary" onclick="saveCommand()">
+                    <i class="fas fa-save me-1"></i> حفظ
+                </button>
             </div>
         </div>
     </div>
@@ -154,17 +171,14 @@
 {% block scripts %}
 <script>
     let allCommands = [];
-    let confirmCallback = null;
-    let confirmModal = null;
+    let currentEditCommand = '';
+    let editModal = null;
 
-    // تهيئة Modal
     document.addEventListener('DOMContentLoaded', function() {
-        const modalEl = document.getElementById('confirmModal');
-        confirmModal = new bootstrap.Modal(modalEl);
+        editModal = new bootstrap.Modal(document.getElementById('editModal'));
         loadCommands();
     });
 
-    // تحميل الأوامر من API
     async function loadCommands() {
         try {
             const response = await fetch('/api/commands');
@@ -183,7 +197,6 @@
         }
     }
 
-    // تحديث إحصائيات الأوامر
     function updateStats() {
         const total = allCommands.length;
         const enabled = allCommands.filter(c => c.enabled).length;
@@ -194,22 +207,20 @@
         document.getElementById('disabled-commands').textContent = disabled;
     }
 
-    // فلترة الأوامر
     function filterCommands() {
         const searchTerm = document.getElementById('search-input').value.toLowerCase();
         const category = document.getElementById('category-filter').value;
         
         let filtered = allCommands;
         
-        // فلترة بالبحث
         if (searchTerm) {
             filtered = filtered.filter(cmd => 
                 cmd.name.toLowerCase().includes(searchTerm) ||
-                cmd.description.toLowerCase().includes(searchTerm)
+                (cmd.description && cmd.description.toLowerCase().includes(searchTerm)) ||
+                (cmd.shortcut && cmd.shortcut.toLowerCase().includes(searchTerm))
             );
         }
         
-        // فلترة بالقسم
         if (category !== 'all') {
             filtered = filtered.filter(cmd => cmd.category === category);
         }
@@ -217,14 +228,13 @@
         renderCommands(filtered);
     }
 
-    // عرض الأوامر في الجدول
     function renderCommands(commands) {
         const tbody = document.getElementById('commands-table-body');
         
         if (commands.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center py-5">
+                    <td colspan="7" class="text-center py-5">
                         <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                         <p class="text-muted mb-0">لا توجد أوامر مطابقة</p>
                     </td>
@@ -235,167 +245,137 @@
         
         tbody.innerHTML = commands.map((cmd, index) => `
             <tr>
-                <td class="ps-4 align-middle">
-                    <span class="badge bg-light text-white">${index + 1}</span>
-                </td>
+                <td class="ps-4 align-middle">${index + 1}</td>
                 <td class="align-middle">
-                    <div class="d-flex align-items-center">
-                        <div class="command-icon bg-${getCategoryColor(cmd.category)} bg-opacity-10 text-${getCategoryColor(cmd.category)} me-2">
-                            <i class="${getCategoryIcon(cmd.category)}"></i>
-                        </div>
-                        <code class="fw-bold">/${cmd.name}</code>
-                    </div>
+                    <code class="fw-bold text-info">/${cmd.name}</code>
                 </td>
-                <td class="align-middle text-muted">${cmd.description}</td>
+                <td class="align-middle">${cmd.description || '-'}</td>
                 <td class="align-middle">
-                    <span class="badge bg-${getCategoryColor(cmd.category)} bg-opacity-10 text-${getCategoryColor(cmd.category)}">
-                        ${getCategoryName(cmd.category)}
-                    </span>
+                    <span class="badge bg-${getCategoryColor(cmd.category)}">${cmd.category}</span>
+                </td>
+                <td class="align-middle text-center">
+                    ${cmd.shortcut ? 
+                        `<span class="badge bg-success">${cmd.shortcut}</span>` : 
+                        `<span class="badge bg-secondary">بدون</span>`}
                 </td>
                 <td class="align-middle text-center">
                     <div class="form-check form-switch d-inline-block">
                         <input 
                             class="form-check-input" 
                             type="checkbox" 
-                            role="switch"
-                            id="switch-${cmd.name}"
                             ${cmd.enabled ? 'checked' : ''}
                             onchange="toggleCommand('${cmd.name}', this.checked)"
                         >
                     </div>
                 </td>
                 <td class="align-middle text-center pe-4">
-                    <button 
-                        class="btn btn-sm btn-outline-${cmd.enabled ? 'danger' : 'success'}"
-                        onclick="toggleCommand('${cmd.name}', ${!cmd.enabled})"
-                    >
-                        <i class="fas fa-${cmd.enabled ? 'times' : 'check'} me-1"></i>
-                        ${cmd.enabled ? 'تعطيل' : 'تفعيل'}
+                    <button class="btn btn-sm btn-primary" onclick="openEditModal('${cmd.name}')">
+                        <i class="fas fa-edit me-1"></i> تعديل
                     </button>
                 </td>
             </tr>
         `).join('');
     }
 
-    // تفعيل/تعطيل أمر
-    async function toggleCommand(commandName, enabled) {
-        const actionText = enabled ? 'تفعيل' : 'تعطيل';
+    function openEditModal(commandName) {
+        const cmd = allCommands.find(c => c.name === commandName);
+        if (!cmd) return;
         
-        // تأكيد العملية
-        showConfirm(
-            `هل أنت متأكد من ${actionText} الأمر <code>/${commandName}</code>؟`,
-            async () => {
-                try {
-                    const response = await fetch('/api/commands/toggle', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            command: commandName,
-                            enabled: enabled
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        // تحديث الحالة في القائمة
-                        const cmd = allCommands.find(c => c.name === commandName);
-                        if (cmd) {
-                            cmd.enabled = enabled;
-                        }
-                        
-                        updateStats();
-                        filterCommands();
-                        showNotification(result.message, 'success');
-                    } else {
-                        showNotification(result.error || 'حدث خطأ', 'danger');
-                    }
-                } catch (error) {
-                    console.error('خطأ:', error);
-                    showNotification('حدث خطأ في الاتصال', 'danger');
+        currentEditCommand = commandName;
+        document.getElementById('edit-name').value = commandName;
+        document.getElementById('edit-shortcut').value = cmd.shortcut || '';
+        document.getElementById('edit-description').value = cmd.description || '';
+        editModal.show();
+    }
+
+    async function saveCommand() {
+        const shortcut = document.getElementById('edit-shortcut').value.trim();
+        const description = document.getElementById('edit-description').value.trim();
+        
+        try {
+            const response = await fetch('/api/commands/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: currentEditCommand,
+                    shortcut: shortcut,
+                    description: description,
+                    enabled: true
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                const cmd = allCommands.find(c => c.name === currentEditCommand);
+                if (cmd) {
+                    cmd.shortcut = shortcut;
+                    cmd.description = description;
                 }
+                editModal.hide();
+                filterCommands();
+                showNotification('✅ تم الحفظ', 'success');
+            } else {
+                showNotification(result.error || 'حدث خطأ', 'danger');
             }
-        );
+        } catch (error) {
+            console.error('خطأ:', error);
+            showNotification('حدث خطأ في الاتصال', 'danger');
+        }
     }
 
-    // عرض Modal التأكيد
-    function showConfirm(message, callback) {
-        document.getElementById('confirmModalText').innerHTML = message;
-        confirmCallback = callback;
-        confirmModal.show();
+    async function toggleCommand(commandName, enabled) {
+        try {
+            const response = await fetch('/api/commands/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: commandName, enabled: enabled })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                const cmd = allCommands.find(c => c.name === commandName);
+                if (cmd) cmd.enabled = enabled;
+                
+                updateStats();
+                showNotification(result.message, 'success');
+            } else {
+                showNotification(result.error || 'حدث خطأ', 'danger');
+            }
+        } catch (error) {
+            showNotification('حدث خطأ في الاتصال', 'danger');
+        }
     }
 
-    // زر التأكيد في Modal
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('confirmModalBtn').addEventListener('click', function() {
-            if (confirmCallback) {
-                confirmCallback();
-                confirmCallback = null;
-            }
-            confirmModal.hide();
-        });
-    });
-
-    // دوال مساعدة للأقسام
     function getCategoryColor(category) {
         const colors = {
-            'levels': 'primary',
-            'economy': 'warning',
-            'games': 'success',
-            'music': 'info',
-            'tickets': 'secondary',
-            'invites': 'dark',
-            'ai': 'danger'
+            'الإدارة': 'danger',
+            'الحماية': 'warning',
+            'المستويات': 'primary',
+            'الموسيقى': 'info',
+            'الدعوات': 'secondary',
+            'التذاكر': 'success',
+            'الترحيب': 'success',
+            'الألعاب': 'warning',
+            'الاقتصاد': 'warning',
+            'الذكاء الاصطناعي': 'danger',
+            'الإعدادات': 'dark',
+            'عام': 'secondary'
         };
         return colors[category] || 'secondary';
     }
 
-    function getCategoryIcon(category) {
-        const icons = {
-            'levels': 'fas fa-chart-line',
-            'economy': 'fas fa-coins',
-            'games': 'fas fa-gamepad',
-            'music': 'fas fa-music',
-            'tickets': 'fas fa-ticket-alt',
-            'invites': 'fas fa-user-plus',
-            'ai': 'fas fa-robot'
-        };
-        return icons[category] || 'fas fa-terminal';
-    }
-
-    function getCategoryName(category) {
-        const names = {
-            'levels': '📊 المستويات',
-            'economy': '💰 الاقتصاد',
-            'games': '🎮 الألعاب',
-            'music': '🎵 الموسيقى',
-            'tickets': '🎫 التذاكر',
-            'invites': '🎟️ الدعوات',
-            'ai': '🤖 الذكاء الاصطناعي'
-        };
-        return names[category] || category;
-    }
-
-    // عرض الإشعارات
     function showNotification(message, type) {
         const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3 shadow`;
+        alertDiv.className = `alert alert-${type} position-fixed top-0 end-0 m-3 shadow`;
         alertDiv.style.zIndex = '9999';
         alertDiv.style.minWidth = '300px';
-        alertDiv.innerHTML = `
-            <div class="d-flex align-items-center">
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
-                <span>${message}</span>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
+        alertDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}`;
         document.body.appendChild(alertDiv);
-        
         setTimeout(() => {
-            alertDiv.classList.remove('show');
-            setTimeout(() => alertDiv.remove(), 150);
+            alertDiv.style.opacity = '0';
+            setTimeout(() => alertDiv.remove(), 300);
         }, 3000);
     }
 </script>

@@ -55,7 +55,6 @@ def get_all_users():
     
     users = {}
     
-    # إضافة بيانات Bitcoin
     for user_id, data in bitcoin_data.items():
         if user_id not in users:
             users[user_id] = {'id': user_id, 'name': f'User {user_id}'}
@@ -63,7 +62,6 @@ def get_all_users():
         users[user_id]['total_earned'] = data.get('total_earned', 0)
         users[user_id]['total_spent'] = data.get('total_spent', 0)
     
-    # إضافة بيانات المستويات
     for guild_id, guild_data in levels_data.items():
         for user_id, data in guild_data.items():
             if user_id not in users:
@@ -71,13 +69,11 @@ def get_all_users():
             users[user_id]['level'] = data.get('level', 0)
             users[user_id]['xp'] = data.get('xp', 0)
     
-    # إضافة بيانات Fizzy
     for user_id, data in games_data.items():
         if user_id not in users:
             users[user_id] = {'id': user_id, 'name': f'User {user_id}'}
         users[user_id]['fizzy'] = data.get('fizzy', 0)
     
-    # إضافة بيانات الدعوات
     for guild_id, guild_data in invites_data.items():
         for user_id, data in guild_data.items():
             if user_id not in users:
@@ -87,17 +83,159 @@ def get_all_users():
     
     return users
 
+
+# ═══════════════════════════════════════
+# 📋 قائمة الأوامر الكاملة (129 أمر)
+# ═══════════════════════════════════════
+ALL_COMMANDS = [
+    # 👑 الإدارة (30)
+    {"name": "ban", "description": "حظر عضو", "category": "الإدارة"},
+    {"name": "kick", "description": "طرد عضو", "category": "الإدارة"},
+    {"name": "unban", "description": "فك حظر عضو", "category": "الإدارة"},
+    {"name": "ban-all", "description": "فك حظر الكل", "category": "الإدارة"},
+    {"name": "warn", "description": "إنذار عضو", "category": "الإدارة"},
+    {"name": "warnings", "description": "عرض الإنذارات", "category": "الإدارة"},
+    {"name": "warnings-all", "description": "كل الإنذارات", "category": "الإدارة"},
+    {"name": "warnings-settings", "description": "إعدادات الإنذارات", "category": "الإدارة"},
+    {"name": "mute", "description": "كتم عضو", "category": "الإدارة"},
+    {"name": "unmute", "description": "فك الكتم", "category": "الإدارة"},
+    {"name": "timeout", "description": "تايم أوت", "category": "الإدارة"},
+    {"name": "untimeout", "description": "فك التايم أوت", "category": "الإدارة"},
+    {"name": "voice-mute", "description": "كتم صوتي", "category": "الإدارة"},
+    {"name": "voice-deafen", "description": "منع سماع", "category": "الإدارة"},
+    {"name": "clear", "description": "مسح رسائل", "category": "الإدارة"},
+    {"name": "slowmode", "description": "الوضع البطيء", "category": "الإدارة"},
+    {"name": "lock", "description": "قفل الروم", "category": "الإدارة"},
+    {"name": "unlock", "description": "فتح الروم", "category": "الإدارة"},
+    {"name": "hide", "description": "إخفاء الروم", "category": "الإدارة"},
+    {"name": "unhide", "description": "إظهار الروم", "category": "الإدارة"},
+    {"name": "move", "description": "نقل عضو", "category": "الإدارة"},
+    {"name": "nick", "description": "تغيير الاسم", "category": "الإدارة"},
+    {"name": "role-all", "description": "رتبة للكل", "category": "الإدارة"},
+    {"name": "role", "description": "رتبة لعضو", "category": "الإدارة"},
+    {"name": "prefix", "description": "تغيير البادئة", "category": "الإدارة"},
+    
+    # 🛡️ الحماية (10)
+    {"name": "protection auto", "description": "حماية تلقائية", "category": "الحماية"},
+    {"name": "protection spam", "description": "حماية السبام", "category": "الحماية"},
+    {"name": "protection link", "description": "حماية الروابط", "category": "الحماية"},
+    {"name": "protection join", "description": "حماية الانضمام", "category": "الحماية"},
+    {"name": "protection hacked", "description": "حماية الاختراق", "category": "الحماية"},
+    {"name": "protection bans", "description": "حماية الحظر", "category": "الحماية"},
+    {"name": "protection kicks", "description": "حماية الطرد", "category": "الحماية"},
+    {"name": "protection channels", "description": "حماية الرومات", "category": "الحماية"},
+    {"name": "protection roles", "description": "حماية الرتب", "category": "الحماية"},
+    {"name": "protection bots", "description": "حماية البوتات", "category": "الحماية"},
+    
+    # 📊 المستويات (4)
+    {"name": "rank", "description": "مستواك", "category": "المستويات"},
+    {"name": "top", "description": "أفضل الأعضاء", "category": "المستويات"},
+    {"name": "setlevel", "description": "تحديد مستوى", "category": "المستويات"},
+    {"name": "resetlevel", "description": "تصفير مستوى", "category": "المستويات"},
+    
+    # 🎵 الموسيقى (8)
+    {"name": "play", "description": "تشغيل أغنية", "category": "الموسيقى"},
+    {"name": "pause", "description": "إيقاف مؤقت", "category": "الموسيقى"},
+    {"name": "resume", "description": "استكمال", "category": "الموسيقى"},
+    {"name": "skip", "description": "تخطي", "category": "الموسيقى"},
+    {"name": "stop", "description": "إيقاف", "category": "الموسيقى"},
+    {"name": "queue", "description": "قائمة التشغيل", "category": "الموسيقى"},
+    {"name": "volume", "description": "تعديل الصوت", "category": "الموسيقى"},
+    {"name": "nowplaying", "description": "الأغنية الحالية", "category": "الموسيقى"},
+    
+    # 📨 الدعوات (4)
+    {"name": "invites", "description": "عدد الدعوات", "category": "الدعوات"},
+    {"name": "inviter", "description": "مين دعاك", "category": "الدعوات"},
+    {"name": "invitetop", "description": "أفضل الداعين", "category": "الدعوات"},
+    {"name": "resetinvites", "description": "تصفير الدعوات", "category": "الدعوات"},
+    
+    # 🎫 التذاكر (5)
+    {"name": "ticket", "description": "فتح تذكرة", "category": "التذاكر"},
+    {"name": "close", "description": "إغلاق التذكرة", "category": "التذاكر"},
+    {"name": "add", "description": "إضافة عضو", "category": "التذاكر"},
+    {"name": "remove", "description": "إزالة عضو", "category": "التذاكر"},
+    {"name": "setticket", "description": "تحديد الروم", "category": "التذاكر"},
+    
+    # 👋 الترحيب (4)
+    {"name": "setwelcome", "description": "روم الترحيب", "category": "الترحيب"},
+    {"name": "setgoodbye", "description": "روم الوداع", "category": "الترحيب"},
+    {"name": "testwelcome", "description": "تجربة الترحيب", "category": "الترحيب"},
+    {"name": "welcome-set-status", "description": "حالة الترحيب", "category": "الترحيب"},
+    
+    # 🎮 الألعاب (10)
+    {"name": "game", "description": "الألعاب", "category": "الألعاب"},
+    {"name": "bomb", "description": "القنبلة", "category": "الألعاب"},
+    {"name": "button", "description": "زر الحظ", "category": "الألعاب"},
+    {"name": "chairs", "description": "الكراسي", "category": "الألعاب"},
+    {"name": "colors", "description": "الألوان", "category": "الألعاب"},
+    {"name": "faster", "description": "الأسرع", "category": "الألعاب"},
+    {"name": "flags", "description": "الأعلام", "category": "الألعاب"},
+    {"name": "mafia", "description": "المافيا", "category": "الألعاب"},
+    {"name": "roulette", "description": "الروليت", "category": "الألعاب"},
+    {"name": "fizzy", "description": "رصيد Fizzy", "category": "الألعاب"},
+    
+    # 💎 الاقتصاد (9)
+    {"name": "balance", "description": "الرصيد", "category": "الاقتصاد"},
+    {"name": "daily", "description": "المكافأة اليومية", "category": "الاقتصاد"},
+    {"name": "work", "description": "العمل", "category": "الاقتصاد"},
+    {"name": "transfer", "description": "تحويل", "category": "الاقتصاد"},
+    {"name": "bitcoin-top", "description": "أغنى الأعضاء", "category": "الاقتصاد"},
+    {"name": "bitcoin-history", "description": "السجل", "category": "الاقتصاد"},
+    {"name": "shop", "description": "المتجر", "category": "الاقتصاد"},
+    {"name": "buy", "description": "شراء", "category": "الاقتصاد"},
+    {"name": "bitcoin-admin", "description": "إدارة", "category": "الاقتصاد"},
+    
+    # 🤖 الذكاء الاصطناعي (7)
+    {"name": "ai ask", "description": "سؤال", "category": "الذكاء الاصطناعي"},
+    {"name": "ai imagine", "description": "توليد صورة", "category": "الذكاء الاصطناعي"},
+    {"name": "ai translate", "description": "ترجمة", "category": "الذكاء الاصطناعي"},
+    {"name": "ai summarize", "description": "تلخيص", "category": "الذكاء الاصطناعي"},
+    {"name": "ai code", "description": "كتابة كود", "category": "الذكاء الاصطناعي"},
+    {"name": "ai story", "description": "قصة", "category": "الذكاء الاصطناعي"},
+    {"name": "ai analyze", "description": "تحليل", "category": "الذكاء الاصطناعي"},
+    
+    # ⚙️ الإعدادات (30)
+    {"name": "add-emoji", "description": "إضافة إيموجي", "category": "الإعدادات"},
+    {"name": "auto-message", "description": "رسالة تلقائية", "category": "الإعدادات"},
+    {"name": "auto-reply", "description": "رد تلقائي", "category": "الإعدادات"},
+    {"name": "automod", "description": "كلمات ممنوعة", "category": "الإعدادات"},
+    {"name": "autorole", "description": "رتبة تلقائية", "category": "الإعدادات"},
+    {"name": "change-log", "description": "السجل", "category": "الإعدادات"},
+    {"name": "command-disable", "description": "تعطيل أمر", "category": "الإعدادات"},
+    {"name": "level-up-msg", "description": "رسالة الترقية", "category": "الإعدادات"},
+    {"name": "level", "description": "إعدادات المستوى", "category": "الإعدادات"},
+    {"name": "log", "description": "اللوجات", "category": "الإعدادات"},
+    {"name": "perms", "description": "الصلاحيات", "category": "الإعدادات"},
+    {"name": "role-icon", "description": "أيقونة الرتبة", "category": "الإعدادات"},
+    {"name": "role-info", "description": "معلومات الرتبة", "category": "الإعدادات"},
+    {"name": "role-move", "description": "نقل الرتبة", "category": "الإعدادات"},
+    {"name": "self-roles", "description": "الرتب الذاتية", "category": "الإعدادات"},
+    {"name": "embed", "description": "Embed", "category": "الإعدادات"},
+    {"name": "server", "description": "معلومات السيرفر", "category": "الإعدادات"},
+    {"name": "settings", "description": "الإعدادات", "category": "الإعدادات"},
+    {"name": "setup", "description": "ضبط تلقائي", "category": "الإعدادات"},
+    {"name": "shorts", "description": "اختصارات", "category": "الإعدادات"},
+    {"name": "end-premium", "description": "إلغاء بريميوم", "category": "الإعدادات"},
+    
+    # 🛠️ الأوامر العامة (8)
+    {"name": "ping", "description": "سرعة البوت", "category": "عام"},
+    {"name": "help", "description": "المساعدة", "category": "عام"},
+    {"name": "avatar", "description": "الصورة", "category": "عام"},
+    {"name": "banner", "description": "البانر", "category": "عام"},
+    {"name": "user", "description": "معلومات عضو", "category": "عام"},
+    {"name": "volt", "description": "رصيد Volt", "category": "عام"},
+]
+
+
 # =================== Routes - الصفحات ===================
 
 @app.route('/')
 @login_required
 def index():
-    """الصفحة الرئيسية - الإحصائيات"""
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """صفحة تسجيل الدخول"""
     if request.method == 'POST':
         password = request.form.get('password')
         dashboard_password = os.getenv('DASHBOARD_PASSWORD', 'admin123')
@@ -113,59 +251,50 @@ def login():
 
 @app.route('/logout')
 def logout():
-    """تسجيل الخروج"""
     session.clear()
     return redirect(url_for('login'))
 
 @app.route('/commands')
 @login_required
 def commands():
-    """صفحة الأوامر"""
     return render_template('commands.html')
 
 @app.route('/users')
 @login_required
 def users():
-    """صفحة الأعضاء"""
     return render_template('users.html')
 
 @app.route('/economy')
 @login_required
 def economy():
-    """صفحة الاقتصاد"""
     return render_template('economy.html')
 
 @app.route('/logs')
 @login_required
 def logs():
-    """صفحة السجلات"""
     return render_template('logs.html')
 
 @app.route('/settings')
 @login_required
 def settings():
-    """صفحة الإعدادات"""
     return render_template('settings.html')
+
 
 # =================== API Endpoints ===================
 
 @app.route('/api/stats')
 @login_required
 def api_stats():
-    """إحصائيات عامة"""
     try:
         bitcoin_data = load_json_file('bitcoin.json')
         levels_data = load_json_file('levels.json')
         games_data = load_json_file('games.json')
-        settings_data = load_json_file('settings.json')
         
-        # حساب الإحصائيات
         total_users = len(bitcoin_data)
         total_balance = sum(user.get('balance', 0) for user in bitcoin_data.values())
         total_levels = sum(len(guild) for guild in levels_data.values())
         total_fizzy = sum(user.get('fizzy', 0) for user in games_data.values())
         
-        # بيانات للرسم البياني (محاكاة)
         chart_data = {
             'labels': ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'],
             'datasets': [{
@@ -194,11 +323,8 @@ def api_stats():
 @app.route('/api/users')
 @login_required
 def api_users():
-    """قائمة المستخدمين"""
     try:
         users = get_all_users()
-        
-        # تحويل إلى قائمة
         users_list = []
         for user_id, data in users.items():
             users_list.append({
@@ -211,27 +337,19 @@ def api_users():
                 'invites_real': data.get('invites_real', 0),
                 'invites_fake': data.get('invites_fake', 0)
             })
-        
-        return jsonify({
-            'success': True,
-            'data': users_list
-        })
+        return jsonify({'success': True, 'data': users_list})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/economy')
 @login_required
 def api_economy():
-    """بيانات الاقتصاد"""
     try:
         bitcoin_data = load_json_file('bitcoin.json')
-        
-        # حساب الإحصائيات
         total_balance = sum(user.get('balance', 0) for user in bitcoin_data.values())
         total_earned = sum(user.get('total_earned', 0) for user in bitcoin_data.values())
         total_spent = sum(user.get('total_spent', 0) for user in bitcoin_data.values())
         
-        # آخر المعاملات
         recent_transactions = []
         for user_id, data in bitcoin_data.items():
             for tx in data.get('transactions', [])[-5:]:
@@ -243,7 +361,6 @@ def api_economy():
                     'timestamp': tx.get('timestamp')
                 })
         
-        # ترتيب حسب الوقت
         recent_transactions.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
         recent_transactions = recent_transactions[:20]
         
@@ -267,31 +384,99 @@ def api_economy():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+# ═══════════════════════════════════════
+# 📋 API الأوامر (المعدّل)
+# ═══════════════════════════════════════
+
+@app.route('/api/commands')
+@login_required
+def api_commands():
+    """قائمة الأوامر مع اختصاراتها من commands_config.json"""
+    try:
+        # جلب الاختصارات من commands_config.json
+        config = load_json_file('commands_config.json')
+        
+        commands_list = []
+        for cmd in ALL_COMMANDS:
+            cmd_name = cmd['name']
+            cmd_config = config.get(cmd_name, {})
+            
+            commands_list.append({
+                'name': cmd_name,
+                'description': cmd_config.get('description', cmd['description']),
+                'category': cmd['category'],
+                'enabled': cmd_config.get('enabled', True),
+                'shortcut': cmd_config.get('shortcut', '')
+            })
+        
+        return jsonify({'success': True, 'data': commands_list})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/commands/save', methods=['POST'])
+@login_required
+def api_save_command():
+    """حفظ اختصار أمر"""
+    try:
+        data = request.get_json()
+        cmd_name = data.get('name')
+        shortcut = data.get('shortcut', '').strip()
+        description = data.get('description')
+        enabled = data.get('enabled', True)
+        
+        config = load_json_file('commands_config.json')
+        
+        if cmd_name not in config:
+            config[cmd_name] = {}
+        
+        config[cmd_name]['shortcut'] = shortcut
+        config[cmd_name]['enabled'] = enabled
+        if description:
+            config[cmd_name]['description'] = description
+        
+        save_json_file('commands_config.json', config)
+        
+        return jsonify({'success': True, 'message': f'تم حفظ الأمر {cmd_name}'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/commands/delete', methods=['POST'])
+@login_required
+def api_delete_command():
+    """حذف اختصار أمر"""
+    try:
+        data = request.get_json()
+        cmd_name = data.get('name')
+        
+        config = load_json_file('commands_config.json')
+        
+        if cmd_name in config:
+            config[cmd_name]['shortcut'] = ''
+            save_json_file('commands_config.json', config)
+        
+        return jsonify({'success': True, 'message': f'تم حذف اختصار {cmd_name}'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# =================== بقية الـ APIs ===================
+
 @app.route('/api/commands/toggle', methods=['POST'])
 @login_required
 def api_toggle_command():
-    """تفعيل/تعطيل أمر"""
     try:
         data = request.get_json()
         command_name = data.get('command')
         enabled = data.get('enabled')
         
-        settings_data = load_json_file('settings.json')
+        config = load_json_file('commands_config.json')
         
-        # تحديث الإعدادات
-        if 'disabled_commands' not in settings_data:
-            settings_data['disabled_commands'] = []
+        if command_name not in config:
+            config[command_name] = {}
         
-        if enabled:
-            # تفعيل الأمر
-            if command_name in settings_data['disabled_commands']:
-                settings_data['disabled_commands'].remove(command_name)
-        else:
-            # تعطيل الأمر
-            if command_name not in settings_data['disabled_commands']:
-                settings_data['disabled_commands'].append(command_name)
-        
-        save_json_file('settings.json', settings_data)
+        config[command_name]['enabled'] = enabled
+        save_json_file('commands_config.json', config)
         
         return jsonify({
             'success': True,
@@ -303,7 +488,6 @@ def api_toggle_command():
 @app.route('/api/users/<user_id>/balance', methods=['POST'])
 @login_required
 def api_update_balance(user_id):
-    """تعديل رصيد Bitcoin لعضو"""
     try:
         data = request.get_json()
         new_balance = int(data.get('balance', 0))
@@ -312,19 +496,14 @@ def api_update_balance(user_id):
         
         if user_id not in bitcoin_data:
             bitcoin_data[user_id] = {
-                'balance': 0,
-                'total_earned': 0,
-                'total_spent': 0,
-                'last_daily': None,
-                'last_work': None,
-                'transactions': [],
-                'inventory': []
+                'balance': 0, 'total_earned': 0, 'total_spent': 0,
+                'last_daily': None, 'last_work': None,
+                'transactions': [], 'inventory': []
             }
         
         old_balance = bitcoin_data[user_id].get('balance', 0)
         bitcoin_data[user_id]['balance'] = new_balance
         
-        # إضافة معاملة
         transaction = {
             'type': 'admin',
             'amount': new_balance - old_balance,
@@ -335,21 +514,15 @@ def api_update_balance(user_id):
         
         save_json_file('bitcoin.json', bitcoin_data)
         
-        return jsonify({
-            'success': True,
-            'message': f'تم تحديث رصيد المستخدم {user_id} إلى {new_balance}'
-        })
+        return jsonify({'success': True, 'message': f'تم تحديث رصيد {user_id}'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/logs')
 @login_required
 def api_logs():
-    """جلب السجلات"""
     try:
         bitcoin_data = load_json_file('bitcoin.json')
-        
-        # تجميع كل المعاملات
         all_logs = []
         
         for user_id, data in bitcoin_data.items():
@@ -363,80 +536,27 @@ def api_logs():
                     'timestamp': tx.get('timestamp')
                 })
         
-        # ترتيب حسب الوقت
         all_logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
-        
-        return jsonify({
-            'success': True,
-            'data': all_logs[:100]  # آخر 100 سجل
-        })
+        return jsonify({'success': True, 'data': all_logs[:100]})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/settings', methods=['GET', 'POST'])
 @login_required
 def api_settings():
-    """جلب/تحديث الإعدادات"""
     try:
         if request.method == 'POST':
             data = request.get_json()
             settings_data = load_json_file('settings.json')
-            
-            # تحديث الإعدادات
             settings_data.update(data)
             save_json_file('settings.json', settings_data)
-            
-            return jsonify({
-                'success': True,
-                'message': 'تم حفظ الإعدادات بنجاح'
-            })
+            return jsonify({'success': True, 'message': 'تم الحفظ'})
         else:
             settings_data = load_json_file('settings.json')
-            return jsonify({
-                'success': True,
-                'data': settings_data
-            })
+            return jsonify({'success': True, 'data': settings_data})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/commands')
-@login_required
-def api_commands():
-    """قائمة الأوامر"""
-    try:
-        # قائمة الأوامر المتاحة
-        commands_list = [
-            {'name': 'rank', 'description': 'عرض المستوى', 'category': 'levels', 'enabled': True},
-            {'name': 'top', 'description': 'أفضل 10 أعضاء', 'category': 'levels', 'enabled': True},
-            {'name': 'balance', 'description': 'عرض الرصيد', 'category': 'economy', 'enabled': True},
-            {'name': 'daily', 'description': 'المكافأة اليومية', 'category': 'economy', 'enabled': True},
-            {'name': 'work', 'description': 'العمل', 'category': 'economy', 'enabled': True},
-            {'name': 'transfer', 'description': 'تحويل Bitcoin', 'category': 'economy', 'enabled': True},
-            {'name': 'game', 'description': 'الألعاب', 'category': 'games', 'enabled': True},
-            {'name': 'fizzy', 'description': 'رصيد Fizzy', 'category': 'games', 'enabled': True},
-            {'name': 'play', 'description': 'تشغيل موسيقى', 'category': 'music', 'enabled': True},
-            {'name': 'pause', 'description': 'إيقاف مؤقت', 'category': 'music', 'enabled': True},
-            {'name': 'skip', 'description': 'تخطي', 'category': 'music', 'enabled': True},
-            {'name': 'ticket', 'description': 'فتح تذكرة', 'category': 'tickets', 'enabled': True},
-            {'name': 'close', 'description': 'إغلاق التذكرة', 'category': 'tickets', 'enabled': True},
-            {'name': 'invites', 'description': 'عدد الدعوات', 'category': 'invites', 'enabled': True},
-            {'name': 'ai ask', 'description': 'سؤال للذكاء الاصطناعي', 'category': 'ai', 'enabled': True},
-            {'name': 'ai imagine', 'description': 'توليد صورة', 'category': 'ai', 'enabled': True},
-        ]
-        
-        # التحقق من الأوامر المعطلة
-        settings_data = load_json_file('settings.json')
-        disabled = settings_data.get('disabled_commands', [])
-        
-        for cmd in commands_list:
-            cmd['enabled'] = cmd['name'] not in disabled
-        
-        return jsonify({
-            'success': True,
-            'data': commands_list
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 # =================== تشغيل التطبيق ===================
 
