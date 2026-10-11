@@ -150,10 +150,23 @@ ALL_COMMANDS = [
 
 # =================== Routes ===================
 
+# ═══════════════════════════════════════
+# 🏠 الراوت الذكي - Dashboard أو Landing
+# ═══════════════════════════════════════
 @app.route('/')
-@login_required
 def index():
-    return render_template('index.html')
+    """
+    الصفحة الرئيسية:
+    - لو مسجل دخول → Dashboard
+    - لو مش مسجل → Landing + زر تسجيل الدخول
+    """
+    if 'user' in session:
+        # ✅ المستخدم مسجل → Dashboard
+        return render_template('index.html')
+    else:
+        # ❌ المستخدم مش مسجل → Landing
+        return render_template('login.html', 
+                             discord_login_url=get_login_url())
 
 
 @app.route('/login')
@@ -219,7 +232,7 @@ def callback():
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 
 @app.route('/commands')
@@ -273,7 +286,7 @@ def api_user():
 
 
 # ═══════════════════════════════════════
-# 🏰 Guild Info - معدّل ليعرض الصورة والاسم صح
+# 🏰 Guild Info
 # ═══════════════════════════════════════
 @app.route('/api/guild-info')
 def api_guild_info():
