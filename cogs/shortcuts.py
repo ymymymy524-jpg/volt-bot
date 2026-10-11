@@ -2,20 +2,15 @@ import discord
 from discord.ext import commands, tasks
 import json
 import os
-import threading
-from flask import Flask, jsonify, request
 
 # ═══════════════════════════════════════
 # 📁 إعدادات
 # ═══════════════════════════════════════
 CONFIG_FILE = "commands_config.json"
-BOT_API_PORT = int(os.getenv("PORT", 5001))
-BOT_API_SECRET = os.getenv("BOT_API_SECRET", "default_secret_123")
 
-# ═══════════════════════════════════════
-# 🌐 Flask API Server
-# ═══════════════════════════════════════
-api_app = Flask(__name__)
+# ⚠️ Flask API ملغي مؤقتاً (Railway مش بيدعم multi-port)
+# BOT_API_PORT = int(os.getenv("PORT", 5001))
+# BOT_API_SECRET = os.getenv("BOT_API_SECRET", "default_secret_123")
 
 
 def load_config():
@@ -36,18 +31,15 @@ def save_config(data):
 
 
 class Shortcuts(commands.Cog):
-    """نظام الأوامر بدون بادئة + Bot API"""
+    """نظام الأوامر بدون بادئة"""
 
     def __init__(self, bot):
         self.bot = bot
         self.config = load_config()
         self.shortcuts_map = {}
         
-        # تحميل الاختصارات أول مرة
+        # تحميل الاختصارات
         self.reload_shortcuts()
-        
-        # بدء الـ API server
-        self.start_api_server()
         
         # بدء الـ auto-reload loop
         self.auto_reload.start()
@@ -58,62 +50,6 @@ class Shortcuts(commands.Cog):
             self.auto_reload.cancel()
         except:
             pass
-
-    # ═══════════════════════════════════════
-    # 🌐 API Server
-    # ═══════════════════════════════════════
-    def start_api_server(self):
-        """بدء Flask API في thread منفصل"""
-        cog = self
-
-        @api_app.route('/reload', methods=['POST'])
-        def reload_endpoint():
-            """إعادة تحميل الاختصارات"""
-            secret = request.headers.get('X-API-Secret')
-            if secret != BOT_API_SECRET:
-                return jsonify({'success': False, 'error': 'Unauthorized'}), 401
-            
-            try:
-                cog.reload_shortcuts()
-                return jsonify({
-                    'success': True,
-                    'count': len(cog.shortcuts_map),
-                    'message': f'✅ تم تحميل {len(cog.shortcuts_map)} اختصار'
-                })
-            except Exception as e:
-                return jsonify({'success': False, 'error': str(e)}), 500
-
-        @api_app.route('/health', methods=['GET'])
-        def health():
-            """فحص حالة الـ API"""
-            return jsonify({
-                'success': True,
-                'status': 'online',
-                'shortcuts': len(cog.shortcuts_map),
-                'bot_user': str(cog.bot.user) if cog.bot.user else 'not ready'
-            })
-
-        @api_app.route('/', methods=['GET'])
-        def index():
-            """الصفحة الرئيسية"""
-            return jsonify({
-                'name': 'Volt System Bot API',
-                'status': 'online',
-                'endpoints': ['/reload', '/health']
-            })
-
-        def run_api():
-            api_app.run(
-                host='0.0.0.0',
-                port=BOT_API_PORT,
-                debug=False,
-                use_reloader=False,
-                threaded=True
-            )
-
-        api_thread = threading.Thread(target=run_api, daemon=True)
-        api_thread.start()
-        print(f"✅ Bot API شغال على port {BOT_API_PORT}")
 
     # ═══════════════════════════════════════
     # 🔄 إعادة تحميل الاختصارات
@@ -134,7 +70,7 @@ class Shortcuts(commands.Cog):
 
     @tasks.loop(seconds=60)
     async def auto_reload(self):
-        """إعادة تحميل دورية كل 60 ثانية (fallback)"""
+        """إعادة تحميل دورية كل 60 ثانية"""
         try:
             self.reload_shortcuts()
         except Exception as e:
@@ -151,49 +87,49 @@ class Shortcuts(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         """مراقبة الرسائل للأوامر بدون بادئة"""
-        
+
         # تجاهل رسائل البوتات
         if message.author.bot:
             return
-        
+
         # تجاهل الرسائل الخاصة
         if not message.guild:
             return
-        
+
         # تجاهل الرسائل الفاضية
         content = message.content.strip()
         if not content:
             return
-        
+
         # تجاهل لو بتبدأ بـ prefix عادي
         if content.startswith(("!", "/", ".", ",", "؟")):
             return
-        
+
         # تقسيم الرسالة
         words = content.split()
         if not words:
             return
-        
+
         # أول كلمة
         first_word = words[0].lower()
-        
+
         # لو مش اختصار
         if first_word not in self.shortcuts_map:
             return
-        
+
         # الأمر الأصلي
         command_name = self.shortcuts_map[first_word]
-        
+
         # باقي الرسالة
         args_text = " ".join(words[1:]) if len(words) > 1 else ""
-        
+
         # ندوّر على الأمر
         command = self.bot.get_command(command_name)
-        
+
         if command is None:
             print(f"⚠️ الأمر {command_name} مش موجود")
             return
-        
+
         # ننفذ الأمر
         try:
             ctx = await self.bot.get_context(message)
