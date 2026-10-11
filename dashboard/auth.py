@@ -1,6 +1,5 @@
 """
-🔐 Discord OAuth2 Authentication
-نظام تسجيل الدخول بحساب ديسكورد
+🔐 Discord OAuth2 Authentication + Guild Info
 """
 import os
 import requests
@@ -8,7 +7,6 @@ from functools import wraps
 from flask import session, redirect, url_for, request
 from dotenv import load_dotenv
 
-# تحميل المتغيرات
 load_dotenv()
 
 # ═══════════════════════════════════════
@@ -16,16 +14,11 @@ load_dotenv()
 # ═══════════════════════════════════════
 DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
 DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
-# ═══════════════════════════════════════
-# 🌐 الرابط الأساسي
-# ═══════════════════════════════════════
 BASE_URL = os.getenv("BASE_URL", "https://volt-bot-ijni.onrender.com")
 REDIRECT_URI = f"{BASE_URL}/callback"
 
-# ═══════════════════════════════════════
-# 🌐 Discord API Endpoints
-# ═══════════════════════════════════════
 DISCORD_API = "https://discord.com/api/v10"
 OAUTH_URL = "https://discord.com/oauth2/authorize"
 TOKEN_URL = f"{DISCORD_API}/oauth2/token"
@@ -37,7 +30,7 @@ GUILDS_URL = f"{DISCORD_API}/users/@me/guilds"
 # 🔗 رابط تسجيل الدخول
 # ═══════════════════════════════════════
 def get_login_url():
-    """إنشاء رابط تسجيل الدخول بـ Discord"""
+    """رابط تسجيل الدخول بـ Discord"""
     params = {
         "client_id": DISCORD_CLIENT_ID,
         "redirect_uri": REDIRECT_URI,
@@ -52,7 +45,6 @@ def get_login_url():
 # 🔄 تبادل الكود بالتوكن
 # ═══════════════════════════════════════
 def exchange_code(code):
-    """تحويل الـ code لـ access token"""
     data = {
         "client_id": DISCORD_CLIENT_ID,
         "client_secret": DISCORD_CLIENT_SECRET,
@@ -75,7 +67,6 @@ def exchange_code(code):
 # 👤 جلب معلومات المستخدم
 # ═══════════════════════════════════════
 def get_user_info(access_token):
-    """جلب معلومات المستخدم من Discord API"""
     headers = {"Authorization": f"Bearer {access_token}"}
     
     try:
@@ -91,7 +82,6 @@ def get_user_info(access_token):
 # 🏰 جلب سيرفرات المستخدم
 # ═══════════════════════════════════════
 def get_user_guilds(access_token):
-    """جلب سيرفرات المستخدم"""
     headers = {"Authorization": f"Bearer {access_token}"}
     
     try:
@@ -104,15 +94,80 @@ def get_user_guilds(access_token):
 
 
 # ═══════════════════════════════════════
+# 🏰 جلب معلومات سيرفر محدد (بـ Bot Token)
+# ═══════════════════════════════════════
+def get_guild_info(guild_id):
+    """جلب معلومات السيرفر باستخدام Bot Token"""
+    if not DISCORD_TOKEN:
+        print("⚠️ DISCORD_TOKEN مش موجود")
+        return None
+    
+    headers = {"Authorization": f"Bot {DISCORD_TOKEN}"}
+    
+    try:
+        response = requests.get(
+            f"{DISCORD_API}/guilds/{guild_id}",
+            headers=headers,
+            timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        icon_url = None
+        if data.get("icon"):
+            icon_url = f"https://cdn.discordapp.com/icons/{data['id']}/{data['icon']}.png?size=256"
+        
+        return {
+            "id": data.get("id"),
+            "name": data.get("name"),
+            "icon": icon_url,
+            "member_count": data.get("member_count", 0),
+            "owner_id": data.get("owner_id"),
+        }
+    except requests.exceptions.HTTPError as e:
+        print(f"❌ خطأ في جلب السيرفر {guild_id}: {e}")
+        return None
+    except Exception as e:
+        print(f"❌ خطأ: {e}")
+        return None
+
+
+# ═══════════════════════════════════════
+# 🎯 اختيار أفضل سيرفر للمستخدم
+# ═══════════════════════════════════════
+def get_best_guild_for_user(access_token):
+    """جلب أفضل سيرفر للمستخدم (اللي فيه البوت)"""
+    user_guilds = get_user_guilds(access_token)
+    
+    if not user_guilds:
+        return None
+    
+    # فلترة السيرفرات اللي المستخدم أدمن فيها
+    admin_guilds = []
+    for guild in user_guilds:
+        try:
+            permissions = int(guild.get("permissions", 0))
+            # Administrator (0x8) أو Manage Server (0x20)
+            if permissions & 0x8 or permissions & 0x20:
+                admin_guilds.append(guild)
+        except (ValueError, TypeError):
+            continue
+    
+    # لو فيه سيرفرات أدمن → ناخد أول واحد
+    if admin_guilds:
+        return admin_guilds[0]
+    
+    # fallback: أول سيرفر في القايمة
+    return user_guilds[0]
+
+
+# ═══════════════════════════════════════
 # ✅ التحقق من صلاحيات المستخدم
 # ═══════════════════════════════════════
 def is_user_admin(access_token):
-    """التحقق إذا كان المستخدم أدمن في أي سيرفر"""
     guilds = get_user_guilds(access_token)
-    
-    # صلاحيات Discord
-    ADMIN_PERMISSION = 0x8        # Administrator
-    MANAGE_GUILD = 0x20            # Manage Server
+    ADMIN_PERMISSION = 0x8
+    MANAGE_GUILD = 0x20
     
     for guild in guilds:
         try:
@@ -129,14 +184,12 @@ def is_user_admin(access_token):
 # 🎨 دوال مساعدة
 # ═══════════════════════════════════════
 def get_avatar_url(user_data):
-    """جلب رابط صورة المستخدم"""
     user_id = user_data.get("id")
     avatar = user_data.get("avatar")
     
     if avatar:
-        return f"https://cdn.discordapp.com/avatars/{user_id}/{avatar}.png"
+        return f"https://cdn.discordapp.com/avatars/{user_id}/{avatar}.png?size=256"
     else:
-        # صورة افتراضية
         discriminator = user_data.get("discriminator", "0")
         try:
             default_index = int(discriminator) % 5
@@ -146,7 +199,6 @@ def get_avatar_url(user_data):
 
 
 def get_user_display_name(user_data):
-    """اسم المستخدم للعرض"""
     global_name = user_data.get("global_name")
     username = user_data.get("username", "Unknown")
     
@@ -156,10 +208,9 @@ def get_user_display_name(user_data):
 
 
 # ═══════════════════════════════════════
-# 🔐 Decorator للحماية
+# 🔐 Decorators
 # ═══════════════════════════════════════
 def discord_login_required(f):
-    """Decorator للتحقق من تسجيل الدخول"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "user" not in session:
@@ -169,7 +220,6 @@ def discord_login_required(f):
 
 
 def admin_required(f):
-    """Decorator للتحقق من صلاحيات الأدمن"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "user" not in session:

@@ -12,20 +12,21 @@ from auth import (
     exchange_code, 
     get_user_info, 
     get_user_guilds,
+    get_guild_info,
+    get_best_guild_for_user,
     is_user_admin,
     get_avatar_url,
     get_user_display_name,
     discord_login_required,
 )
 
-# تحميل المتغيرات
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('DASHBOARD_SECRET_KEY', 'default_secret_key_change_this')
 
 # ═══════════════════════════════════════
-# 🔐 إعدادات Session (عشان الـ Cookie ما يبقاش كبير)
+# 🔐 إعدادات Session
 # ═══════════════════════════════════════
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = True
@@ -36,7 +37,6 @@ app.config['SESSION_COOKIE_NAME'] = 'volt_session'
 # =================== دوال مساعدة ===================
 
 def login_required(f):
-    """Decorator للتحقق من تسجيل الدخول"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user' not in session:
@@ -46,7 +46,6 @@ def login_required(f):
 
 
 def load_json_file(filename):
-    """تحميل بيانات من ملف JSON"""
     filepath = os.path.join('..', filename)
     if not os.path.exists(filepath):
         filepath = filename
@@ -61,7 +60,6 @@ def load_json_file(filename):
 
 
 def save_json_file(filename, data):
-    """حفظ بيانات في ملف JSON"""
     filepath = os.path.join('..', filename)
     if not os.path.exists(filepath):
         filepath = filename
@@ -71,7 +69,6 @@ def save_json_file(filename, data):
 
 
 def get_all_users():
-    """جلب جميع المستخدمين من كل الملفات"""
     bitcoin_data = load_json_file('bitcoin.json')
     levels_data = load_json_file('levels.json')
     games_data = load_json_file('games.json')
@@ -109,134 +106,35 @@ def get_all_users():
 
 
 # ═══════════════════════════════════════
-# 📋 قائمة الأوامر الكاملة
+# 📋 قائمة الأوامر
 # ═══════════════════════════════════════
 ALL_COMMANDS = [
     {"name": "ban", "description": "حظر عضو", "category": "الإدارة"},
     {"name": "kick", "description": "طرد عضو", "category": "الإدارة"},
     {"name": "unban", "description": "فك حظر عضو", "category": "الإدارة"},
-    {"name": "ban-all", "description": "فك حظر الكل", "category": "الإدارة"},
     {"name": "warn", "description": "إنذار عضو", "category": "الإدارة"},
-    {"name": "warnings", "description": "عرض الإنذارات", "category": "الإدارة"},
-    {"name": "warnings-all", "description": "كل الإنذارات", "category": "الإدارة"},
-    {"name": "warnings-settings", "description": "إعدادات الإنذارات", "category": "الإدارة"},
     {"name": "mute", "description": "كتم عضو", "category": "الإدارة"},
-    {"name": "unmute", "description": "فك الكتم", "category": "الإدارة"},
-    {"name": "timeout", "description": "تايم أوت", "category": "الإدارة"},
-    {"name": "untimeout", "description": "فك التايم أوت", "category": "الإدارة"},
-    {"name": "voice-mute", "description": "كتم صوتي", "category": "الإدارة"},
-    {"name": "voice-deafen", "description": "منع سماع", "category": "الإدارة"},
     {"name": "clear", "description": "مسح رسائل", "category": "الإدارة"},
-    {"name": "slowmode", "description": "الوضع البطيء", "category": "الإدارة"},
-    {"name": "lock", "description": "قفل الروم", "category": "الإدارة"},
-    {"name": "unlock", "description": "فتح الروم", "category": "الإدارة"},
-    {"name": "hide", "description": "إخفاء الروم", "category": "الإدارة"},
-    {"name": "unhide", "description": "إظهار الروم", "category": "الإدارة"},
-    {"name": "move", "description": "نقل عضو", "category": "الإدارة"},
-    {"name": "nick", "description": "تغيير الاسم", "category": "الإدارة"},
-    {"name": "role-all", "description": "رتبة للكل", "category": "الإدارة"},
-    {"name": "role", "description": "رتبة لعضو", "category": "الإدارة"},
-    {"name": "prefix", "description": "تغيير البادئة", "category": "الإدارة"},
-    
-    {"name": "protection auto", "description": "حماية تلقائية", "category": "الحماية"},
-    {"name": "protection spam", "description": "حماية السبام", "category": "الحماية"},
-    {"name": "protection link", "description": "حماية الروابط", "category": "الحماية"},
-    {"name": "protection join", "description": "حماية الانضمام", "category": "الحماية"},
-    {"name": "protection hacked", "description": "حماية الاختراق", "category": "الحماية"},
-    {"name": "protection bans", "description": "حماية الحظر", "category": "الحماية"},
-    {"name": "protection kicks", "description": "حماية الطرد", "category": "الحماية"},
-    {"name": "protection channels", "description": "حماية الرومات", "category": "الحماية"},
-    {"name": "protection roles", "description": "حماية الرتب", "category": "الحماية"},
-    {"name": "protection bots", "description": "حماية البوتات", "category": "الحماية"},
-    
+    {"name": "role", "description": "إدارة الرتب", "category": "الإدارة"},
     {"name": "rank", "description": "مستواك", "category": "المستويات"},
     {"name": "top", "description": "أفضل الأعضاء", "category": "المستويات"},
-    {"name": "setlevel", "description": "تحديد مستوى", "category": "المستويات"},
-    {"name": "resetlevel", "description": "تصفير مستوى", "category": "المستويات"},
-    
     {"name": "play", "description": "تشغيل أغنية", "category": "الموسيقى"},
-    {"name": "pause", "description": "إيقاف مؤقت", "category": "الموسيقى"},
-    {"name": "resume", "description": "استكمال", "category": "الموسيقى"},
     {"name": "skip", "description": "تخطي", "category": "الموسيقى"},
     {"name": "stop", "description": "إيقاف", "category": "الموسيقى"},
     {"name": "queue", "description": "قائمة التشغيل", "category": "الموسيقى"},
-    {"name": "volume", "description": "تعديل الصوت", "category": "الموسيقى"},
-    {"name": "nowplaying", "description": "الأغنية الحالية", "category": "الموسيقى"},
-    
-    {"name": "invites", "description": "عدد الدعوات", "category": "الدعوات"},
-    {"name": "inviter", "description": "مين دعاك", "category": "الدعوات"},
-    {"name": "invitetop", "description": "أفضل الداعين", "category": "الدعوات"},
-    {"name": "resetinvites", "description": "تصفير الدعوات", "category": "الدعوات"},
-    
-    {"name": "ticket", "description": "فتح تذكرة", "category": "التذاكر"},
-    {"name": "close", "description": "إغلاق التذكرة", "category": "التذاكر"},
-    {"name": "add", "description": "إضافة عضو", "category": "التذاكر"},
-    {"name": "remove", "description": "إزالة عضو", "category": "التذاكر"},
-    {"name": "setticket", "description": "تحديد الروم", "category": "التذاكر"},
-    
-    {"name": "setwelcome", "description": "روم الترحيب", "category": "الترحيب"},
-    {"name": "setgoodbye", "description": "روم الوداع", "category": "الترحيب"},
-    {"name": "testwelcome", "description": "تجربة الترحيب", "category": "الترحيب"},
-    {"name": "welcome-set-status", "description": "حالة الترحيب", "category": "الترحيب"},
-    
-    {"name": "game", "description": "الألعاب", "category": "الألعاب"},
-    {"name": "bomb", "description": "القنبلة", "category": "الألعاب"},
-    {"name": "button", "description": "زر الحظ", "category": "الألعاب"},
-    {"name": "chairs", "description": "الكراسي", "category": "الألعاب"},
-    {"name": "colors", "description": "الألوان", "category": "الألعاب"},
-    {"name": "faster", "description": "الأسرع", "category": "الألعاب"},
-    {"name": "flags", "description": "الأعلام", "category": "الألعاب"},
-    {"name": "mafia", "description": "المافيا", "category": "الألعاب"},
-    {"name": "roulette", "description": "الروليت", "category": "الألعاب"},
-    {"name": "fizzy", "description": "رصيد Fizzy", "category": "الألعاب"},
-    
     {"name": "balance", "description": "الرصيد", "category": "الاقتصاد"},
     {"name": "daily", "description": "المكافأة اليومية", "category": "الاقتصاد"},
     {"name": "work", "description": "العمل", "category": "الاقتصاد"},
     {"name": "transfer", "description": "تحويل", "category": "الاقتصاد"},
-    {"name": "bitcoin-top", "description": "أغنى الأعضاء", "category": "الاقتصاد"},
-    {"name": "bitcoin-history", "description": "السجل", "category": "الاقتصاد"},
     {"name": "shop", "description": "المتجر", "category": "الاقتصاد"},
     {"name": "buy", "description": "شراء", "category": "الاقتصاد"},
-    {"name": "bitcoin-admin", "description": "إدارة", "category": "الاقتصاد"},
-    
-    {"name": "ai ask", "description": "سؤال", "category": "الذكاء الاصطناعي"},
-    {"name": "ai imagine", "description": "توليد صورة", "category": "الذكاء الاصطناعي"},
-    {"name": "ai translate", "description": "ترجمة", "category": "الذكاء الاصطناعي"},
-    {"name": "ai summarize", "description": "تلخيص", "category": "الذكاء الاصطناعي"},
-    {"name": "ai code", "description": "كتابة كود", "category": "الذكاء الاصطناعي"},
-    {"name": "ai story", "description": "قصة", "category": "الذكاء الاصطناعي"},
-    {"name": "ai analyze", "description": "تحليل", "category": "الذكاء الاصطناعي"},
-    
-    {"name": "add-emoji", "description": "إضافة إيموجي", "category": "الإعدادات"},
-    {"name": "auto-message", "description": "رسالة تلقائية", "category": "الإعدادات"},
-    {"name": "auto-reply", "description": "رد تلقائي", "category": "الإعدادات"},
-    {"name": "automod", "description": "كلمات ممنوعة", "category": "الإعدادات"},
-    {"name": "autorole", "description": "رتبة تلقائية", "category": "الإعدادات"},
-    {"name": "change-log", "description": "السجل", "category": "الإعدادات"},
-    {"name": "command-disable", "description": "تعطيل أمر", "category": "الإعدادات"},
-    {"name": "level-up-msg", "description": "رسالة الترقية", "category": "الإعدادات"},
-    {"name": "level", "description": "إعدادات المستوى", "category": "الإعدادات"},
-    {"name": "log", "description": "اللوجات", "category": "الإعدادات"},
-    {"name": "perms", "description": "الصلاحيات", "category": "الإعدادات"},
-    {"name": "role-icon", "description": "أيقونة الرتبة", "category": "الإعدادات"},
-    {"name": "role-info", "description": "معلومات الرتبة", "category": "الإعدادات"},
-    {"name": "role-move", "description": "نقل الرتبة", "category": "الإعدادات"},
-    {"name": "self-roles", "description": "الرتب الذاتية", "category": "الإعدادات"},
-    {"name": "embed", "description": "Embed", "category": "الإعدادات"},
-    {"name": "settings", "description": "الإعدادات", "category": "الإعدادات"},
-    {"name": "setup", "description": "ضبط تلقائي", "category": "الإعدادات"},
-    {"name": "shorts", "description": "اختصارات", "category": "الإعدادات"},
-    {"name": "end-premium", "description": "إلغاء بريميوم", "category": "الإعدادات"},
-    
+    {"name": "roulette", "description": "الروليت", "category": "الألعاب"},
+    {"name": "bomb", "description": "القنبلة", "category": "الألعاب"},
+    {"name": "fizzy", "description": "رصيد Fizzy", "category": "الألعاب"},
     {"name": "ping", "description": "سرعة البوت", "category": "عام"},
     {"name": "help", "description": "المساعدة", "category": "عام"},
-    {"name": "avatar", "description": "الصورة", "category": "عام"},
-    {"name": "banner", "description": "البانر", "category": "عام"},
     {"name": "user", "description": "معلومات عضو", "category": "عام"},
     {"name": "server", "description": "معلومات السيرفر", "category": "عام"},
-    {"name": "volt", "description": "رصيد Volt", "category": "عام"},
-    {"name": "crypto-top", "description": "أغنى الأعضاء", "category": "عام"},
 ]
 
 
@@ -250,7 +148,6 @@ def index():
 
 @app.route('/login')
 def login():
-    """صفحة تسجيل الدخول بـ Discord"""
     if 'user' in session:
         return redirect(url_for('index'))
     
@@ -290,7 +187,15 @@ def callback():
                              error='فشل في جلب معلومات المستخدم',
                              discord_login_url=get_login_url())
     
-    # ⚠️ ما نحفظش access_token ولا guilds (عشان الـ Cookie)
+    # ═══════════════════════════════════════
+    # 🏰 اختيار أفضل سيرفر للمستخدم
+    # ═══════════════════════════════════════
+    selected_guild = get_best_guild_for_user(access_token)
+    guild_id = selected_guild.get('id') if selected_guild else None
+    
+    # ═══════════════════════════════════════
+    # 💾 حفظ في Session (صغير الحجم)
+    # ═══════════════════════════════════════
     session['user'] = {
         'id': user_info.get('id'),
         'username': user_info.get('username'),
@@ -301,7 +206,8 @@ def callback():
     }
     session['logged_in'] = True
     session['login_time'] = datetime.now().isoformat()
-    session['is_admin'] = False
+    session['is_admin'] = is_user_admin(access_token)
+    session['guild_id'] = guild_id  # ← نحفظ بس الـ ID
     
     return redirect(url_for('index'))
 
@@ -344,7 +250,6 @@ def settings():
 
 @app.route('/leaderboard')
 def leaderboard():
-    """صفحة قائمة المتصدرين"""
     return render_template('leaderboard.html')
 
 
@@ -352,15 +257,43 @@ def leaderboard():
 
 @app.route('/api/user')
 def api_user():
-    """معلومات المستخدم"""
+    """معلومات المستخدم الحالي"""
     if 'user' not in session:
         return jsonify({'success': False, 'user': None})
     
     return jsonify({
         'success': True,
         'user': session.get('user', {}),
-        'is_admin': session.get('is_admin', False)
+        'is_admin': session.get('is_admin', False),
+        'guild_id': session.get('guild_id')
     })
+
+
+@app.route('/api/guild-info')
+def api_guild_info():
+    """معلومات السيرفر الحالي"""
+    try:
+        guild_id = session.get('guild_id')
+        
+        if not guild_id:
+            return jsonify({
+                'success': False,
+                'error': 'No guild selected'
+            }), 404
+        
+        # نجيب معلومات السيرفر من Discord API
+        guild = get_guild_info(guild_id)
+        
+        if guild:
+            return jsonify({
+                'success': True,
+                'guild': guild
+            })
+        
+        return jsonify({'success': False, 'error': 'Guild not found'}), 404
+    except Exception as e:
+        print(f"❌ خطأ في /api/guild-info: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/leaderboard')
