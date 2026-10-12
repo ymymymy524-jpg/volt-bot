@@ -6,20 +6,16 @@ import os
 from config import Colors
 
 
-# ==========================================
-# 🛠️ الأوامر العامة (General Commands) - Prefix + Slash
-# ==========================================
-
 class General(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     # ═══════════════════════════════════════
-    # 🏓 أمر !ping / /ping
+    # 🏓 !ping / /ping
     # ═══════════════════════════════════════
     @commands.hybrid_command(
         name="ping",
-        aliases=["p", "بنق"],
+        aliases=["بنق"],
         description="🏓 عرض سرعة استجابة البوت"
     )
     async def ping(self, ctx: commands.Context):
@@ -37,7 +33,7 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════
-    # 🖼️ أمر !avatar / /avatar
+    # 🖼️ !avatar / /avatar
     # ═══════════════════════════════════════
     @commands.hybrid_command(
         name="avatar",
@@ -73,7 +69,7 @@ class General(commands.Cog):
         await ctx.send(embed=embed, view=view)
 
     # ═══════════════════════════════════════
-    # 🎨 أمر !banner / /banner
+    # 🎨 !banner / /banner
     # ═══════════════════════════════════════
     @commands.hybrid_command(
         name="banner",
@@ -86,7 +82,7 @@ class General(commands.Cog):
         member = member or ctx.author
         user = await self.bot.fetch_user(member.id)
         if not user.banner:
-            await ctx.send(f"❌ {member.mention} لا يمتلك بانر!", delete_after=8)
+            await ctx.send(f"❌ {member.mention} لا يمتلك بانر!")
             return
         embed = discord.Embed(title=f"🎨 بانر {member.display_name}", color=Colors.INFO)
         embed.set_image(url=user.banner.url)
@@ -97,11 +93,11 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════
-    # 👤 أمر !user / /user
+    # 👤 !user / /user
     # ═══════════════════════════════════════
     @commands.hybrid_command(
         name="user",
-        aliases=["u", "userinfo", "معلومات"],
+        aliases=["userinfo", "معلومات"],
         description="👤 عرض معلومات عضو"
     )
     @app_commands.describe(member="العضو المراد عرض معلوماته (اختياري)")
@@ -139,11 +135,11 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════
-    # 🏰 أمر !server / /server
+    # 🏰 !server / /server
     # ═══════════════════════════════════════
     @commands.hybrid_command(
         name="server",
-        aliases=["sv", "serverinfo", "سيرفر"],
+        aliases=["serverinfo", "سيرفر"],
         description="🏰 عرض معلومات السيرفر"
     )
     async def server(self, ctx: commands.Context):
@@ -202,11 +198,11 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════
-    # 💎 أمر !volt / /volt
+    # 💎 !volt / /volt
     # ═══════════════════════════════════════
     @commands.hybrid_command(
         name="volt",
-        aliases=["v", "فولت"],
+        aliases=["فولت"],
         description="💎 عرض رصيد Crypto لعضو"
     )
     @app_commands.describe(
@@ -231,10 +227,9 @@ class General(commands.Cog):
         else:
             balance = bitcoin_data[user_id].get("balance", 0)
 
-        # تعديل الرصيد (للمشرفين)
         if amount is not None:
             if not ctx.author.guild_permissions.administrator:
-                await ctx.send("❌ صلاحية مطلوبة: يجب أن تكون مشرفاً!", delete_after=8)
+                await ctx.send("❌ صلاحية مطلوبة: يجب أن تكون مشرفاً!")
                 return
 
             if user_id not in bitcoin_data:
