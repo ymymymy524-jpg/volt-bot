@@ -26,6 +26,15 @@ def save_config(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+def normalize_arabic(text: str) -> str:
+    """تطبيع النص العربي (NFC + إزالة التشكيل)"""
+    if not text:
+        return text
+    # NFC normalization
+    text = unicodedata.normalize('NFC', text)
+    return text.strip().lower()
+
+
 class Shortcuts(commands.Cog):
     """نظام الأوامر بدون بادئة + API للتحديث الفوري"""
 
@@ -53,20 +62,20 @@ class Shortcuts(commands.Cog):
         for command_name, data in self.config.items():
             if not data.get("enabled", True):
                 continue
-            shortcut = data.get("shortcut", "").strip().lower()
+            shortcut = data.get("shortcut", "").strip()
             if shortcut:
-                self.shortcuts_map[shortcut] = command_name
+                key = normalize_arabic(shortcut)
+                self.shortcuts_map[key] = command_name
 
         # 2️⃣ من aliases بتاعت الأوامر نفسها (في الكود)
         try:
             for cmd in self.bot.walk_commands():
                 cmd_name = cmd.name
                 if " " not in cmd_name:
-                    self.shortcuts_map.setdefault(cmd_name.lower(), cmd_name)
+                    self.shortcuts_map.setdefault(normalize_arabic(cmd_name), cmd_name)
                 for alias in cmd.aliases:
-                    alias_lower = alias.strip().lower()
-                    if alias_lower:
-                        self.shortcuts_map.setdefault(alias_lower, cmd_name)
+                    if alias:
+                        self.shortcuts_map.setdefault(normalize_arabic(alias), cmd_name)
         except Exception as e:
             print(f"⚠️ [Shortcuts] فشل تحميل aliases: {e}")
 
@@ -83,7 +92,6 @@ class Shortcuts(commands.Cog):
     @auto_reload.before_loop
     async def before_auto_reload(self):
         await self.bot.wait_until_ready()
-        # ⚡ نستنى 3 ثواني عشان الأوامر تتحمّل
         await asyncio.sleep(3)
         self.reload_shortcuts()
 
@@ -98,10 +106,9 @@ class Shortcuts(commands.Cog):
         }
 
     def update_shortcut(self, command_name: str, shortcut: str, enabled: bool = True):
-        shortcut = shortcut.strip().lower()
-
+        shortcut = shortcut.strip()
         for cmd, data in self.config.items():
-            if cmd != command_name and data.get("shortcut", "").lower() == shortcut:
+            if cmd != command_name and normalize_arabic(data.get("shortcut", "")) == normalize_arabic(shortcut):
                 raise ValueError(f"الاختصار `{shortcut}` مستخدم بالفعل مع `/{cmd}`")
 
         self.config[command_name] = {
@@ -117,14 +124,15 @@ class Shortcuts(commands.Cog):
         for cmd, data in shortcuts_dict.items():
             if not data.get("enabled", True):
                 continue
-            shortcut = data.get("shortcut", "").strip().lower()
+            shortcut = data.get("shortcut", "").strip()
             if not shortcut:
                 continue
-            if shortcut in shortcuts_seen:
+            key = normalize_arabic(shortcut)
+            if key in shortcuts_seen:
                 raise ValueError(
-                    f"الاختصار `{shortcut}` مستخدم مرتين: `/{shortcuts_seen[shortcut]}` و `/{cmd}`"
+                    f"الاختصار `{shortcut}` مستخدم مرتين: `/{shortcuts_seen[key]}` و `/{cmd}`"
                 )
-            shortcuts_seen[shortcut] = cmd
+            shortcuts_seen[key] = cmd
 
         self.config = shortcuts_dict
         save_config(self.config)
@@ -141,7 +149,7 @@ class Shortcuts(commands.Cog):
         return False
 
     # ═══════════════════════════════════════
-    # 📨 معالجة الرسائل — للاختصارات بس
+    # 📨 معالجة الرسائل
     # ═══════════════════════════════════════
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -156,17 +164,26 @@ class Shortcuts(commands.Cog):
         if content.startswith(("!", "/", ".", ",")):
             return
 
-        # لو اختصار
         words = content.split()
-        first_word = words[0].lower()
+        first_word = words[0]
 
-        if first_word in self.shortcuts_map:
-            command_name = self.shortcuts_map[first_word]
+        # 🔍 تشخيص
+        print(f"🔍 [DEBUG] أول كلمة = '{first_word}'")
+        print(f"🔍 [DEBUG] repr = {repr(first_word)}")
+        print(f"🔍 [DEBUG] normalized = '{normalize_arabic(first_word)}'")
+        print(f"🔍 [DEBUG] in map? {normalize_arabic(first_word) in self.shortcuts_map}")
+
+        # لو اختصار
+        key = normalize_arabic(first_word)
+        if key in self.shortcuts_map:
+            command_name = self.shortcuts_map[key]
             args_text = " ".join(words[1:]) if len(words) > 1 else ""
+
+            print(f"🔍 [DEBUG] الأمر = {command_name}")
 
             command = self._find_command(command_name)
             if command is None:
-                print(f"⚠️ الأمر {command_name} مش موجود")
+                print(f"❌ الأمر {command_name} مش موجود")
                 return
 
             try:
@@ -177,29 +194,29 @@ class Shortcuts(commands.Cog):
                     await command.__call__(ctx)
             except Exception as e:
                 print(f"⚠️ خطأ في تنفيذ {command_name}: {e}")
+                import traceback
+                traceback.print_exc()
 
     # ═══════════════════════════════════════
-    # 🔍 _find_command — يدوّر على الأوامر والـ aliases
+    # 🔍 _find_command
     # ═══════════════════════════════════════
     def _find_command(self, command_name: str):
-        # ⚡ تطبيع العربي
-        normalized = unicodedata.normalize('NFC', command_name)
-
-        # 1️⃣ جرب get_command مباشرة
-        command = self.bot.get_command(normalized)
+        # 1️⃣ get_command مباشرة
+        command = self.bot.get_command(command_name)
         if command:
             return command
 
-        # 2️⃣ جرب يدوّر على alias (مع تطبيع)
+        # 2️⃣ alias
         for cmd in self.bot.walk_commands():
+            if cmd.name == command_name:
+                return cmd
             for alias in cmd.aliases:
-                alias_norm = unicodedata.normalize('NFC', alias)
-                if alias_norm == normalized:
+                if alias == command_name:
                     return cmd
 
-        # 3️⃣ جرب sub-commands
-        if " " in normalized:
-            parts = normalized.split()
+        # 3️⃣ sub-commands
+        if " " in command_name:
+            parts = command_name.split()
             parent = self.bot.get_command(parts[0])
             if parent and hasattr(parent, 'all_commands'):
                 return parent.all_commands.get(parts[-1])
@@ -207,7 +224,7 @@ class Shortcuts(commands.Cog):
         return None
 
     # ═══════════════════════════════════════
-    # 🛠️ أوامر إدارة الاختصارات (Discord)
+    # 🛠️ أوامر إدارة الاختصارات
     # ═══════════════════════════════════════
     @commands.command(name="اختصارات", aliases=["shortcuts"])
     @commands.has_permissions(administrator=True)
@@ -220,7 +237,7 @@ class Shortcuts(commands.Cog):
         chunks = [shortcuts[i:i + 25] for i in range(0, len(shortcuts), 25)]
 
         for page_num, chunk in enumerate(chunks, 1):
-            desc = "\n".join(f"`{s}` → `/{c}`" for s, c in chunk)
+            desc = "\n".join(f"`{s}` → `{c}`" for s, c in chunk)
             embed = discord.Embed(
                 title=f"📋 الاختصارات ({page_num}/{len(chunks)})",
                 description=desc,
