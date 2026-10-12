@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import asyncio
 import json
@@ -24,7 +25,7 @@ def save_data(data):
 
 
 class Broadcast(commands.Cog):
-    """📢 نظام البرودكاست — إرسال رسائل في الخاص لكل الأعضاء"""
+    """📢 نظام البرودكاست — Prefix + Slash"""
 
     def __init__(self, bot):
         self.bot = bot
@@ -32,28 +33,29 @@ class Broadcast(commands.Cog):
         self.active_broadcasts = {}
 
     # ═══════════════════════════════════════
-    # 📢 !broadcast — إرسال رسالة نصية
+    # 📢 !broadcast / /broadcast
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="broadcast",
         aliases=["bc", "برودكاست", "اعلان"],
         description="📢 إرسال رسالة في الخاص لكل الأعضاء"
     )
     @commands.has_permissions(administrator=True)
     @commands.bot_has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.describe(message="الرسالة المراد إرسالها")
     async def broadcast(self, ctx: commands.Context, *, message: str = None):
         """إرسال رسالة نصية لكل الأعضاء في الخاص"""
         if not message:
             await ctx.send(
                 "❌ **الاستخدام الصحيح:**\n"
-                "`!broadcast <الرسالة>`\n\n"
-                "**مثال:** `!broadcast مرحباً بالجميع، عندنا حدث جديد!`",
-                delete_after=10
+                "`/broadcast message:الرسالة` أو `!broadcast <الرسالة>`\n\n"
+                "**مثال:** `!broadcast مرحباً بالجميع، عندنا حدث جديد!`"
             )
             return
 
         if ctx.guild.id in self.active_broadcasts:
-            await ctx.send("⚠️ فيه برودكاست شغال بالفعل! استنى يخلص أو استخدم `!broadcast-cancel`", delete_after=10)
+            await ctx.send("⚠️ فيه برودكاست شغال بالفعل! استنى يخلص أو استخدم `/broadcast-cancel`")
             return
 
         embed = discord.Embed(
@@ -73,36 +75,40 @@ class Broadcast(commands.Cog):
         await ctx.send(embed=embed, view=view)
 
     # ═══════════════════════════════════════
-    # 📢 !broadcast-embed — إرسال embed
+    # 📢 !broadcast-embed / /broadcast-embed
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="broadcast-embed",
         aliases=["bce", "برودكاست-ايمبد"],
         description="📢 إرسال Embed في الخاص لكل الأعضاء"
     )
     @commands.has_permissions(administrator=True)
     @commands.bot_has_permissions(administrator=True)
-    async def broadcast_embed(self, ctx: commands.Context, *, args: str = None):
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.describe(title="عنوان Embed", description="وصف Embed")
+    async def broadcast_embed(self, ctx: commands.Context, title: str = None, *, description: str = None):
         """إرسال embed لكل الأعضاء في الخاص"""
-        if not args or "|" not in args:
+        if not title or not description:
             await ctx.send(
                 "❌ **الاستخدام الصحيح:**\n"
-                "`!broadcast-embed العنوان | الوصف`\n\n"
-                "**مثال:** `!broadcast-embed حدث جديد | عندنا حدث مميز النهارده!`",
-                delete_after=12
+                "`/broadcast-embed title:العنوان description:الوصف`\n"
+                "أو `!broadcast-embed العنوان | الوصف`\n\n"
+                "**مثال:** `!broadcast-embed حدث جديد | عندنا حدث مميز النهارده!`"
             )
             return
 
-        title, description = args.split("|", 1)
-        title = title.strip()
-        description = description.strip()
+        # دعم الصيغة القديمة (title | description)
+        if description is None and "|" in title:
+            title, description = title.split("|", 1)
+            title = title.strip()
+            description = description.strip()
 
         if not title or not description:
-            await ctx.send("❌ لازم تحط العنوان والوصف، مفصولين بـ `|`", delete_after=10)
+            await ctx.send("❌ لازم تحط العنوان والوصف!")
             return
 
         if ctx.guild.id in self.active_broadcasts:
-            await ctx.send("⚠️ فيه برودكاست شغال بالفعل! استنى يخلص أو استخدم `!broadcast-cancel`", delete_after=10)
+            await ctx.send("⚠️ فيه برودكاست شغال بالفعل! استنى يخلص أو استخدم `/broadcast-cancel`")
             return
 
         embed = discord.Embed(
@@ -227,32 +233,34 @@ class Broadcast(commands.Cog):
         await status_msg.edit(embed=finish_embed)
 
     # ═══════════════════════════════════════
-    # 🛑 !broadcast-cancel — إلغاء
+    # 🛑 !broadcast-cancel / /broadcast-cancel
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="broadcast-cancel",
         aliases=["bcc", "الغاء-البرودكاست"],
         description="🛑 إلغاء البرودكاست الجاري"
     )
     @commands.has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
     async def broadcast_cancel(self, ctx: commands.Context):
         """إلغاء البرودكاست الجاري"""
         if ctx.guild.id not in self.active_broadcasts:
-            await ctx.send("❌ مفيش برودكاست شغال حالياً!", delete_after=8)
+            await ctx.send("❌ مفيش برودكاست شغال حالياً!")
             return
 
         del self.active_broadcasts[ctx.guild.id]
         await ctx.send("🛑 تم إلغاء البرودكاست!")
 
     # ═══════════════════════════════════════
-    # 📊 !broadcast-status — الحالة
+    # 📊 !broadcast-status / /broadcast-status
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="broadcast-status",
         aliases=["bcs", "حالة-البرودكاست"],
         description="📊 عرض حالة البرودكاست"
     )
     @commands.has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
     async def broadcast_status(self, ctx: commands.Context):
         """عرض حالة البرودكاست"""
         if ctx.guild.id in self.active_broadcasts:
@@ -271,7 +279,7 @@ class Broadcast(commands.Cog):
         else:
             guild_data = self.data.get(str(ctx.guild.id), [])
             if not guild_data:
-                await ctx.send("📭 مفيش برودكاستات مسجلة!", delete_after=8)
+                await ctx.send("📭 مفيش برودكاستات مسجلة!")
                 return
 
             recent = guild_data[-5:]
@@ -288,16 +296,13 @@ class Broadcast(commands.Cog):
             )
             await ctx.send(embed=embed)
 
-    # ═══════════════════════════════════════
-    # ⚠️ معالجة الأخطاء
-    # ═══════════════════════════════════════
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
-            await ctx.send("❌ مفيش عندك صلاحية **Administrator**!", delete_after=8)
+            await ctx.send("❌ مفيش عندك صلاحية **Administrator**!")
         elif isinstance(error, commands.BotMissingPermissions):
-            await ctx.send("❌ البوت مفيش عنده صلاحية **Administrator**!", delete_after=8)
+            await ctx.send("❌ البوت مفيش عنده صلاحية **Administrator**!")
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(f"❌ ناقص بيانات: `{error.param.name}`", delete_after=8)
+            await ctx.send(f"❌ ناقص بيانات: `{error.param.name}`")
         else:
             print(f"❌ خطأ في أمر {ctx.command}: {error}")
 

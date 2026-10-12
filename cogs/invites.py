@@ -1,14 +1,13 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import json
 import os
 from datetime import datetime, timedelta
 
-# مسار ملف التخزين
 INVITES_FILE = "invites.json"
 
 
-# دالة لتحميل البيانات من ملف JSON
 def load_data():
     if os.path.exists(INVITES_FILE):
         try:
@@ -19,7 +18,6 @@ def load_data():
     return {}
 
 
-# دالة لحفظ البيانات في ملف JSON
 def save_data(data):
     with open(INVITES_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
@@ -29,12 +27,8 @@ class Invites(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.data = load_data()
-        # Cache للدعوات عشان نقدر نحدد مين دعا العضو الجديد
         self.invite_cache = {}
 
-    # ==========================================
-    # 🔧 دوال مساعدة
-    # ==========================================
     def get_user_data(self, guild_id, user_id):
         guild_id = str(guild_id)
         user_id = str(user_id)
@@ -52,17 +46,12 @@ class Invites(commands.Cog):
         save_data(self.data)
 
     def is_fake_account(self, member: discord.Member):
-        """التحقق من إذا كان الحساب وهمي (أقل من 7 أيام)"""
         now = discord.utils.utcnow()
         account_age = now - member.created_at
         return account_age.days < 7
 
-    # ==========================================
-    # 🔔 Events
-    # ==========================================
     @commands.Cog.listener()
     async def on_ready(self):
-        """تحديث cache الدعوات عند تشغيل البوت"""
         for guild in self.bot.guilds:
             try:
                 invites = await guild.invites()
@@ -167,16 +156,17 @@ class Invites(commands.Cog):
                 self.save()
                 break
 
-    # ==========================================
-    # 📨 أمر !invites - عرض عدد الدعوات
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 📨 !invites / /invites
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="invites",
         aliases=["inv", "دعوات", "دعوة"],
-        description="عرض عدد دعوات عضو في السيرفر"
+        description="📨 عرض عدد دعوات عضو"
     )
+    @app_commands.describe(member="العضو المراد عرض دعواته (اختياري)")
     async def invites_prefix(self, ctx: commands.Context, member: discord.Member = None):
-        """عرض عدد دعوات عضو"""
+        """عرض عدد الدعوات"""
         target = member or ctx.author
         guild_id = str(ctx.guild.id)
         user_id = str(target.id)
@@ -193,25 +183,23 @@ class Invites(commands.Cog):
             timestamp=discord.utils.utcnow()
         )
         embed.set_thumbnail(url=target.display_avatar.url)
-
         embed.add_field(name="✅ حقيقية", value=f"**{real}**", inline=True)
         embed.add_field(name="⚠️ وهمية", value=f"**{fake}**", inline=True)
         embed.add_field(name="📊 الإجمالي", value=f"**{total}**", inline=True)
         embed.add_field(name="👥 أعضاء مدعوين", value=f"**{invited_count}**", inline=False)
-
         embed.set_footer(text=f"آيدي العضو: {target.id}")
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # 📨 أمر !inviter - مين دعاك؟
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 📨 !inviter / /inviter
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="inviter",
         aliases=["دعاني", "مين-دعاني"],
-        description="معرفة مين دعاك للسيرفر"
+        description="📨 معرفة مين دعاك للسيرفر"
     )
     async def inviter_prefix(self, ctx: commands.Context):
-        """معرفة مين دعاك للسيرفر"""
+        """معرفة مين دعاك"""
         guild_id = str(ctx.guild.id)
 
         inviter_id = None
@@ -249,16 +237,16 @@ class Invites(commands.Cog):
             )
             await ctx.send(embed=embed)
 
-    # ==========================================
-    # 🏆 أمر !invitetop - أفضل 10 داعين
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🏆 !invitetop / /invitetop
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="invitetop",
         aliases=["itop", "توب-الدعوات", "افضل-الداعين"],
-        description="عرض أفضل 10 داعين في السيرفر"
+        description="🏆 أفضل 10 داعين في السيرفر"
     )
     async def invitetop_prefix(self, ctx: commands.Context):
-        """عرض أفضل 10 داعين"""
+        """أفضل 10 داعين"""
         guild_id = str(ctx.guild.id)
         all_users = self.data.get(guild_id, {})
 
@@ -296,17 +284,19 @@ class Invites(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # 🔄 أمر !resetinvites - تصفير الدعوات (للمشرفين)
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🔄 !resetinvites / /resetinvites
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="resetinvites",
         aliases=["rinv", "تصفير-الدعوات", "صفر-الدعوات"],
-        description="تصفير دعوات عضو (للمشرفين)"
+        description="🔄 تصفير دعوات عضو (للمشرفين)"
     )
     @commands.has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.describe(member="العضو")
     async def resetinvites_prefix(self, ctx: commands.Context, member: discord.Member):
-        """تصفير دعوات عضو - يتطلب صلاحية Administrator"""
+        """تصفير دعوات عضو"""
         guild_id = str(ctx.guild.id)
         user_id = str(member.id)
 
@@ -324,21 +314,13 @@ class Invites(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # ⚠️ معالجة الأخطاء
-    # ==========================================
-    @resetinvites_prefix.error
-    async def resetinvites_error(self, ctx: commands.Context, error):
+    async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
-            await ctx.send("❌ مفيش عندك صلاحية **Administrator** لاستخدام الأمر ده!", delete_after=8)
+            await ctx.send("❌ مفيش عندك صلاحية **Administrator**!", delete_after=8)
         elif isinstance(error, commands.MemberNotFound):
             await ctx.send("❌ مش لاقي العضو ده في السيرفر!", delete_after=8)
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(
-                "❌ لازم تحدد العضو!\n"
-                "**مثال:** `!resetinvites @عضو`",
-                delete_after=8
-            )
+            await ctx.send(f"❌ ناقص بيانات: `{error.param.name}`", delete_after=8)
 
 
 async def setup(bot):

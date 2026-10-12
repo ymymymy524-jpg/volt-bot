@@ -1,14 +1,13 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import json
 import os
 import random
 
-# مسار ملف التخزين
 LEVELS_FILE = "levels.json"
 
 
-# دالة لتحميل البيانات من ملف JSON
 def load_data():
     if os.path.exists(LEVELS_FILE):
         try:
@@ -19,7 +18,6 @@ def load_data():
     return {}
 
 
-# دالة لحفظ البيانات في ملف JSON
 def save_data(data):
     with open(LEVELS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
@@ -31,15 +29,10 @@ class Levels(commands.Cog):
         self.data = load_data()
         self.cooldowns = {}
 
-    # ==========================================
-    # 🔧 دوال مساعدة
-    # ==========================================
     def xp_needed(self, level):
-        """حساب الـ XP المطلوب للترقية"""
         return 100 + (level * 50)
 
     def progress_bar(self, current, total, length=10):
-        """إنشاء Progress Bar نصي"""
         percentage = current / total if total > 0 else 0
         filled = int(length * percentage)
         bar = "▰" * filled + "▱" * (length - filled)
@@ -57,22 +50,15 @@ class Levels(commands.Cog):
     def save(self):
         save_data(self.data)
 
-    # ==========================================
-    # 📩 Event: حساب XP عند الرسائل
-    # ⚠️ ملاحظة: process_commands مسؤولية cogs/shortcuts.py
-    # ==========================================
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot or not message.guild:
             return
 
-        # ⚠️ مفيش process_commands هنا — ده مسؤولية shortcuts.py
-
         guild_id = str(message.guild.id)
         user_id = str(message.author.id)
         now = discord.utils.utcnow()
 
-        # Cooldown لمدة 60 ثانية
         cooldown_key = (guild_id, user_id)
         if cooldown_key in self.cooldowns:
             last_time = self.cooldowns[cooldown_key]
@@ -106,14 +92,15 @@ class Levels(commands.Cog):
             except discord.HTTPException:
                 pass
 
-    # ==========================================
-    # 📊 أمر !rank - عرض المستوى
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 📊 !rank / /rank
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="rank",
         aliases=["r", "مستوى", "لفل", "level"],
-        description="📊 عرض مستوى ورتبة عضو في السيرفر"
+        description="📊 عرض مستوى ورتبة عضو"
     )
+    @app_commands.describe(member="العضو المراد عرض مستواه (اختياري)")
     async def rank_prefix(self, ctx: commands.Context, member: discord.Member = None):
         """عرض مستوى عضو"""
         target = member or ctx.author
@@ -125,7 +112,6 @@ class Levels(commands.Cog):
         xp = user_data["xp"]
         needed = self.xp_needed(level)
 
-        # حساب الترتيب
         all_users = self.data.get(guild_id, {})
         sorted_users = sorted(
             all_users.items(),
@@ -151,16 +137,16 @@ class Levels(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # 🏆 أمر !top - أفضل 10 أعضاء
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🏆 !top / /top
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="top",
         aliases=["t", "توب", "افضل", "leaderboard", "lb"],
-        description="🏆 عرض أفضل 10 أعضاء في المستويات"
+        description="🏆 أفضل 10 أعضاء في المستويات"
     )
     async def top_prefix(self, ctx: commands.Context):
-        """عرض لوحة المتصدرين"""
+        """لوحة المتصدرين"""
         guild_id = str(ctx.guild.id)
         all_users = self.data.get(guild_id, {})
 
@@ -190,19 +176,21 @@ class Levels(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # 📊 أمر !setlevel - تحديد مستوى (للمشرفين)
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 📊 !setlevel / /setlevel
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="setlevel",
         aliases=["sl", "تحديد-مستوى", "عين-مستوى"],
         description="📊 تحديد مستوى عضو (للمشرفين)"
     )
     @commands.has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.describe(member="العضو", level="المستوى (0-1000)")
     async def setlevel_prefix(self, ctx: commands.Context, member: discord.Member, level: int):
-        """تحديد مستوى عضو - يتطلب Administrator"""
+        """تحديد مستوى عضو"""
         if level < 0 or level > 1000:
-            await ctx.send("❌ المستوى لازم يكون بين **0** و **1000**!", delete_after=8)
+            await ctx.send("❌ المستوى لازم يكون بين **0** و **1000**!")
             return
 
         guild_id = str(ctx.guild.id)
@@ -220,17 +208,19 @@ class Levels(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # 🔄 أمر !resetlevel - تصفير مستوى (للمشرفين)
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🔄 !resetlevel / /resetlevel
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="resetlevel",
         aliases=["rl", "تصفير-مستوى", "صفر-مستوى"],
         description="📊 تصفير مستوى عضو (للمشرفين)"
     )
     @commands.has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.describe(member="العضو")
     async def resetlevel_prefix(self, ctx: commands.Context, member: discord.Member):
-        """تصفير مستوى عضو - يتطلب Administrator"""
+        """تصفير مستوى عضو"""
         guild_id = str(ctx.guild.id)
         user_id = str(member.id)
 
@@ -246,22 +236,13 @@ class Levels(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # ⚠️ معالجة الأخطاء
-    # ==========================================
-    @setlevel_prefix.error
-    @resetlevel_prefix.error
-    async def on_admin_error(self, ctx: commands.Context, error):
+    async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("❌ مفيش عندك صلاحية **Administrator**!", delete_after=8)
         elif isinstance(error, commands.MemberNotFound):
             await ctx.send("❌ مش لاقي العضو ده في السيرفر!", delete_after=8)
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(
-                "❌ لازم تحدد العضو والمستوى!\n"
-                "**مثال:** `!setlevel @عضو 5`",
-                delete_after=8
-            )
+            await ctx.send(f"❌ ناقص بيانات: `{error.param.name}`", delete_after=8)
         elif isinstance(error, commands.BadArgument):
             await ctx.send("❌ تأكد إن المستوى رقم صحيح!", delete_after=8)
 

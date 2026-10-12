@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import json, os, random, asyncio
 from typing import List, Optional
@@ -370,7 +371,6 @@ class Games(commands.Cog):
 
         self.active_games.add(channel_id)
 
-        # الألعاب السريعة (بدون lobby)
         if game_name in ["colors", "faster", "flags"]:
             try:
                 if game_name == "colors":
@@ -383,7 +383,6 @@ class Games(commands.Cog):
                 self.active_games.discard(channel_id)
             return
 
-        # الألعاب الجماعية
         game_configs = {
             "bomb": ("💣 القنبلة الموقوتة", 2, 10, g_bomb),
             "button": ("🎲 زر الحظ", 2, 8, g_button),
@@ -414,54 +413,74 @@ class Games(commands.Cog):
             self.active_games.discard(channel_id)
 
     # ═══════════════════════════════════════
-    # 🎮 أوامر الألعاب (كل لعبة بأمرها)
+    # 💣 !bomb / /bomb
     # ═══════════════════════════════════════
-
-    @commands.command(name="bomb", aliases=["قنبلة"], description="💣 لعبة القنبلة الموقوتة")
+    @commands.hybrid_command(name="bomb", aliases=["قنبلة"], description="💣 لعبة القنبلة الموقوتة")
     async def bomb_cmd(self, ctx):
         """القنبلة الموقوتة"""
         await self._run_game(ctx, "bomb")
 
-    @commands.command(name="button", aliases=["ازرار"], description="🎲 لعبة زر الحظ")
+    # ═══════════════════════════════════════
+    # 🎲 !button / /button
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(name="button", aliases=["ازرار"], description="🎲 لعبة زر الحظ")
     async def button_cmd(self, ctx):
         """زر الحظ"""
         await self._run_game(ctx, "button")
 
-    @commands.command(name="chairs", aliases=["كراسي"], description="🪑 لعبة الكراسي الموسيقية")
+    # ═══════════════════════════════════════
+    # 🪑 !chairs / /chairs
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(name="chairs", aliases=["كراسي"], description="🪑 لعبة الكراسي الموسيقية")
     async def chairs_cmd(self, ctx):
         """الكراسي الموسيقية"""
         await self._run_game(ctx, "chairs")
 
-    @commands.command(name="colors", aliases=["الوان"], description="🎨 لعبة تخمين الألوان")
+    # ═══════════════════════════════════════
+    # 🎨 !colors / /colors
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(name="colors", aliases=["الوان"], description="🎨 لعبة تخمين الألوان")
     async def colors_cmd(self, ctx):
         """تخمين الألوان"""
         await self._run_game(ctx, "colors")
 
-    @commands.command(name="faster", aliases=["سرعة"], description="⚡ لعبة الأسرع في الكتابة")
+    # ═══════════════════════════════════════
+    # ⚡ !faster / /faster
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(name="faster", aliases=["سرعة"], description="⚡ لعبة الأسرع في الكتابة")
     async def faster_cmd(self, ctx):
         """الأسرع في الكتابة"""
         await self._run_game(ctx, "faster")
 
-    @commands.command(name="flags", aliases=["اعلام"], description="🏳️ لعبة تخمين الأعلام")
+    # ═══════════════════════════════════════
+    # 🏳️ !flags / /flags
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(name="flags", aliases=["اعلام"], description="🏳️ لعبة تخمين الأعلام")
     async def flags_cmd(self, ctx):
         """تخمين الأعلام"""
         await self._run_game(ctx, "flags")
 
-    @commands.command(name="mafia", aliases=["مافيا"], description="🎭 لعبة المافيا")
+    # ═══════════════════════════════════════
+    # 🎭 !mafia / /mafia
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(name="mafia", aliases=["مافيا"], description="🎭 لعبة المافيا")
     async def mafia_cmd(self, ctx):
         """المافيا"""
         await self._run_game(ctx, "mafia")
 
-    @commands.command(name="roulette", aliases=["روليت"], description="🔫 لعبة الروليت الروسية")
+    # ═══════════════════════════════════════
+    # 🔫 !roulette / /roulette
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(name="roulette", aliases=["روليت"], description="🔫 لعبة الروليت الروسية")
     async def roulette_cmd(self, ctx):
         """الروليت الروسية"""
         await self._run_game(ctx, "roulette")
 
     # ═══════════════════════════════════════
-    # 💰 أوامر Fizzy
+    # 💰 !fizzy / /fizzy
     # ═══════════════════════════════════════
-
-    @commands.command(name="fizzy", aliases=["fz", "فيزي"], description="💰 عرض رصيد Fizzy")
+    @commands.hybrid_command(name="fizzy", aliases=["fz", "فيزي"], description="💰 عرض رصيد Fizzy")
+    @app_commands.describe(member="العضو (اختياري)")
     async def fizzy_cmd(self, ctx, member: discord.Member = None):
         """عرض رصيد Fizzy"""
         target = member or ctx.author
@@ -474,7 +493,10 @@ class Games(commands.Cog):
         embed.set_thumbnail(url=target.display_avatar.url)
         await ctx.send(embed=embed)
 
-    @commands.command(name="fizzytop", aliases=["fzt", "توب-فيزي"], description="🏆 أفضل 10 لاعبين في Fizzy")
+    # ═══════════════════════════════════════
+    # 🏆 !fizzytop / /fizzytop
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(name="fizzytop", aliases=["fzt", "توب-فيزي"], description="🏆 أفضل 10 لاعبين في Fizzy")
     async def fizzytop_cmd(self, ctx):
         """أفضل 10 لاعبين في Fizzy"""
         if not self.data:

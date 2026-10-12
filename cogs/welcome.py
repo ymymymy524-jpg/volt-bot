@@ -1,13 +1,12 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import json
 import os
 
-# مسار ملف التخزين
 WELCOME_FILE = "welcome.json"
 
 
-# دالة لتحميل البيانات من ملف JSON
 def load_data():
     if os.path.exists(WELCOME_FILE):
         try:
@@ -18,7 +17,6 @@ def load_data():
     return {}
 
 
-# دالة لحفظ البيانات في ملف JSON
 def save_data(data):
     with open(WELCOME_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
@@ -29,9 +27,6 @@ class Welcome(commands.Cog):
         self.bot = bot
         self.data = load_data()
 
-    # ═══════════════════════════════════════
-    # 🔧 دوال مساعدة
-    # ═══════════════════════════════════════
     def get_guild_data(self, guild_id):
         guild_id = str(guild_id)
         if guild_id not in self.data:
@@ -77,9 +72,6 @@ class Welcome(commands.Cog):
         embed.set_footer(text="نتمنى لك التوفيق في مكان آخر")
         return embed
 
-    # ═══════════════════════════════════════
-    # 🔔 Events
-    # ═══════════════════════════════════════
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         if member.bot:
@@ -131,15 +123,17 @@ class Welcome(commands.Cog):
             print(f"❌ خطأ في إرسال رسالة الوداع: {e}")
 
     # ═══════════════════════════════════════
-    # 📨 أوامر الترحيب (Prefix)
+    # 👋 !setwelcome / /setwelcome
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="setwelcome",
         aliases=["sw", "عين-ترحيب"],
         description="👋 تعيين روم الترحيب"
     )
     @commands.has_permissions(administrator=True)
     @commands.bot_has_permissions(manage_channels=True)
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.describe(channel="روم الترحيب")
     async def setwelcome(self, ctx: commands.Context, channel: discord.TextChannel):
         """تعيين روم الترحيب"""
         guild_data = self.get_guild_data(ctx.guild.id)
@@ -153,13 +147,18 @@ class Welcome(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 👋 !setgoodbye / /setgoodbye
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="setgoodbye",
         aliases=["sg", "عين-وداع"],
         description="👋 تعيين روم الوداع"
     )
     @commands.has_permissions(administrator=True)
     @commands.bot_has_permissions(manage_channels=True)
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.describe(channel="روم الوداع")
     async def setgoodbye(self, ctx: commands.Context, channel: discord.TextChannel):
         """تعيين روم الوداع"""
         guild_data = self.get_guild_data(ctx.guild.id)
@@ -173,19 +172,23 @@ class Welcome(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🧪 !testwelcome / /testwelcome
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="testwelcome",
         aliases=["tw", "تجربة-ترحيب"],
         description="🧪 اختبار رسالة الترحيب"
     )
     @commands.has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
     async def testwelcome(self, ctx: commands.Context):
         """اختبار رسالة الترحيب"""
         guild_data = self.get_guild_data(ctx.guild.id)
         welcome_channel_id = guild_data.get("welcome_channel")
 
         if not welcome_channel_id:
-            await ctx.send("❌ لم يتم تعيين روم الترحيب! استخدم `!setwelcome` أولاً")
+            await ctx.send("❌ لم يتم تعيين روم الترحيب! استخدم `/setwelcome` أو `!setwelcome` أولاً")
             return
 
         channel = ctx.guild.get_channel(int(welcome_channel_id))
@@ -210,19 +213,27 @@ class Welcome(commands.Cog):
         except discord.HTTPException as e:
             await ctx.send(f"❌ حدث خطأ أثناء إرسال الرسالة: {e}")
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🔄 !welcome-set-status / /welcome-set-status
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="welcome-set-status",
         aliases=["wss", "تشغيل-ترحيب"],
         description="🔄 تفعيل أو إيقاف نظام الترحيب"
     )
     @commands.has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.describe(status="on للتفعيل أو off للإيقاف")
+    @app_commands.choices(status=[
+        app_commands.Choice(name="تفعيل ✅", value="on"),
+        app_commands.Choice(name="إيقاف ❌", value="off")
+    ])
     async def welcome_set_status(self, ctx: commands.Context, status: str = None):
         """تفعيل أو إيقاف نظام الترحيب"""
         if not status or status.lower() not in ["on", "off", "تفعيل", "ايقاف"]:
             await ctx.send(
                 "❌ اكتب `on` للتفعيل أو `off` للإيقاف\n"
-                "**مثال:** `!welcome-set-status on`",
-                delete_after=10
+                "**مثال:** `/welcome-set-status status:on` أو `!welcome-set-status on`"
             )
             return
 
@@ -239,10 +250,7 @@ class Welcome(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    # ═══════════════════════════════════════
-    # ⚠️ معالجة الأخطاء
-    # ═══════════════════════════════════════
-    async def cog_command_error(self, ctx: commands.Context, error):
+    async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("❌ مفيش عندك صلاحية **Administrator**!", delete_after=8)
         elif isinstance(error, commands.ChannelNotFound):
@@ -251,8 +259,6 @@ class Welcome(commands.Cog):
             await ctx.send(f"❌ ناقص بيانات: `{error.param.name}`", delete_after=8)
         elif isinstance(error, commands.BadArgument):
             await ctx.send("❌ تأكد من البيانات المدخلة!", delete_after=8)
-        else:
-            print(f"❌ خطأ في أمر {ctx.command}: {error}")
 
 
 async def setup(bot):

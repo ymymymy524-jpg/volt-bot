@@ -1,29 +1,26 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 from config import Colors
 
 # ==========================================
-# ❓ نظام المساعدة (Help System) - Prefix !
+# ❓ نظام المساعدة (Help System) - Prefix + Slash
 # ==========================================
 
 class HelpSelect(discord.ui.Select):
     def __init__(self):
-        # تعريف الأقسام الـ 12 المطلوبة
         self.sections = {
             "general": {
                 "emoji": "🛠️",
                 "title": "🛠️ الأوامر العامة",
                 "description": "أوامر المعلومات الأساسية والصور الشخصية",
                 "commands": [
-                    "`!ping` (`!p`) - عرض سرعة استجابة البوت",
-                    "`!avatar` (`!av`, `!صورة`) - عرض صورة العضو أو السيرفر",
-                    "`!banner` (`!bn`) - عرض بانر العضو أو السيرفر",
-                    "`!user` (`!u`, `!معلومات`) - عرض معلومات تفصيلية عن عضو",
-                    "`!server` (`!sv`) - عرض معلومات وإحصائيات السيرفر",
-                    "`!daily` (`!d`, `!يومي`) - استلام الرصيد اليومي",
-                    "`!rank` (`!r`, `!مستوى`) - عرض مستوى العضو وتقدمه",
-                    "`!top` (`!t`, `!توب`) - عرض أفضل 10 أعضاء في المستويات",
-                    "`!volt` (`!v`) - عرض أو تعديل رصيد Bitcoin"
+                    "`!ping` / `/ping` (`!p`, `!بنق`) - عرض سرعة استجابة البوت",
+                    "`!avatar` / `/avatar` (`!av`, `!صورة`) - عرض صورة العضو",
+                    "`!banner` / `/banner` (`!bn`) - عرض بانر العضو",
+                    "`!user` / `/user` (`!u`, `!معلومات`) - عرض معلومات عضو",
+                    "`!server` / `/server` (`!sv`) - عرض معلومات السيرفر",
+                    "`!volt` / `/volt` (`!v`) - عرض رصيد Bitcoin"
                 ]
             },
             "moderation": {
@@ -31,22 +28,24 @@ class HelpSelect(discord.ui.Select):
                 "title": "👑 الإدارة",
                 "description": "أوامر إدارة الأعضاء والقنوات والرتب",
                 "commands": [
-                    "`!ban` (`!b`, `!حظر`) - حظر عضو",
-                    "`!kick` (`!k`, `!طرد`) - طرد عضو",
-                    "`!unban` (`!ub`) - فك الحظر",
-                    "`!ban-all` - حظر شامل",
-                    "`!warn` (`!w`, `!انذار`) - إنذار عضو",
-                    "`!warnings` (`!ws`) - عرض إنذارات عضو",
-                    "`!mute` (`!m`, `!كتم`) - كتم عضو",
-                    "`!unmute` (`!um`) - فك الكتم",
-                    "`!timeout` (`!to`) - توقيت عضو",
-                    "`!clear` (`!c`, `!مسح`) - مسح الرسائل",
-                    "`!slowmode` (`!sm`) - الوضع البطيء",
-                    "`!lock` (`!l`, `!قفل`) - قفل القناة",
-                    "`!unlock` (`!ul`, `!فتح`) - فتح القناة",
-                    "`!nick` (`!n`) - تغيير اللقب",
-                    "`!role` (`!rl`) - إدارة الرتب",
-                    "`!role-all` - إعطاء رتبة للجميع"
+                    "`!ban` / `/ban` (`!b`, `!حظر`) - حظر عضو",
+                    "`!kick` / `/kick` (`!k`, `!طرد`) - طرد عضو",
+                    "`!unban` / `/unban` (`!ub`) - فك الحظر",
+                    "`!ban-all` / `/ban-all` - حظر شامل",
+                    "`!warn add/list/clear` / `/warn` - الإنذارات",
+                    "`!mute` / `/mute` (`!m`, `!كتم`) - كتم عضو",
+                    "`!unmute` / `/unmute` (`!um`) - فك الكتم",
+                    "`!timeout` / `/timeout` (`!to`) - توقيت عضو",
+                    "`!clear` / `/clear` (`!c`, `!مسح`) - مسح الرسائل",
+                    "`!slowmode` / `/slowmode` (`!sm`) - الوضع البطيء",
+                    "`!lock` / `/lock` (`!l`, `!قفل`) - قفل القناة",
+                    "`!unlock` / `/unlock` (`!ul`, `!فتح`) - فتح القناة",
+                    "`!nick` / `/nick` (`!n`) - تغيير اللقب",
+                    "`!move` / `/move` - نقل عضو",
+                    "`!hide` / `/hide` - إخفاء القناة",
+                    "`!unhide` / `/unhide` - إظهار القناة",
+                    "`!voicemute` / `/voicemute` - كتم صوت",
+                    "`!voicedeafen` / `/voicedeafen` - منع السماع"
                 ]
             },
             "protection": {
@@ -54,23 +53,28 @@ class HelpSelect(discord.ui.Select):
                 "title": "🛡️ الحماية",
                 "description": "أنظمة حماية السيرفر من السبام والاختراق",
                 "commands": [
-                    "`!protection auto` (`!حماية auto`) - تفعيل/تعطيل الحماية",
-                    "`!protection spam` - حماية من السبام",
-                    "`!protection link` - حماية من روابط التشهير",
-                    "`!protection join` - حماية من الحسابات الجديدة",
-                    "`!protection hacked` - حماية من الاختراق",
-                    "`!protection bans, kicks, channels, roles, bots`"
+                    "`!protection auto on/off` / `/protection auto` - الحماية التلقائية",
+                    "`!protection spam on/off` / `/protection spam` - حماية السبام",
+                    "`!protection link on/off` / `/protection link` - حماية الروابط",
+                    "`!protection join on/off` / `/protection join` - حماية الانضمام",
+                    "`!protection hacked on/off` / `/protection hacked` - حماية المخترقة",
+                    "`!protection bans on/off` / `/protection bans` - حماية الحظر الجماعي",
+                    "`!protection kicks on/off` / `/protection kicks` - حماية الطرد الجماعي",
+                    "`!protection channels on/off` / `/protection channels` - حماية القنوات",
+                    "`!protection roles on/off` / `/protection roles` - حماية الرتب",
+                    "`!protection bots on/off` / `/protection bots` - حماية البوتات",
+                    "`!protection status` / `/protection status` - عرض الحالة"
                 ]
             },
             "levels": {
                 "emoji": "📊",
                 "title": "📊 المستويات",
-                "description": "نظام الخبرة والمستويات وتخصيص المكافآت",
+                "description": "نظام الخبرة والمستويات",
                 "commands": [
-                    "`!rank` (`!r`, `!مستوى`) - عرض مستوى العضو",
-                    "`!top` (`!t`, `!توب`) - عرض لوحة المتصدرين",
-                    "`!setlevel` (`!sl`) - تعيين مستوى (للإدارة)",
-                    "`!resetlevel` (`!rl`) - تصفير المستوى (للإدارة)"
+                    "`!rank` / `/rank` (`!r`, `!مستوى`) - عرض مستوى العضو",
+                    "`!top` / `/top` (`!t`, `!توب`) - لوحة المتصدرين",
+                    "`!setlevel` / `/setlevel` (`!sl`) - تعيين مستوى (للإدارة)",
+                    "`!resetlevel` / `/resetlevel` (`!rl`) - تصفير المستوى (للإدارة)"
                 ]
             },
             "welcome": {
@@ -78,118 +82,112 @@ class HelpSelect(discord.ui.Select):
                 "title": "👋 الترحيب",
                 "description": "إعداد رسائل الترحيب والمغادرة",
                 "commands": [
-                    "`!setwelcome` (`!sw`) - تعيين قناة ورسالة الترحيب",
-                    "`!setgoodbye` (`!sg`) - تعيين قناة ورسالة المغادرة",
-                    "`!testwelcome` (`!tw`) - اختبار رسالة الترحيب",
-                    "`!welcome-set-status` (`!wss`) - تفعيل/تعطيل الترحيب"
+                    "`!setwelcome` / `/setwelcome` (`!sw`) - تعيين قناة الترحيب",
+                    "`!setgoodbye` / `/setgoodbye` (`!sg`) - تعيين قناة المغادرة",
+                    "`!testwelcome` / `/testwelcome` (`!tw`) - اختبار رسالة الترحيب",
+                    "`!welcome-set-status` / `/welcome-set-status` - تفعيل/تعطيل"
                 ]
             },
             "music": {
                 "emoji": "🎵",
                 "title": "🎵 الموسيقى",
-                "description": "تشغيل وإدارة الموسيقى في القنوات الصوتية",
+                "description": "تشغيل وإدارة الموسيقى",
                 "commands": [
-                    "`!play` (`!p`) - تشغيل أغنية أو إضافة للقائمة",
-                    "`!pause` - إيقاف مؤقت",
-                    "`!resume` (`!res`) - استئناف",
-                    "`!skip` (`!s`) - تخطي الأغنية",
-                    "`!stop` (`!st`) - إيقاف التشغيل",
-                    "`!queue` (`!q`) - قائمة التشغيل",
-                    "`!volume` (`!vol`) - مستوى الصوت",
-                    "`!nowplaying` (`!np`) - الأغنية الحالية"
+                    "`!play` / `/play` (`!p`) - تشغيل أغنية",
+                    "`!pause` / `/pause` - إيقاف مؤقت",
+                    "`!resume` / `/resume` (`!res`) - استئناف",
+                    "`!skip` / `/skip` (`!s`) - تخطي الأغنية",
+                    "`!stop` / `/stop` (`!st`) - إيقاف التشغيل",
+                    "`!queue` / `/queue` (`!q`) - قائمة التشغيل",
+                    "`!volume` / `/volume` (`!vol`) - مستوى الصوت",
+                    "`!nowplaying` / `/nowplaying` (`!np`) - الأغنية الحالية",
+                    "`!shuffle` / `/shuffle` (`!sh`) - خلط القائمة"
                 ]
             },
             "invites": {
                 "emoji": "📨",
                 "title": "📨 الدعوات",
-                "description": "تتبع دعوات الأعضاء وإحصائياتها",
+                "description": "تتبع دعوات الأعضاء",
                 "commands": [
-                    "`!invites` (`!inv`, `!دعوات`) - عرض عدد دعواتك",
-                    "`!inviter` - معرفة من قام بدعوتك",
-                    "`!invitetop` (`!itop`) - أفضل الأعضاء في الدعوات",
-                    "`!resetinvites` (`!rinv`) - تصفير دعوات عضو"
+                    "`!invites` / `/invites` (`!inv`, `!دعوات`) - عرض دعواتك",
+                    "`!inviter` / `/inviter` - مين دعاك؟",
+                    "`!invitetop` / `/invitetop` (`!itop`) - أفضل الداعين",
+                    "`!resetinvites` / `/resetinvites` (`!rinv`) - تصفير الدعوات"
                 ]
             },
             "tickets": {
                 "emoji": "🎫",
                 "title": "🎫 التذاكر",
-                "description": "نظام فتح وإدارة تذاكر الدعم الفني",
+                "description": "نظام فتح وإدارة التذاكر",
                 "commands": [
-                    "`!ticket` (`!t`, `!تذكرة`) - فتح تذكرة دعم",
-                    "`!close` (`!cl`) - إغلاق التذكرة الحالية",
-                    "`!add` - إضافة عضو للتذكرة",
-                    "`!remove` (`!rm`) - إزالة عضو من التذكرة",
-                    "`!setticket` - إعداد نظام التذاكر"
+                    "`!ticket` / `/ticket` (`!t`, `!تذكرة`) - فتح تذكرة",
+                    "`!close` / `/close` (`!cl`) - إغلاق التذكرة",
+                    "`!add` / `/add` - إضافة عضو للتذكرة",
+                    "`!remove` / `/remove` (`!rm`) - إزالة عضو",
+                    "`!setticket` / `/setticket` - إعداد التذاكر"
                 ]
             },
             "games": {
                 "emoji": "🎮",
                 "title": "🎮 الألعاب",
-                "description": "ألعاب تفاعلية جماعية وسريعة مع نظام Fizzy",
+                "description": "ألعاب تفاعلية مع نظام Fizzy",
                 "commands": [
-                    "`!game bomb` (`!bomb`) - لعبة القنبلة",
-                    "`!game button` (`!button`) - لعبة الأزرار",
-                    "`!game chairs` - لعبة الكراسي",
-                    "`!game colors` (`!colors`) - لعبة الألوان",
-                    "`!game faster` (`!faster`) - لعبة السرعة",
-                    "`!game flags` (`!flags`) - لعبة الأعلام",
-                    "`!game mafia` (`!mafia`) - لعبة المافيا",
-                    "`!game roulette` (`!roulette`) - الروليت",
-                    "`!fizzy` (`!fz`) - رصيد Fizzy",
-                    "`!fizzytop` (`!fzt`) - أفضل 10 لاعبين Fizzy"
+                    "`!bomb` / `/bomb` - القنبلة",
+                    "`!button` / `/button` - زر الحظ",
+                    "`!chairs` / `/chairs` - الكراسي",
+                    "`!colors` / `/colors` - الألوان",
+                    "`!faster` / `/faster` - السرعة",
+                    "`!flags` / `/flags` - الأعلام",
+                    "`!mafia` / `/mafia` - المافيا",
+                    "`!roulette` / `/roulette` - الروليت",
+                    "`!fizzy` / `/fizzy` (`!fz`) - رصيد Fizzy",
+                    "`!fizzytop` / `/fizzytop` (`!fzt`) - توب Fizzy"
                 ]
             },
             "economy": {
                 "emoji": "💎",
                 "title": "💎 الاقتصاد",
-                "description": "نظام Bitcoin، العمل، التحويل، والمتجر",
+                "description": "نظام Bitcoin والمتجر",
                 "commands": [
-                    "`!balance` (`!bal`, `!b`, `!رصيد`) - عرض الرصيد",
-                    "`!daily` (`!d`, `!يومي`) - الرصيد اليومي",
-                    "`!work` (`!w`, `!عمل`) - العمل لكسب Bitcoin",
-                    "`!transfer` (`!tr`) - تحويل الرصيد",
-                    "`!bitcoin-top` (`!btop`) - أفضل الأثرياء",
-                    "`!bitcoin-history` (`!bh`) - سجل المعاملات",
-                    "`!bitcoin-shop` (`!shop`, `!متجر`) - المتجر",
-                    "`!buy` - شراء من المتجر",
-                    "`!bitcoin-admin` (`!badmin`) - إدارة الاقتصاد"
+                    "`!balance` / `/balance` (`!bal`, `!b`, `!رصيد`) - الرصيد",
+                    "`!daily` / `/daily` (`!d`, `!يومي`) - المكافأة اليومية",
+                    "`!work` / `/work` (`!w`, `!عمل`) - العمل",
+                    "`!transfer` / `/transfer` (`!tr`) - تحويل",
+                    "`!top` / `/top` (`!btop`) - الأثرياء",
+                    "`!history` / `/history` (`!bh`) - السجل",
+                    "`!shop` / `/shop` (`!متجر`) - المتجر",
+                    "`!buy` / `/buy` - شراء",
+                    "`!badmin add/remove/set/reset` - إدارة"
                 ]
             },
             "ai": {
                 "emoji": "🤖",
                 "title": "🤖 الذكاء الاصطناعي",
-                "description": "أوامر مدعومة بـ Google Gemini AI",
+                "description": "أوامر مدعومة بـ Google Gemini",
                 "commands": [
-                    "`!ai ask` (`!ai سؤال`) - طرح سؤال للـ AI",
-                    "`!ai imagine` (`!ai تخيل`) - توليد وصف أو فكرة",
-                    "`!ai translate` (`!ai ترجم`) - ترجمة النصوص",
-                    "`!ai summarize` (`!ai لخص`) - تلخيص النصوص",
-                    "`!ai code` - مساعدة في الكود",
-                    "`!ai story` - كتابة قصة",
-                    "`!ai analyze` - تحليل نص"
+                    "`!ask` / `/ask` (`!اسأل`) - طرح سؤال",
+                    "`!imagine` / `/imagine` (`!تخيل`) - توليد وصف",
+                    "`!translate` / `/translate` (`!ترجم`) - ترجمة",
+                    "`!summarize` / `/summarize` (`!لخص`) - تلخيص",
+                    "`!code` / `/code` (`!كود`) - مساعدة في الكود",
+                    "`!story` / `/story` (`!قصة`) - كتابة قصة",
+                    "`!analyze` / `/analyze` (`!حلل`) - تحليل"
                 ]
             },
             "settings": {
                 "emoji": "⚙️",
                 "title": "⚙️ الإعدادات",
-                "description": "إعدادات السيرفر المتقدمة والتخصيص",
+                "description": "إعدادات السيرفر المتقدمة",
                 "commands": [
-                    "`!add-emoji` (`!ae`) - إضافة إيموجي",
-                    "`!auto-message` (`!am`) - رسائل تلقائية",
-                    "`!auto-reply` (`!ar`) - ردود تلقائية",
-                    "`!automod` - الإشراف التلقائي",
-                    "`!autorole` - رتبة تلقائية",
-                    "`!change-log` (`!clog`) - سجل التغييرات",
-                    "`!command-disable` (`!cd`) - تعطيل أمر",
-                    "`!level-up-msg` (`!lum`) - رسالة ترقية",
-                    "`!log` - إعداد السجلات",
-                    "`!perms` (`!p`) - الصلاحيات",
-                    "`!role-icon` - أيقونة الرتبة",
-                    "`!self-roles` (`!sr`) - رتب ذاتية",
-                    "`!embed` - إنشاء Embed",
-                    "`!settings` (`!set`) - الإعدادات العامة",
-                    "`!setup` - الإعداد الأولي",
-                    "`!end-premium` - إنهاء البريميوم"
+                    "`!setup` / `/setup` - الإعداد الأولي",
+                    "`!add-emoji` / `/add-emoji` (`!ae`) - إضافة إيموجي",
+                    "`!auto-message add/delete/list` - رسائل تلقائية",
+                    "`!auto-reply add/delete/show` - ردود تلقائية",
+                    "`!automod create/delete` - AutoMod",
+                    "`!autorole` / `/autorole` - رتبة تلقائية",
+                    "`!log set/stop` - السجلات",
+                    "`!perms` / `/perms` (`!p`) - الصلاحيات",
+                    "`!settings` / `/settings` (`!set`) - الإعدادات"
                 ]
             }
         }
@@ -220,7 +218,7 @@ class HelpSelect(discord.ui.Select):
             description=section["description"] + "\n\n**الأوامر المتاحة:**\n" + "\n".join(section["commands"]),
             color=Colors.INFO
         )
-        embed.set_footer(text="استخدم !help للعودة للقائمة الرئيسية")
+        embed.set_footer(text="استخدم /help أو !help للعودة للقائمة الرئيسية")
         await interaction.response.edit_message(embed=embed, view=self.view)
 
 
@@ -233,14 +231,16 @@ class HelpView(discord.ui.View):
     async def home_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
             title="🤖 قائمة مساعدة البوت الشاملة",
-            description="مرحباً بك! اختر قسماً من القائمة المنسدلة أدناه لعرض الأوامر التفصيلية الخاصة به.\n\n"
-                        "💡 **ملاحظة:** جميع الأوامر تبدأ بـ `!` (Prefix Commands).\n"
-                        "🔹 بعض الأوامر لها اختصارات قصيرة (مكتوبة بين قوسين).\n"
-                        "⚠️ بعض الأوامر تتطلب صلاحيات إدارية محددة.",
+            description=(
+                "مرحباً بك! اختر قسماً من القائمة المنسدلة أدناه لعرض الأوامر التفصيلية الخاصة به.\n\n"
+                "💡 **ملاحظة:** كل الأوامر تشتغل بـ `/` (Slash) و `!` (Prefix).\n"
+                "🔹 الاختصارات (بين قوسين) تشتغل بـ Prefix فقط.\n"
+                "⚠️ بعض الأوامر تتطلب صلاحيات إدارية محددة."
+            ),
             color=Colors.GOLD
         )
         embed.set_thumbnail(url=interaction.client.user.display_avatar.url)
-        embed.set_footer(text="!help | !h | !مساعدة")
+        embed.set_footer(text="/help | !help | !h | !مساعدة")
         await interaction.response.edit_message(embed=embed, view=self)
 
 
@@ -252,24 +252,26 @@ class Help(commands.Cog):
         """إنشاء الإيمبد الرئيسي لقائمة المساعدة"""
         embed = discord.Embed(
             title="🤖 قائمة مساعدة البوت الشاملة",
-            description="مرحباً بك! اختر قسماً من القائمة المنسدلة أدناه لعرض الأوامر التفصيلية الخاصة به.\n\n"
-                        "💡 **ملاحظة:** جميع الأوامر تبدأ بـ `!` (Prefix Commands).\n"
-                        "🔹 بعض الأوامر لها اختصارات قصيرة (مكتوبة بين قوسين).\n"
-                        "⚠️ بعض الأوامر تتطلب صلاحيات إدارية محددة.",
+            description=(
+                "مرحباً بك! اختر قسماً من القائمة المنسدلة أدناه لعرض الأوامر التفصيلية الخاصة به.\n\n"
+                "💡 **ملاحظة:** كل الأوامر تشتغل بـ `/` (Slash) و `!` (Prefix).\n"
+                "🔹 الاختصارات (بين قوسين) تشتغل بـ Prefix فقط.\n"
+                "⚠️ بعض الأوامر تتطلب صلاحيات إدارية محددة."
+            ),
             color=Colors.GOLD
         )
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
-        embed.set_footer(text="!help | !h | !مساعدة")
+        embed.set_footer(text="/help | !help | !h | !مساعدة")
         if user:
             embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
         return embed
 
     # ==========================================
-    # 🔹 أمر المساعدة بالبادئة !
+    # 🔹 !help / /help
     # ==========================================
-    @commands.command(
+    @commands.hybrid_command(
         name="help",
-        aliases=["h", "مساعدة", "اوامر", "الاوامر", "?", "commands"],
+        aliases=["h", "مساعدة", "اوامر", "الاوامر", "commands"],
         description="❓ عرض قائمة الأوامر والمساعدة"
     )
     async def help_prefix(self, ctx: commands.Context):

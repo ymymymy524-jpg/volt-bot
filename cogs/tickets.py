@@ -1,14 +1,13 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import json
 import os
 import asyncio
 
-# مسار ملف التخزين
 TICKETS_FILE = "tickets.json"
 
 
-# دالة لتحميل البيانات من ملف JSON
 def load_data():
     if os.path.exists(TICKETS_FILE):
         try:
@@ -19,7 +18,6 @@ def load_data():
     return {}
 
 
-# دالة لحفظ البيانات في ملف JSON
 def save_data(data):
     with open(TICKETS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
@@ -30,9 +28,6 @@ class Tickets(commands.Cog):
         self.bot = bot
         self.data = load_data()
 
-    # ═══════════════════════════════════════
-    # 🔧 دوال مساعدة
-    # ═══════════════════════════════════════
     def get_guild_data(self, guild_id):
         guild_id = str(guild_id)
         if guild_id not in self.data:
@@ -46,15 +41,17 @@ class Tickets(commands.Cog):
         save_data(self.data)
 
     # ═══════════════════════════════════════
-    # 🎫 أمر !setticket - إعداد نظام التذاكر
+    # 🎫 !setticket / /setticket
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="setticket",
         aliases=["st", "اعداد-تذاكر"],
-        description="🎫 تحديد Category التذاكر في السيرفر"
+        description="🎫 تحديد Category التذاكر"
     )
     @commands.has_permissions(administrator=True)
     @commands.bot_has_permissions(manage_channels=True)
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.describe(channel="الـ Category الخاص بالتذاكر")
     async def setticket(self, ctx: commands.Context, channel: discord.CategoryChannel):
         """تحديد Category التذاكر"""
         guild_data = self.get_guild_data(ctx.guild.id)
@@ -70,14 +67,15 @@ class Tickets(commands.Cog):
         await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════
-    # 🎫 أمر !ticket - فتح تذكرة جديدة
+    # 🎫 !ticket / /ticket
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="ticket",
         aliases=["t", "تذكرة"],
         description="🎫 فتح تذكرة دعم جديدة"
     )
     @commands.bot_has_permissions(manage_channels=True)
+    @app_commands.describe(reason="سبب فتح التذكرة (اختياري)")
     async def ticket(self, ctx: commands.Context, *, reason: str = None):
         """فتح تذكرة دعم"""
         guild_id = str(ctx.guild.id)
@@ -85,25 +83,22 @@ class Tickets(commands.Cog):
 
         category_id = guild_data.get("ticket_channel")
         if not category_id:
-            await ctx.send("❌ لم يتم تعيين روم التذاكر! استخدم `!setticket` أولاً", delete_after=8)
+            await ctx.send("❌ لم يتم تعيين روم التذاكر! استخدم `/setticket` أو `!setticket` أولاً")
             return
 
         category = ctx.guild.get_channel(int(category_id))
         if not category:
-            await ctx.send("❌ روم التذاكر غير موجود", delete_after=8)
+            await ctx.send("❌ روم التذاكر غير موجود")
             return
 
-        # التحقق من وجود تذكرة مفتوحة بالفعل للعضو
         active_tickets = guild_data.get("active_tickets", {})
         if str(ctx.author.id) in active_tickets.values():
-            await ctx.send("❌ لديك تذكرة مفتوحة بالفعل! لا يمكنك فتح أكثر من تذكرة", delete_after=8)
+            await ctx.send("❌ لديك تذكرة مفتوحة بالفعل! لا يمكنك فتح أكثر من تذكرة")
             return
 
-        # إنشاء اسم الروم الجديد
         channel_name = f"ticket-{ctx.author.name}"
         channel_name = channel_name.lower().replace(" ", "-")[:90]
 
-        # تحديد صلاحيات الروم
         overwrites = {
             ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
             ctx.author: discord.PermissionOverwrite(
@@ -114,7 +109,6 @@ class Tickets(commands.Cog):
             )
         }
 
-        # إضافة صلاحية لفريق الدعم والإدارة لو موجودين
         support_role = discord.utils.get(ctx.guild.roles, name="Support")
         if support_role:
             overwrites[support_role] = discord.PermissionOverwrite(
@@ -135,18 +129,16 @@ class Tickets(commands.Cog):
                 topic=f"تذكرة دعم من {ctx.author.mention} | الآيدي: {ctx.author.id}"
             )
         except discord.Forbidden:
-            await ctx.send("❌ البوت مفيش عنده صلاحية إنشاء رومات", delete_after=8)
+            await ctx.send("❌ البوت مفيش عنده صلاحية إنشاء رومات")
             return
         except Exception as e:
-            await ctx.send(f"❌ حدث خطأ: {e}", delete_after=8)
+            await ctx.send(f"❌ حدث خطأ: {e}")
             return
 
-        # حفظ التذكرة في البيانات
         active_tickets[str(ticket_channel.id)] = str(ctx.author.id)
         guild_data["active_tickets"] = active_tickets
         self.save()
 
-        # إرسال رسالة الترحيب في التذكرة
         reason_text = reason if reason else "لم يتم تحديد سبب"
         embed = discord.Embed(
             title="🎫 تم إنشاء التذكرة",
@@ -154,7 +146,7 @@ class Tickets(commands.Cog):
                 f"أهلاً {ctx.author.mention}!\n"
                 f"فريق الدعم هيرد عليك في أقرب وقت.\n\n"
                 f"📝 **السبب:** {reason_text}\n\n"
-                f"لإغلاق التذكرة، استخدم الأمر `!close`"
+                f"لإغلاق التذكرة، استخدم `/close` أو `!close`"
             ),
             color=discord.Color.blue(),
             timestamp=discord.utils.utcnow()
@@ -166,15 +158,15 @@ class Tickets(commands.Cog):
             embed=embed
         )
 
-        await ctx.send(f"✅ تم إنشاء التذكرة في {ticket_channel.mention}", delete_after=8)
+        await ctx.send(f"✅ تم إنشاء التذكرة في {ticket_channel.mention}")
 
     # ═══════════════════════════════════════
-    # 🔒 أمر !close - إغلاق التذكرة
+    # 🔒 !close / /close
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="close",
         aliases=["cl", "اغلاق"],
-        description="🔒 إغلاق التذكرة الحالية وحذفها"
+        description="🔒 إغلاق التذكرة الحالية"
     )
     @commands.bot_has_permissions(manage_channels=True)
     async def close(self, ctx: commands.Context):
@@ -185,10 +177,9 @@ class Tickets(commands.Cog):
 
         channel_id = str(ctx.channel.id)
         if channel_id not in active_tickets:
-            await ctx.send("❌ هذه ليست تذكرة! الأمر ده بيستخدم جوه رومات التذاكر فقط", delete_after=8)
+            await ctx.send("❌ هذه ليست تذكرة! الأمر ده بيستخدم جوه رومات التذاكر فقط")
             return
 
-        # التحقق من الصلاحيات
         user_id = active_tickets[channel_id]
         is_owner = str(ctx.author.id) == user_id
         has_perms = (
@@ -197,10 +188,9 @@ class Tickets(commands.Cog):
         )
 
         if not is_owner and not has_perms:
-            await ctx.send("❌ فقط صاحب التذكرة أو الإدارة يمكنهم إغلاقها", delete_after=8)
+            await ctx.send("❌ فقط صاحب التذكرة أو الإدارة يمكنهم إغلاقها")
             return
 
-        # إرسال رسالة الإغلاق
         embed = discord.Embed(
             title="🔒 تم إغلاق التذكرة",
             description="شكراً لتواصلك مع الدعم! الروم هيتحذف خلال 5 ثواني...",
@@ -209,7 +199,6 @@ class Tickets(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-        # حذف الروم بعد 5 ثواني
         await asyncio.sleep(5)
 
         try:
@@ -222,14 +211,15 @@ class Tickets(commands.Cog):
             print(f"❌ خطأ في حذف التذكرة: {e}")
 
     # ═══════════════════════════════════════
-    # ➕ أمر !add - إضافة عضو للتذكرة
+    # ➕ !add / /add
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="add",
         aliases=["اضف"],
         description="➕ إضافة عضو للتذكرة"
     )
     @commands.bot_has_permissions(manage_channels=True)
+    @app_commands.describe(member="العضو المراد إضافته")
     async def add(self, ctx: commands.Context, member: discord.Member):
         """إضافة عضو للتذكرة"""
         guild_id = str(ctx.guild.id)
@@ -238,10 +228,9 @@ class Tickets(commands.Cog):
 
         channel_id = str(ctx.channel.id)
         if channel_id not in active_tickets:
-            await ctx.send("❌ هذه ليست تذكرة!", delete_after=8)
+            await ctx.send("❌ هذه ليست تذكرة!")
             return
 
-        # التحقق من الصلاحيات
         user_id = active_tickets[channel_id]
         is_owner = str(ctx.author.id) == user_id
         has_perms = (
@@ -250,7 +239,7 @@ class Tickets(commands.Cog):
         )
 
         if not is_owner and not has_perms:
-            await ctx.send("❌ مفيش عندك صلاحية!", delete_after=8)
+            await ctx.send("❌ مفيش عندك صلاحية!")
             return
 
         try:
@@ -269,17 +258,18 @@ class Tickets(commands.Cog):
             )
             await ctx.send(embed=embed)
         except discord.Forbidden:
-            await ctx.send("❌ البوت مفيش عنده صلاحية!", delete_after=8)
+            await ctx.send("❌ البوت مفيش عنده صلاحية!")
 
     # ═══════════════════════════════════════
-    # ➖ أمر !remove - إزالة عضو من التذكرة
+    # ➖ !remove / /remove
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="remove",
         aliases=["rm", "شيل"],
         description="➖ إزالة عضو من التذكرة"
     )
     @commands.bot_has_permissions(manage_channels=True)
+    @app_commands.describe(member="العضو المراد إزالته")
     async def remove(self, ctx: commands.Context, member: discord.Member):
         """إزالة عضو من التذكرة"""
         guild_id = str(ctx.guild.id)
@@ -288,10 +278,9 @@ class Tickets(commands.Cog):
 
         channel_id = str(ctx.channel.id)
         if channel_id not in active_tickets:
-            await ctx.send("❌ هذه ليست تذكرة!", delete_after=8)
+            await ctx.send("❌ هذه ليست تذكرة!")
             return
 
-        # التحقق من الصلاحيات
         user_id = active_tickets[channel_id]
         is_owner = str(ctx.author.id) == user_id
         has_perms = (
@@ -300,7 +289,7 @@ class Tickets(commands.Cog):
         )
 
         if not is_owner and not has_perms:
-            await ctx.send("❌ مفيش عندك صلاحية!", delete_after=8)
+            await ctx.send("❌ مفيش عندك صلاحية!")
             return
 
         try:
@@ -313,12 +302,9 @@ class Tickets(commands.Cog):
             )
             await ctx.send(embed=embed)
         except discord.Forbidden:
-            await ctx.send("❌ البوت مفيش عنده صلاحية!", delete_after=8)
+            await ctx.send("❌ البوت مفيش عنده صلاحية!")
 
-    # ═══════════════════════════════════════
-    # ⚠️ معالجة الأخطاء
-    # ═══════════════════════════════════════
-    async def cog_command_error(self, ctx: commands.Context, error):
+    async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("❌ مفيش عندك صلاحية **Administrator**!", delete_after=8)
         elif isinstance(error, commands.BotMissingPermissions):
@@ -331,8 +317,6 @@ class Tickets(commands.Cog):
             await ctx.send(f"❌ ناقص بيانات: `{error.param.name}`", delete_after=8)
         elif isinstance(error, commands.BadArgument):
             await ctx.send("❌ تأكد من البيانات المدخلة!", delete_after=8)
-        else:
-            print(f"❌ خطأ في أمر {ctx.command}: {error}")
 
 
 async def setup(bot):

@@ -1,12 +1,10 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import json
 import os
 import aiohttp
 
-# ═══════════════════════════════════════
-# 📁 إعدادات
-# ═══════════════════════════════════════
 SETTINGS_FILE = "settings.json"
 
 
@@ -30,9 +28,6 @@ class Settings(commands.Cog):
         self.bot = bot
         self.data = load_data()
 
-    # ═══════════════════════════════════════
-    # 🔧 دوال مساعدة
-    # ═══════════════════════════════════════
     def get_guild_data(self, guild_id):
         guild_id = str(guild_id)
         if guild_id not in self.data:
@@ -53,14 +48,15 @@ class Settings(commands.Cog):
         save_data(self.data)
 
     # ═══════════════════════════════════════
-    # 🚀 أمر !setup التفاعلي
+    # 🚀 !setup / /setup
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="setup",
         aliases=["اعداد", "تهيئة"],
         description="🚀 إعداد البوت في السيرفر (تفاعلي)"
     )
     @commands.has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
     async def setup_wizard(self, ctx: commands.Context):
         """إعداد تفاعلي للبوت"""
         embed = discord.Embed(
@@ -78,36 +74,26 @@ class Settings(commands.Cog):
         )
         await ctx.send(embed=embed, view=SetupStartView(self))
 
-    # ═══════════════════════════════════════
-    # 🛠️ خطوات المعالج
-    # ═══════════════════════════════════════
     async def do_setup_protection(self, interaction: discord.Interaction):
         """تفعيل الحماية الأساسية"""
         try:
             protection_cog = self.bot.get_cog("Protection")
-
             if not protection_cog:
                 return await interaction.response.edit_message(
                     content="❌ cog الحماية غير محمّل", embed=None, view=None
                 )
 
-            # نفعّل كل أنظمة الحماية
-            protection_cog.data[str(interaction.guild.id)] = {
-                "auto": True,
-                "spam": {"enabled": True, "limit": 5, "seconds": 3},
-                "link": {"enabled": True, "type": "all"},
-                "join": {"enabled": True, "min_age": 7},
-                "hacked": True,
-                "bans": True,
-                "kicks": True,
-                "channels": True,
-                "roles": True,
-                "bots": {"enabled": True, "action": "kick"},
-                "log_channel": None,
-                "whitelist": [],
-                "blacklist": []
-            }
-            protection_cog.save()
+            # شكل البيانات الصح
+            protection_cog._toggle_status(str(interaction.guild.id), "auto", enabled=True)
+            protection_cog._toggle_status(str(interaction.guild.id), "spam", enabled=True, limit=5, seconds=3)
+            protection_cog._toggle_status(str(interaction.guild.id), "link", enabled=True, type="all")
+            protection_cog._toggle_status(str(interaction.guild.id), "join", enabled=True, min_age=7)
+            protection_cog._toggle_status(str(interaction.guild.id), "hacked", enabled=True)
+            protection_cog._toggle_status(str(interaction.guild.id), "bans", enabled=True)
+            protection_cog._toggle_status(str(interaction.guild.id), "kicks", enabled=True)
+            protection_cog._toggle_status(str(interaction.guild.id), "channels", enabled=True)
+            protection_cog._toggle_status(str(interaction.guild.id), "roles", enabled=True)
+            protection_cog._toggle_status(str(interaction.guild.id), "bots", enabled=True, action="kick")
 
             embed = discord.Embed(
                 title="✅ المرحلة 1/4 — تم تفعيل الحماية",
@@ -129,9 +115,7 @@ class Settings(commands.Cog):
             await interaction.response.edit_message(embed=embed, view=SetupAutoroleView(self))
         except Exception as e:
             await interaction.response.edit_message(
-                content=f"❌ خطأ: {e}",
-                embed=None,
-                view=None
+                content=f"❌ خطأ: {e}", embed=None, view=None
             )
 
     async def do_setup_autorole(self, interaction: discord.Interaction, role: discord.Role):
@@ -143,18 +127,13 @@ class Settings(commands.Cog):
 
             embed = discord.Embed(
                 title="✅ المرحلة 2/4 — تم تعيين الرتبة التلقائية",
-                description=(
-                    f"الرتبة: {role.mention}\n\n"
-                    "**المرحلة الجاية:** اختار روم الترحيب 👇"
-                ),
+                description=f"الرتبة: {role.mention}\n\n**المرحلة الجاية:** اختار روم الترحيب 👇",
                 color=0x2ECC71
             )
             await interaction.response.edit_message(embed=embed, view=SetupWelcomeView(self))
         except Exception as e:
             await interaction.response.edit_message(
-                content=f"❌ خطأ: {e}",
-                embed=None,
-                view=None
+                content=f"❌ خطأ: {e}", embed=None, view=None
             )
 
     async def do_setup_welcome(self, interaction: discord.Interaction, channel: discord.TextChannel):
@@ -169,19 +148,13 @@ class Settings(commands.Cog):
 
             embed = discord.Embed(
                 title="✅ المرحلة 3/4 — تم تعيين روم الترحيب",
-                description=(
-                    f"الروم: {channel.mention}\n"
-                    f"(هيتم استخدامه للترحيب والوداع)\n\n"
-                    "**المرحلة الجاية:** اختار روم اللوجات 👇"
-                ),
+                description=f"الروم: {channel.mention}\n\n**المرحلة الجاية:** اختار روم اللوجات 👇",
                 color=0x2ECC71
             )
             await interaction.response.edit_message(embed=embed, view=SetupLogView(self))
         except Exception as e:
             await interaction.response.edit_message(
-                content=f"❌ خطأ: {e}",
-                embed=None,
-                view=None
+                content=f"❌ خطأ: {e}", embed=None, view=None
             )
 
     async def do_setup_log(self, interaction: discord.Interaction, channel: discord.TextChannel):
@@ -195,41 +168,43 @@ class Settings(commands.Cog):
                 title="🎉 اكتمل الإعداد!",
                 description=(
                     "**تم إعداد البوت بنجاح** ✅\n\n"
-                    "**الإعدادات النهائية:**\n"
                     "🛡️ الحماية: **مفعّلة**\n"
                     "🎭 الرتبة التلقائية: **تم تعيينها**\n"
                     "👋 روم الترحيب: **تم تعيينه**\n"
                     "📋 روم اللوجات: **تم تعيينه**\n\n"
-                    "**ابدأ استخدام البوت بـ `!help`** 🚀"
+                    "**ابدأ استخدام البوت بـ `/help` أو `!help`** 🚀"
                 ),
                 color=0x2ECC71
             )
             await interaction.response.edit_message(embed=embed, view=None)
         except Exception as e:
             await interaction.response.edit_message(
-                content=f"❌ خطأ: {e}",
-                embed=None,
-                view=None
+                content=f"❌ خطأ: {e}", embed=None, view=None
             )
 
     # ═══════════════════════════════════════
-    # 🎨 أمر !add-emoji
+    # 🎨 !add-emoji / /add-emoji
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="add-emoji",
         aliases=["ae", "اضف-ايموجي"],
-        description="إضافة إيموجي للسيرفر"
+        description="🎨 إضافة إيموجي للسيرفر"
     )
     @commands.has_permissions(manage_emojis=True)
     @commands.bot_has_permissions(manage_emojis=True)
+    @app_commands.default_permissions(manage_emojis=True)
+    @app_commands.describe(name="اسم الإيموجي", url="رابط الصورة")
     async def add_emoji(self, ctx: commands.Context, name: str, url: str):
         """إضافة إيموجي"""
-        msg = await ctx.send("⏳ جاري إضافة الإيموجي...")
+        if ctx.interaction:
+            await ctx.defer()
+        else:
+            msg = await ctx.send("⏳ جاري إضافة الإيموجي...")
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as resp:
                     if resp.status != 200:
-                        await msg.edit(content="❌ رابط غير صالح")
+                        await ctx.send("❌ رابط غير صالح")
                         return
                     image_bytes = await resp.read()
             emoji = await ctx.guild.create_custom_emoji(name=name, image=image_bytes)
@@ -238,34 +213,39 @@ class Settings(commands.Cog):
                 description=f"تم إضافة {emoji} بنجاح!",
                 color=0x2ECC71
             )
-            await msg.edit(content=None, embed=embed)
+            await ctx.send(embed=embed)
         except Exception as e:
-            await msg.edit(content=f"❌ خطأ: {str(e)}")
+            await ctx.send(f"❌ خطأ: {str(e)}")
 
     # ═══════════════════════════════════════
-    # 📨 الرسائل التلقائية
+    # 📨 !auto-message / /auto-message (Group)
     # ═══════════════════════════════════════
-    @commands.group(
+    @commands.hybrid_group(
         name="auto-message",
         aliases=["am", "رسالة-تلقائية"],
-        description="إدارة الرسائل التلقائية",
+        description="📨 إدارة الرسائل التلقائية",
         invoke_without_command=True
     )
     @commands.has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
     async def auto_message(self, ctx: commands.Context):
         """عرض المساعدة"""
         embed = discord.Embed(
             title="📨 أوامر الرسائل التلقائية",
             description=(
-                "`!auto-message add #روم الرسالة 60` - إضافة\n"
-                "`!auto-message delete 1` - حذف بالرقم\n"
-                "`!auto-message list` - عرض الكل"
+                "**Slash:**\n"
+                "`/auto-message add #روم 60 الرسالة` - إضافة\n"
+                "`/auto-message delete 1` - حذف بالرقم\n"
+                "`/auto-message list` - عرض الكل\n\n"
+                "**Prefix:**\n"
+                "`!auto-message add #روم 60 الرسالة`"
             ),
             color=0x3498DB
         )
         await ctx.send(embed=embed)
 
     @auto_message.command(name="add", aliases=["+", "اضف"], description="إضافة رسالة تلقائية")
+    @app_commands.describe(channel="الروم", interval="الفاصل الزمني بالثواني (60-86400)", message="الرسالة")
     async def auto_message_add(
         self,
         ctx: commands.Context,
@@ -276,7 +256,7 @@ class Settings(commands.Cog):
     ):
         """إضافة رسالة تلقائية"""
         if interval < 60 or interval > 86400:
-            await ctx.send("❌ الفاصل الزمني لازم يكون بين **60** و **86400** ثانية!", delete_after=8)
+            await ctx.send("❌ الفاصل الزمني لازم يكون بين **60** و **86400** ثانية!")
             return
 
         guild_data = self.get_guild_data(ctx.guild.id)
@@ -289,12 +269,13 @@ class Settings(commands.Cog):
         await ctx.send(f"✅ تم إضافة رسالة تلقائية في {channel.mention} كل {interval} ثانية")
 
     @auto_message.command(name="delete", aliases=["del", "احذف"], description="حذف رسالة تلقائية")
+    @app_commands.describe(index="رقم الرسالة")
     async def auto_message_delete(self, ctx: commands.Context, index: int):
         """حذف رسالة تلقائية"""
         guild_data = self.get_guild_data(ctx.guild.id)
         messages = guild_data["auto_messages"]
         if index < 1 or index > len(messages):
-            await ctx.send("❌ رقم غير صحيح", delete_after=6)
+            await ctx.send("❌ رقم غير صحيح")
             return
         messages.pop(index - 1)
         self.save()
@@ -317,29 +298,34 @@ class Settings(commands.Cog):
         await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════
-    # 💬 الردود التلقائية
+    # 💬 !auto-reply / /auto-reply (Group)
     # ═══════════════════════════════════════
-    @commands.group(
+    @commands.hybrid_group(
         name="auto-reply",
         aliases=["ar", "رد-تلقائي"],
-        description="إدارة الردود التلقائية",
+        description="💬 إدارة الردود التلقائية",
         invoke_without_command=True
     )
     @commands.has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
     async def auto_reply(self, ctx: commands.Context):
         """عرض المساعدة"""
         embed = discord.Embed(
             title="💬 أوامر الردود التلقائية",
             description=(
-                "`!auto-reply add trigger response` - إضافة رد\n"
-                "`!auto-reply delete trigger` - حذف رد\n"
-                "`!auto-reply show` - عرض الكل"
+                "**Slash:**\n"
+                "`/auto-reply add trigger response` - إضافة رد\n"
+                "`/auto-reply delete trigger` - حذف رد\n"
+                "`/auto-reply show` - عرض الكل\n\n"
+                "**Prefix:**\n"
+                "`!auto-reply add trigger response`"
             ),
             color=0x3498DB
         )
         await ctx.send(embed=embed)
 
     @auto_reply.command(name="add", aliases=["+", "اضف"], description="إضافة رد تلقائي")
+    @app_commands.describe(trigger="الكلمة المفتاحية", response="الرد")
     async def auto_reply_add(self, ctx: commands.Context, trigger: str, *, response: str):
         """إضافة رد تلقائي"""
         guild_data = self.get_guild_data(ctx.guild.id)
@@ -351,6 +337,7 @@ class Settings(commands.Cog):
         await ctx.send(f"✅ تم إضافة الرد: `{trigger}` → {response}")
 
     @auto_reply.command(name="delete", aliases=["del", "احذف"], description="حذف رد تلقائي")
+    @app_commands.describe(trigger="الكلمة المفتاحية")
     async def auto_reply_delete(self, ctx: commands.Context, *, trigger: str):
         """حذف رد تلقائي"""
         guild_data = self.get_guild_data(ctx.guild.id)
@@ -359,7 +346,7 @@ class Settings(commands.Cog):
             r for r in guild_data["auto_replies"] if r["trigger"] != trigger.lower()
         ]
         if len(guild_data["auto_replies"]) == initial:
-            await ctx.send("❌ لم يتم العثور", delete_after=6)
+            await ctx.send("❌ لم يتم العثور")
             return
         self.save()
         await ctx.send("✅ تم الحذف")
@@ -377,28 +364,31 @@ class Settings(commands.Cog):
         await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════
-    # 🛡️ AutoMod
+    # 🛡️ !automod / /automod (Group)
     # ═══════════════════════════════════════
-    @commands.group(
+    @commands.hybrid_group(
         name="automod",
         aliases=["ام-مود", "كلمات-ممنوعة"],
-        description="إدارة الكلمات الممنوعة",
+        description="🛡️ إدارة الكلمات الممنوعة",
         invoke_without_command=True
     )
     @commands.has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
     async def automod(self, ctx: commands.Context):
         """عرض المساعدة"""
         embed = discord.Embed(
             title="🛡️ أوامر AutoMod",
             description=(
-                "`!automod create اسم-القاعدة كلمة1,كلمة2` - إنشاء قاعدة\n"
-                "`!automod delete اسم-القاعدة` - حذف قاعدة"
+                "**Slash:**\n"
+                "`/automod create اسم-القاعدة كلمة1,كلمة2` - إنشاء قاعدة\n"
+                "`/automod delete اسم-القاعدة` - حذف قاعدة"
             ),
             color=0x3498DB
         )
         await ctx.send(embed=embed)
 
     @automod.command(name="create", aliases=["+", "انشئ"], description="إنشاء قاعدة")
+    @app_commands.describe(name="اسم القاعدة", trigger="الكلمات المفتاحية مفصولة بفاصلة")
     async def automod_create(self, ctx: commands.Context, name: str, *, trigger: str):
         """إنشاء قاعدة AutoMod"""
         guild_data = self.get_guild_data(ctx.guild.id)
@@ -410,6 +400,7 @@ class Settings(commands.Cog):
         await ctx.send(f"✅ تم إنشاء قاعدة `{name}`")
 
     @automod.command(name="delete", aliases=["del", "احذف"], description="حذف قاعدة")
+    @app_commands.describe(name="اسم القاعدة")
     async def automod_delete(self, ctx: commands.Context, *, name: str):
         """حذف قاعدة AutoMod"""
         guild_data = self.get_guild_data(ctx.guild.id)
@@ -418,21 +409,23 @@ class Settings(commands.Cog):
             r for r in guild_data["automod_rules"] if r["name"].lower() != name.lower()
         ]
         if len(guild_data["automod_rules"]) == initial:
-            await ctx.send("❌ لم يتم العثور", delete_after=6)
+            await ctx.send("❌ لم يتم العثور")
             return
         self.save()
         await ctx.send("✅ تم الحذف")
 
     # ═══════════════════════════════════════
-    # 🎭 Autorole
+    # 🎭 !autorole / /autorole
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="autorole",
         aliases=["ار-رول", "رتبة-تلقائية"],
-        description="تعيين رتبة تلقائية"
+        description="🎭 تعيين رتبة تلقائية"
     )
     @commands.has_permissions(manage_roles=True)
     @commands.bot_has_permissions(manage_roles=True)
+    @app_commands.default_permissions(manage_roles=True)
+    @app_commands.describe(role="الرتبة التلقائية")
     async def autorole(self, ctx: commands.Context, role: discord.Role):
         """تعيين رتبة تلقائية"""
         guild_data = self.get_guild_data(ctx.guild.id)
@@ -441,28 +434,30 @@ class Settings(commands.Cog):
         await ctx.send(f"✅ تم تعيين {role.mention} كرتبة تلقائية")
 
     # ═══════════════════════════════════════
-    # 📋 Logs
+    # 📋 !log / /log (Group)
     # ═══════════════════════════════════════
-    @commands.group(
+    @commands.hybrid_group(
         name="log",
         aliases=["لوج", "سجل"],
-        description="إدارة السجلات",
+        description="📋 إدارة السجلات",
         invoke_without_command=True
     )
     @commands.has_permissions(administrator=True)
+    @app_commands.default_permissions(administrator=True)
     async def log(self, ctx: commands.Context):
         """عرض المساعدة"""
         embed = discord.Embed(
             title="📋 أوامر السجلات",
             description=(
-                "`!log set #روم` - تعيين روم السجلات\n"
-                "`!log stop` - إيقاف السجلات"
+                "`/log set #روم` - تعيين روم السجلات\n"
+                "`/log stop` - إيقاف السجلات"
             ),
             color=0x3498DB
         )
         await ctx.send(embed=embed)
 
     @log.command(name="set", aliases=["عين"], description="تعيين روم السجلات")
+    @app_commands.describe(channel="الروم")
     async def log_set(self, ctx: commands.Context, channel: discord.TextChannel):
         """تعيين روم السجلات"""
         guild_data = self.get_guild_data(ctx.guild.id)
@@ -479,13 +474,14 @@ class Settings(commands.Cog):
         await ctx.send("✅ تم إيقاف السجلات")
 
     # ═══════════════════════════════════════
-    # 👤 !perms
+    # 👤 !perms / /perms
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="perms",
         aliases=["صلاحيات", "permissions"],
-        description="عرض صلاحيات العضو"
+        description="👤 عرض صلاحيات العضو"
     )
+    @app_commands.describe(member="العضو (اختياري)")
     async def perms(self, ctx: commands.Context, member: discord.Member = None):
         """عرض صلاحيات العضو"""
         target = member or ctx.author
@@ -499,12 +495,12 @@ class Settings(commands.Cog):
         await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════
-    # ⚙️ !settings
+    # ⚙️ !settings / /settings
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="settings",
         aliases=["set", "الاعدادات", "اعدادات"],
-        description="عرض إعدادات السيرفر"
+        description="⚙️ عرض إعدادات السيرفر"
     )
     async def settings_cmd(self, ctx: commands.Context):
         """عرض إعدادات السيرفر"""
@@ -517,9 +513,6 @@ class Settings(commands.Cog):
         embed.add_field(name="📋 Logs", value="✅" if guild_data.get("log_channel") else "❌", inline=True)
         await ctx.send(embed=embed)
 
-    # ═══════════════════════════════════════
-    # ⚠️ معالجة الأخطاء
-    # ═══════════════════════════════════════
     async def cog_command_error(self, ctx: commands.Context, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("❌ مفيش عندك الصلاحيات المطلوبة!", delete_after=8)
@@ -540,7 +533,7 @@ class Settings(commands.Cog):
 
 
 # ═══════════════════════════════════════
-# 🎛️ Views للمعالج (نفسها)
+# 🎛️ Views للمعالج
 # ═══════════════════════════════════════
 class SetupStartView(discord.ui.View):
     def __init__(self, cog):

@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import json
 import os
@@ -6,7 +7,7 @@ from datetime import timedelta
 from config import Colors
 
 # ==========================================
-# 👑 أوامر الإدارة (Moderation Commands) - Prefix !
+# 👑 أوامر الإدارة (Moderation) - Prefix + Slash
 # ==========================================
 
 class Moderation(commands.Cog):
@@ -15,9 +16,6 @@ class Moderation(commands.Cog):
         self.warnings_file = "warnings.json"
         self._load_warnings()
 
-    # ==========================================
-    # 🔧 دوال مساعدة
-    # ==========================================
     def _load_warnings(self):
         if os.path.exists(self.warnings_file):
             with open(self.warnings_file, "r", encoding="utf-8") as f:
@@ -29,20 +27,22 @@ class Moderation(commands.Cog):
         with open(self.warnings_file, "w", encoding="utf-8") as f:
             json.dump(self.warnings, f, ensure_ascii=False, indent=2)
 
-    # ==========================================
-    # 🔨 أوامر الحظر (Ban)
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🔨 !ban / /ban
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="ban",
         aliases=["b", "حظر"],
         description="🔨 حظر عضو من السيرفر"
     )
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
+    @app_commands.default_permissions(ban_members=True)
+    @app_commands.describe(member="العضو المراد حظره", reason="سبب الحظر")
     async def ban(self, ctx: commands.Context, member: discord.Member, *, reason: str = "لا يوجد سبب"):
         """حظر عضو من السيرفر"""
         if member.top_role >= ctx.author.top_role and ctx.author != ctx.guild.owner:
-            await ctx.send("❌ لا يمكنك حظر عضو رتبته مساوية أو أعلى من رتبتك!", delete_after=8)
+            await ctx.send("❌ لا يمكنك حظر عضو رتبته مساوية أو أعلى من رتبتك!")
             return
 
         try:
@@ -57,13 +57,18 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🔨 !ban-all / /ban-all
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="ban-all",
         aliases=["ball", "حظر-الكل"],
         description="🔨 حظر جميع الأعضاء الذين لديهم رتبة معينة"
     )
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
+    @app_commands.default_permissions(ban_members=True)
+    @app_commands.describe(role="الرتبة المراد حظر أعضائها", reason="سبب الحظر")
     async def ban_all(self, ctx: commands.Context, role: discord.Role, *, reason: str = "لا يوجد سبب"):
         """حظر جميع أعضاء رتبة معينة"""
         msg = await ctx.send("⏳ جاري تنفيذ الحظر الجماعي...")
@@ -85,13 +90,18 @@ class Moderation(commands.Cog):
         )
         await msg.edit(content=None, embed=embed)
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🔓 !unban / /unban
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="unban",
         aliases=["ub", "فك-الحظر"],
         description="🔓 إلغاء حظر عضو من السيرفر"
     )
     @commands.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
+    @app_commands.default_permissions(ban_members=True)
+    @app_commands.describe(user_id="آيدي العضو المراد فك حظره", reason="سبب فك الحظر")
     async def unban(self, ctx: commands.Context, user_id: str, *, reason: str = "لا يوجد سبب"):
         """إلغاء حظر عضو"""
         try:
@@ -111,20 +121,22 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # 👢 أمر الطرد (Kick)
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 👢 !kick / /kick
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="kick",
         aliases=["k", "طرد"],
         description="👢 طرد عضو من السيرفر"
     )
     @commands.has_permissions(kick_members=True)
     @commands.bot_has_permissions(kick_members=True)
+    @app_commands.default_permissions(kick_members=True)
+    @app_commands.describe(member="العضو المراد طرده", reason="سبب الطرد")
     async def kick(self, ctx: commands.Context, member: discord.Member, *, reason: str = "لا يوجد سبب"):
         """طرد عضو من السيرفر"""
         if member.top_role >= ctx.author.top_role and ctx.author != ctx.guild.owner:
-            await ctx.send("❌ لا يمكنك طرد عضو رتبته مساوية أو أعلى من رتبتك!", delete_after=8)
+            await ctx.send("❌ لا يمكنك طرد عضو رتبته مساوية أو أعلى من رتبتك!")
             return
 
         try:
@@ -139,30 +151,37 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # ⚠️ أوامر الإنذارات (Warn)
-    # ==========================================
-    @commands.group(
+    # ═══════════════════════════════════════
+    # ⚠️ !warn / /warn (Group)
+    # ═══════════════════════════════════════
+    @commands.hybrid_group(
         name="warn",
         aliases=["w", "انذار", "تحذير"],
         description="⚠️ أوامر الإنذارات",
         invoke_without_command=True
     )
     @commands.has_permissions(moderate_members=True)
+    @app_commands.default_permissions(moderate_members=True)
     async def warn_group(self, ctx: commands.Context):
         """عرض المساعدة لأوامر الإنذار"""
         embed = discord.Embed(
             title="⚠️ أوامر الإنذارات",
             description=(
-                "`!warn add @عضو سبب` - إعطاء إنذار\n"
-                "`!warn list @عضو` - عرض الإنذارات\n"
-                "`!warn clear @عضو` - مسح الإنذارات"
+                "**Slash:**\n"
+                "`/warn add @عضو سبب` - إعطاء إنذار\n"
+                "`/warn list @عضو` - عرض الإنذارات\n"
+                "`/warn clear @عضو` - مسح الإنذارات\n\n"
+                "**Prefix:**\n"
+                "`!warn add @عضو سبب`\n"
+                "`!warn list @عضو`\n"
+                "`!warn clear @عضو`"
             ),
             color=Colors.WARNING
         )
         await ctx.send(embed=embed)
 
     @warn_group.command(name="add", aliases=["+", "اضف"], description="⚠️ إعطاء إنذار لعضو")
+    @app_commands.describe(member="العضو", reason="سبب الإنذار")
     async def warn_add(self, ctx: commands.Context, member: discord.Member, *, reason: str):
         """إعطاء إنذار لعضو"""
         guild_id = str(ctx.guild.id)
@@ -191,6 +210,7 @@ class Moderation(commands.Cog):
         await ctx.send(embed=embed)
 
     @warn_group.command(name="list", aliases=["ls", "عرض"], description="📋 عرض إنذارات عضو")
+    @app_commands.describe(member="العضو")
     async def warn_list(self, ctx: commands.Context, member: discord.Member):
         """عرض إنذارات عضو"""
         guild_id = str(ctx.guild.id)
@@ -223,6 +243,7 @@ class Moderation(commands.Cog):
         await ctx.send(embed=embed)
 
     @warn_group.command(name="clear", aliases=["reset", "مسح"], description="🗑️ مسح إنذارات عضو")
+    @app_commands.describe(member="العضو")
     async def warn_clear(self, ctx: commands.Context, member: discord.Member):
         """مسح جميع إنذارات عضو"""
         guild_id = str(ctx.guild.id)
@@ -239,16 +260,18 @@ class Moderation(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # 🔇 أوامر الكتم (Mute)
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🔇 !mute / /mute
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="mute",
         aliases=["m", "كتم"],
         description="🔇 كتم عضو (Timeout)"
     )
     @commands.has_permissions(moderate_members=True)
     @commands.bot_has_permissions(moderate_members=True)
+    @app_commands.default_permissions(moderate_members=True)
+    @app_commands.describe(member="العضو", duration="المدة بالدقائق", reason="السبب")
     async def mute(self, ctx: commands.Context, member: discord.Member, duration: int = 60, *, reason: str = "لا يوجد سبب"):
         """كتم عضو لمدة محددة بالدقائق"""
         try:
@@ -263,13 +286,18 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🔇 !mute-all / /mute-all
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="mute-all",
         aliases=["mall", "كتم-الكل"],
         description="🔇 كتم جميع أعضاء رتبة معينة"
     )
     @commands.has_permissions(moderate_members=True)
     @commands.bot_has_permissions(moderate_members=True)
+    @app_commands.default_permissions(moderate_members=True)
+    @app_commands.describe(role="الرتبة", duration="المدة بالدقائق")
     async def mute_all(self, ctx: commands.Context, role: discord.Role, duration: int = 60):
         """كتم جميع أعضاء رتبة"""
         msg = await ctx.send("⏳ جاري الكتم الجماعي...")
@@ -289,13 +317,18 @@ class Moderation(commands.Cog):
         )
         await msg.edit(content=None, embed=embed)
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🔊 !unmute / /unmute
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="unmute",
         aliases=["um", "فك-الكتم"],
         description="🔊 إلغاء كتم عضو"
     )
     @commands.has_permissions(moderate_members=True)
     @commands.bot_has_permissions(moderate_members=True)
+    @app_commands.default_permissions(moderate_members=True)
+    @app_commands.describe(member="العضو")
     async def unmute(self, ctx: commands.Context, member: discord.Member):
         """إلغاء كتم عضو"""
         try:
@@ -310,16 +343,18 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # ⏱️ أوامر Timeout
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # ⏱️ !timeout / /timeout
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="timeout",
         aliases=["to", "توقيت"],
         description="⏱️ تعيين Timeout لعضو (ساعات ودقائق)"
     )
     @commands.has_permissions(moderate_members=True)
     @commands.bot_has_permissions(moderate_members=True)
+    @app_commands.default_permissions(moderate_members=True)
+    @app_commands.describe(member="العضو", hours="الساعات", minutes="الدقائق", reason="السبب")
     async def timeout_set(
         self,
         ctx: commands.Context,
@@ -332,7 +367,7 @@ class Moderation(commands.Cog):
         """تعيين Timeout لعضو"""
         total_minutes = hours * 60 + minutes
         if total_minutes <= 0:
-            await ctx.send("❌ يجب تحديد مدة صحيحة!", delete_after=8)
+            await ctx.send("❌ يجب تحديد مدة صحيحة!")
             return
 
         try:
@@ -347,13 +382,18 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # ⏱️ !untimeout / /untimeout
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="untimeout",
         aliases=["uto", "الغاء-التوقيت"],
         description="⏱️ إلغاء Timeout لعضو"
     )
     @commands.has_permissions(moderate_members=True)
     @commands.bot_has_permissions(moderate_members=True)
+    @app_commands.default_permissions(moderate_members=True)
+    @app_commands.describe(member="العضو")
     async def untimeout(self, ctx: commands.Context, member: discord.Member):
         """إلغاء Timeout لعضو"""
         try:
@@ -368,20 +408,22 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # 🎤 كتم الصوت
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🎤 !voicemute / /voicemute
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="voicemute",
         aliases=["vm", "كتم-صوت"],
         description="🎤 كتم صوت عضو في القناة الصوتية"
     )
     @commands.has_permissions(mute_members=True)
     @commands.bot_has_permissions(mute_members=True)
+    @app_commands.default_permissions(mute_members=True)
+    @app_commands.describe(member="العضو")
     async def voice_mute(self, ctx: commands.Context, member: discord.Member):
         """كتم صوت عضو"""
         if not member.voice:
-            await ctx.send("❌ العضو ليس في قناة صوتية!", delete_after=8)
+            await ctx.send("❌ العضو ليس في قناة صوتية!")
             return
 
         try:
@@ -396,17 +438,22 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🎧 !voicedeafen / /voicedeafen
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="voicedeafen",
         aliases=["vd", "منع-السماع"],
         description="🎧 منع عضو من سماع الصوت"
     )
     @commands.has_permissions(deafen_members=True)
     @commands.bot_has_permissions(deafen_members=True)
+    @app_commands.default_permissions(deafen_members=True)
+    @app_commands.describe(member="العضو")
     async def voice_deafen(self, ctx: commands.Context, member: discord.Member):
         """منع عضو من سماع الصوت"""
         if not member.voice:
-            await ctx.send("❌ العضو ليس في قناة صوتية!", delete_after=8)
+            await ctx.send("❌ العضو ليس في قناة صوتية!")
             return
 
         try:
@@ -421,24 +468,29 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # 🧹 أوامر القنوات (Channel)
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🧹 !clear / /clear
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="clear",
         aliases=["c", "مسح", "purge"],
-        description="🧹 حذف عدد من الرسائل من القناة"
+        description="🧹 حذف عدد من الرسائل"
     )
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
+    @app_commands.default_permissions(manage_messages=True)
+    @app_commands.describe(amount="عدد الرسائل (1-1000)", member="حذف رسائل عضو معين فقط (اختياري)")
     async def clear(self, ctx: commands.Context, amount: int, member: discord.Member = None):
         """حذف عدد من الرسائل"""
         if amount < 1 or amount > 1000:
-            await ctx.send("❌ العدد لازم يكون بين **1** و **1000**!", delete_after=8)
+            await ctx.send("❌ العدد لازم يكون بين **1** و **1000**!")
             return
 
         try:
-            await ctx.message.delete()
+            # في Slash مش بنقدر نحذف رسالة الأمر
+            if ctx.interaction is None:
+                await ctx.message.delete()
+
             if member:
                 def check(m): return m.author.id == member.id
                 deleted = await ctx.channel.purge(limit=amount, check=check)
@@ -452,19 +504,24 @@ class Moderation(commands.Cog):
             )
             await ctx.send(embed=embed, delete_after=5)
         except Exception as e:
-            await ctx.send(f"❌ فشل: {e}", delete_after=8)
+            await ctx.send(f"❌ فشل: {e}")
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🐌 !slowmode / /slowmode
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="slowmode",
         aliases=["sm", "وضع-بطيء"],
         description="🐌 تعيين الوضع البطيء للقناة"
     )
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_permissions(manage_channels=True)
+    @app_commands.default_permissions(manage_channels=True)
+    @app_commands.describe(seconds="عدد الثواني (0-21600)")
     async def slowmode(self, ctx: commands.Context, seconds: int = 0):
         """تعيين الوضع البطيء"""
         if seconds < 0 or seconds > 21600:
-            await ctx.send("❌ المدة لازم تكون بين **0** و **21600** ثانية!", delete_after=8)
+            await ctx.send("❌ المدة لازم تكون بين **0** و **21600** ثانية!")
             return
 
         try:
@@ -480,13 +537,17 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🔒 !lock / /lock
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="lock",
         aliases=["l", "قفل"],
         description="🔒 قفل القناة"
     )
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_permissions(manage_channels=True)
+    @app_commands.default_permissions(manage_channels=True)
     async def lock(self, ctx: commands.Context):
         """قفل القناة"""
         try:
@@ -497,13 +558,17 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🔓 !unlock / /unlock
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="unlock",
         aliases=["ul", "فتح"],
         description="🔓 فتح القناة"
     )
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_permissions(manage_channels=True)
+    @app_commands.default_permissions(manage_channels=True)
     async def unlock(self, ctx: commands.Context):
         """فتح القناة"""
         try:
@@ -514,13 +579,17 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 👻 !hide / /hide
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="hide",
         aliases=["اخفاء"],
         description="👻 إخفاء القناة"
     )
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_permissions(manage_channels=True)
+    @app_commands.default_permissions(manage_channels=True)
     async def hide(self, ctx: commands.Context):
         """إخفاء القناة"""
         try:
@@ -531,13 +600,17 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 👁️ !unhide / /unhide
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="unhide",
         aliases=["اظهار"],
         description="👁️ إظهار القناة"
     )
     @commands.has_permissions(manage_channels=True)
     @commands.bot_has_permissions(manage_channels=True)
+    @app_commands.default_permissions(manage_channels=True)
     async def unhide(self, ctx: commands.Context):
         """إظهار القناة"""
         try:
@@ -548,17 +621,22 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(
+    # ═══════════════════════════════════════
+    # 🔀 !move / /move
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="move",
         aliases=["نقل"],
         description="🔀 نقل عضو لقناة صوتية"
     )
     @commands.has_permissions(move_members=True)
     @commands.bot_has_permissions(move_members=True)
+    @app_commands.default_permissions(move_members=True)
+    @app_commands.describe(member="العضو", channel="القناة الصوتية")
     async def move(self, ctx: commands.Context, member: discord.Member, channel: discord.VoiceChannel):
         """نقل عضو لقناة صوتية"""
         if not member.voice:
-            await ctx.send("❌ العضو ليس في قناة صوتية!", delete_after=8)
+            await ctx.send("❌ العضو ليس في قناة صوتية!")
             return
 
         try:
@@ -573,16 +651,18 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # ✏️ أمر تغيير الاسم (Nick)
-    # ==========================================
-    @commands.command(
+    # ═══════════════════════════════════════
+    # ✏️ !nick / /nick
+    # ═══════════════════════════════════════
+    @commands.hybrid_command(
         name="nick",
         aliases=["n", "اسم", "لقب"],
         description="✏️ تغيير اسم عضو في السيرفر"
     )
     @commands.has_permissions(manage_nicknames=True)
     @commands.bot_has_permissions(manage_nicknames=True)
+    @app_commands.default_permissions(manage_nicknames=True)
+    @app_commands.describe(member="العضو", nickname="اللقب الجديد (اتركه فارغ لإعادة الاسم الأصلي)")
     async def nick(self, ctx: commands.Context, member: discord.Member, *, nickname: str = None):
         """تغيير اسم عضو"""
         try:
@@ -597,23 +677,14 @@ class Moderation(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    # ==========================================
-    # ⚠️ معالجة الأخطاء (Error Handler)
-    # ==========================================
     async def cog_command_error(self, ctx: commands.Context, error):
         """معالجة شاملة لكل أخطاء الـ Cog"""
         if isinstance(error, commands.MissingPermissions):
             perms = ", ".join(error.missing_permissions)
-            await ctx.send(
-                f"❌ مفيش عندك الصلاحيات دي: `{perms}`",
-                delete_after=8
-            )
+            await ctx.send(f"❌ مفيش عندك الصلاحيات دي: `{perms}`", delete_after=8)
         elif isinstance(error, commands.BotMissingPermissions):
             perms = ", ".join(error.missing_permissions)
-            await ctx.send(
-                f"❌ البوت مفيش عنده الصلاحيات دي: `{perms}`",
-                delete_after=8
-            )
+            await ctx.send(f"❌ البوت مفيش عنده الصلاحيات دي: `{perms}`", delete_after=8)
         elif isinstance(error, commands.MemberNotFound):
             await ctx.send("❌ مش لاقي العضو ده في السيرفر!", delete_after=8)
         elif isinstance(error, commands.RoleNotFound):
@@ -621,14 +692,10 @@ class Moderation(commands.Cog):
         elif isinstance(error, commands.ChannelNotFound):
             await ctx.send("❌ مش لاقي القناة دي!", delete_after=8)
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(
-                f"❌ ناقص بيانات: `{error.param.name}`",
-                delete_after=8
-            )
+            await ctx.send(f"❌ ناقص بيانات: `{error.param.name}`", delete_after=8)
         elif isinstance(error, commands.BadArgument):
             await ctx.send("❌ تأكد من البيانات المدخلة!", delete_after=8)
         else:
-            # لأخطاء تانية، نطبعها في الكونسول
             print(f"❌ خطأ في أمر {ctx.command}: {error}")
 
 
