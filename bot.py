@@ -33,6 +33,7 @@ INITIAL_EXTENSIONS = [
     "cogs.settings",
     "cogs.help",
     "cogs.shortcuts",
+    "cogs.broadcast",
 ]
 
 
@@ -53,21 +54,31 @@ class MyBot(commands.Bot):
                 print(f"  ✅ {ext}")
             except Exception as e:
                 print(f"  ❌ {ext}: {e}")
+                import traceback
+                traceback.print_exc()
 
         print("")
+
+        # استنى ثانيتين عشان كل الـ Cogs تتحمل
+        await asyncio.sleep(2)
+
+        # عدد الأوامر
+        print(f"📊 عدد الأوامر: {len(list(self.commands))}")
 
         # مزامنة الأوامر
         try:
             if config.TEST_GUILD_ID:
                 guild = discord.Object(id=config.TEST_GUILD_ID)
                 self.tree.copy_global_to(guild=guild)
-                await self.tree.sync(guild=guild)
-                print(f"✅ تم مزامنة الأوامر مع السيرفر: {config.TEST_GUILD_ID}")
+                synced = await self.tree.sync(guild=guild)
+                print(f"✅ تم مزامنة {len(synced)} أمر مع السيرفر: {config.TEST_GUILD_ID}")
             else:
-                await self.tree.sync()
-                print("✅ تم مزامنة الأوامر عالمياً")
+                synced = await self.tree.sync()
+                print(f"✅ تم مزامنة {len(synced)} أمر عالمياً")
         except Exception as e:
             print(f"⚠️ فشل مزامنة الأوامر: {e}")
+            import traceback
+            traceback.print_exc()
 
     async def on_ready(self):
         """لما البوت يشتغل"""
@@ -84,13 +95,6 @@ class MyBot(commands.Bot):
                 name="!help | /help"
             )
         )
-
-
-# ═══════════════════════════════════════
-# 📨 on_message — المسؤول الوحيد عن process_commands
-# ═══════════════════════════════════════
-# ⚠️ مهم: on_message في البوت نفسه (مش في cog)
-# ⚠️ وده المسؤول الوحيد عن process_commands
 
 
 # ═══════════════════════════════════════
@@ -144,15 +148,17 @@ async def on_command_error_handler(bot, ctx, error):
 async def main():
     bot = MyBot()
 
-    # ربط معالج الأخطاء
-    bot.on_command_error = lambda ctx, error: on_command_error_handler(bot, ctx, error)
-
     # ⚠️ on_message المسؤول الوحيد عن process_commands
     @bot.event
     async def on_message(message):
         if message.author.bot:
             return
         await bot.process_commands(message)
+
+    # ✅ معالج الأخطاء — الطريقة الصح
+    @bot.event
+    async def on_command_error(ctx, error):
+        await on_command_error_handler(bot, ctx, error)
 
     API_PORT = int(os.getenv("PORT", 8080))
 
