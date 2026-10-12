@@ -58,27 +58,34 @@ class MyBot(commands.Bot):
                 traceback.print_exc()
 
         print("")
-
-        # استنى ثانيتين عشان كل الـ Cogs تتحمل
         await asyncio.sleep(2)
 
-        # عدد الأوامر
         print(f"📊 عدد الأوامر: {len(list(self.commands))}")
 
-        # مزامنة الأوامر
+        # ═══════════════════════════════════════
+        # 1️⃣ مزامنة Global (لكل السيرفرات)
+        # ═══════════════════════════════════════
         try:
-            if config.TEST_GUILD_ID:
-                guild = discord.Object(id=config.TEST_GUILD_ID)
-                self.tree.copy_global_to(guild=guild)
-                synced = await self.tree.sync(guild=guild)
-                print(f"✅ تم مزامنة {len(synced)} أمر مع السيرفر: {config.TEST_GUILD_ID}")
-            else:
-                synced = await self.tree.sync()
-                print(f"✅ تم مزامنة {len(synced)} أمر عالمياً")
+            synced_global = await self.tree.sync()
+            print(f"✅ تم مزامنة {len(synced_global)} أمر عالمياً (لكل السيرفرات)")
         except Exception as e:
-            print(f"⚠️ فشل مزامنة الأوامر: {e}")
+            print(f"⚠️ فشل المزامنة العالمية: {e}")
             import traceback
             traceback.print_exc()
+
+        # ═══════════════════════════════════════
+        # 2️⃣ مزامنة Guild (للسيرفر بتاعك — فورية)
+        # ═══════════════════════════════════════
+        if config.TEST_GUILD_ID:
+            try:
+                guild = discord.Object(id=config.TEST_GUILD_ID)
+                self.tree.copy_global_to(guild=guild)
+                synced_guild = await self.tree.sync(guild=guild)
+                print(f"✅ تم مزامنة {len(synced_guild)} أمر مع السيرفر: {config.TEST_GUILD_ID}")
+            except Exception as e:
+                print(f"⚠️ فشل مزامنة السيرفر: {e}")
+                import traceback
+                traceback.print_exc()
 
     async def on_ready(self):
         """لما البوت يشتغل"""
@@ -106,35 +113,35 @@ async def on_command_error_handler(bot, ctx, error):
         return
 
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send("❌ معندكش الصلاحيات الكافية!", delete_after=8)
+        await ctx.send("❌ معندكش الصلاحيات الكافية!")
         return
 
     if isinstance(error, commands.BotMissingPermissions):
-        await ctx.send("❌ البوت معندوش الصلاحيات الكافية!", delete_after=8)
+        await ctx.send("❌ البوت معندوش الصلاحيات الكافية!")
         return
 
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"⚠️ ناقص بيانات: `{error.param.name}`", delete_after=8)
+        await ctx.send(f"⚠️ ناقص بيانات: `{error.param.name}`")
         return
 
     if isinstance(error, commands.MemberNotFound):
-        await ctx.send("❌ مش لاقي العضو ده!", delete_after=8)
+        await ctx.send("❌ مش لاقي العضو ده!")
         return
 
     if isinstance(error, commands.ChannelNotFound):
-        await ctx.send("❌ مش لاقي القناة دي!", delete_after=8)
+        await ctx.send("❌ مش لاقي القناة دي!")
         return
 
     if isinstance(error, commands.RoleNotFound):
-        await ctx.send("❌ مش لاقي الرتبة دي!", delete_after=8)
+        await ctx.send("❌ مش لاقي الرتبة دي!")
         return
 
     if isinstance(error, commands.BadArgument):
-        await ctx.send("❌ تأكد من البيانات المدخلة!", delete_after=8)
+        await ctx.send("❌ تأكد من البيانات المدخلة!")
         return
 
     if isinstance(error, commands.CommandOnCooldown):
-        await ctx.send(f"⏱️ استنى {error.retry_after:.1f} ثانية!", delete_after=5)
+        await ctx.send(f"⏱️ استنى {error.retry_after:.1f} ثانية!")
         return
 
     print(f"❌ خطأ في الأمر {ctx.command}: {error}")
@@ -148,14 +155,12 @@ async def on_command_error_handler(bot, ctx, error):
 async def main():
     bot = MyBot()
 
-    # ⚠️ on_message المسؤول الوحيد عن process_commands
     @bot.event
     async def on_message(message):
         if message.author.bot:
             return
         await bot.process_commands(message)
 
-    # ✅ معالج الأخطاء — الطريقة الصح
     @bot.event
     async def on_command_error(ctx, error):
         await on_command_error_handler(bot, ctx, error)
