@@ -160,16 +160,27 @@ class Shortcuts(commands.Cog):
             except Exception as e:
                 print(f"⚠️ خطأ في تنفيذ {command_name}: {e}")
 
+    # ═══════════════════════════════════════
+    # 🔍 _find_command — يدوّر على الأوامر والـ aliases
+    # ═══════════════════════════════════════
     def _find_command(self, command_name: str):
+        # 1️⃣ جرب get_command مباشرة
         command = self.bot.get_command(command_name)
         if command:
             return command
 
+        # 2️⃣ جرب يدوّر على alias
+        for cmd in self.bot.walk_commands():
+            if command_name in cmd.aliases:
+                return cmd
+
+        # 3️⃣ جرب sub-commands
         if " " in command_name:
             parts = command_name.split()
             parent = self.bot.get_command(parts[0])
             if parent and hasattr(parent, 'all_commands'):
                 return parent.all_commands.get(parts[-1])
+
         return None
 
     # ═══════════════════════════════════════
