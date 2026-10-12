@@ -4,6 +4,7 @@ import json
 import os
 import asyncio
 import unicodedata
+import traceback
 
 # ═══════════════════════════════════════
 # 📁 إعدادات
@@ -26,11 +27,10 @@ def save_config(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-def normalize_arabic(text: str) -> str:
-    """تطبيع النص العربي (NFC + إزالة التشكيل)"""
+def normalize_text(text: str) -> str:
+    """تطبيع النص (NFC + إزالة المسافات الزيادة)"""
     if not text:
         return text
-    # NFC normalization
     text = unicodedata.normalize('NFC', text)
     return text.strip().lower()
 
@@ -64,7 +64,7 @@ class Shortcuts(commands.Cog):
                 continue
             shortcut = data.get("shortcut", "").strip()
             if shortcut:
-                key = normalize_arabic(shortcut)
+                key = normalize_text(shortcut)
                 self.shortcuts_map[key] = command_name
 
         # 2️⃣ من aliases بتاعت الأوامر نفسها (في الكود)
@@ -72,10 +72,10 @@ class Shortcuts(commands.Cog):
             for cmd in self.bot.walk_commands():
                 cmd_name = cmd.name
                 if " " not in cmd_name:
-                    self.shortcuts_map.setdefault(normalize_arabic(cmd_name), cmd_name)
+                    self.shortcuts_map.setdefault(normalize_text(cmd_name), cmd_name)
                 for alias in cmd.aliases:
                     if alias:
-                        self.shortcuts_map.setdefault(normalize_arabic(alias), cmd_name)
+                        self.shortcuts_map.setdefault(normalize_text(alias), cmd_name)
         except Exception as e:
             print(f"⚠️ [Shortcuts] فشل تحميل aliases: {e}")
 
@@ -108,7 +108,7 @@ class Shortcuts(commands.Cog):
     def update_shortcut(self, command_name: str, shortcut: str, enabled: bool = True):
         shortcut = shortcut.strip()
         for cmd, data in self.config.items():
-            if cmd != command_name and normalize_arabic(data.get("shortcut", "")) == normalize_arabic(shortcut):
+            if cmd != command_name and normalize_text(data.get("shortcut", "")) == normalize_text(shortcut):
                 raise ValueError(f"الاختصار `{shortcut}` مستخدم بالفعل مع `/{cmd}`")
 
         self.config[command_name] = {
@@ -127,7 +127,7 @@ class Shortcuts(commands.Cog):
             shortcut = data.get("shortcut", "").strip()
             if not shortcut:
                 continue
-            key = normalize_arabic(shortcut)
+            key = normalize_text(shortcut)
             if key in shortcuts_seen:
                 raise ValueError(
                     f"الاختصار `{shortcut}` مستخدم مرتين: `/{shortcuts_seen[key]}` و `/{cmd}`"
@@ -166,35 +166,44 @@ class Shortcuts(commands.Cog):
 
         words = content.split()
         first_word = words[0]
-
-        # 🔍 تشخيص
-        print(f"🔍 [DEBUG] أول كلمة = '{first_word}'")
-        print(f"🔍 [DEBUG] repr = {repr(first_word)}")
-        print(f"🔍 [DEBUG] normalized = '{normalize_arabic(first_word)}'")
-        print(f"🔍 [DEBUG] in map? {normalize_arabic(first_word) in self.shortcuts_map}")
+        key = normalize_text(first_word)
 
         # لو اختصار
-        key = normalize_arabic(first_word)
         if key in self.shortcuts_map:
             command_name = self.shortcuts_map[key]
             args_text = " ".join(words[1:]) if len(words) > 1 else ""
 
-            print(f"🔍 [DEBUG] الأمر = {command_name}")
-
             command = self._find_command(command_name)
             if command is None:
-                print(f"❌ الأمر {command_name} مش موجود")
+                print(f"⚠️ الأمر {command_name} مش موجود")
                 return
 
             try:
+                # ⚡ نبني Context من الرسالة
                 ctx = await self.bot.get_context(message)
+
+                # ⚡ نستخدم invoke عشان discord.py يحوّل الـ arguments
                 if args_text:
-                    await command.__call__(ctx, args_text)
+                    args = args_text.split()
+                    await ctx.invoke(command, *args)
                 else:
-                    await command.__call__(ctx)
+                    await ctx.invoke(command)
+            except commands.MissingRequiredArgument as e:
+                await message.channel.send(f"❌ ناقص بيانات: `{e.param.name}`", delete_after=8)
+            except commands.MemberNotFound:
+                await message.channel.send("❌ مش لاقي العضو ده في السيرفر!", delete_after=8)
+            except commands.RoleNotFound:
+                await message.channel.send("❌ مش لاقي الرتبة دي!", delete_after=8)
+            except commands.ChannelNotFound:
+                await message.channel.send("❌ مش لاقي القناة دي!", delete_after=8)
+            except commands.BadArgument:
+                await message.channel.send("❌ تأكد من البيانات المدخلة!", delete_after=8)
+            except commands.MissingPermissions:
+                await message.channel.send("❌ مفيش عندك الصلاحيات المطلوبة!", delete_after=8)
+            except commands.BotMissingPermissions:
+                await message.channel.send("❌ البوت مفيش عنده الصلاحيات المطلوبة!", delete_after=8)
             except Exception as e:
                 print(f"⚠️ خطأ في تنفيذ {command_name}: {e}")
-                import traceback
                 traceback.print_exc()
 
     # ═══════════════════════════════════════
@@ -206,12 +215,13 @@ class Shortcuts(commands.Cog):
         if command:
             return command
 
-        # 2️⃣ alias
+        # 2️⃣ alias (مع تطبيع)
+        norm_name = normalize_text(command_name)
         for cmd in self.bot.walk_commands():
-            if cmd.name == command_name:
+            if normalize_text(cmd.name) == norm_name:
                 return cmd
             for alias in cmd.aliases:
-                if alias == command_name:
+                if normalize_text(alias) == norm_name:
                     return cmd
 
         # 3️⃣ sub-commands
