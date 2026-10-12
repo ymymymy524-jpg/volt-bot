@@ -87,6 +87,13 @@ class MyBot(commands.Bot):
 
 
 # ═══════════════════════════════════════
+# 📨 on_message — المسؤول الوحيد عن process_commands
+# ═══════════════════════════════════════
+# ⚠️ مهم: on_message في البوت نفسه (مش في cog)
+# ⚠️ وده المسؤول الوحيد عن process_commands
+
+
+# ═══════════════════════════════════════
 # ⚠️ معالج الأخطاء العام
 # ═══════════════════════════════════════
 async def on_command_error_handler(bot, ctx, error):
@@ -136,13 +143,19 @@ async def on_command_error_handler(bot, ctx, error):
 # ═══════════════════════════════════════
 async def main():
     bot = MyBot()
-    
+
+    # ربط معالج الأخطاء
     bot.on_command_error = lambda ctx, error: on_command_error_handler(bot, ctx, error)
-    
-    # ⚠️ اتشال on_message من هنا — الاختصارات في cogs/shortcuts.py
-    
+
+    # ⚠️ on_message المسؤول الوحيد عن process_commands
+    @bot.event
+    async def on_message(message):
+        if message.author.bot:
+            return
+        await bot.process_commands(message)
+
     API_PORT = int(os.getenv("PORT", 8080))
-    
+
     try:
         async with bot:
             await asyncio.gather(

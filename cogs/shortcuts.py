@@ -122,7 +122,8 @@ class Shortcuts(commands.Cog):
         return False
 
     # ═══════════════════════════════════════
-    # 📨 معالجة الرسائل — المسؤول الوحيد عن process_commands
+    # 📨 معالجة الرسائل — للاختصارات بس (بدون process_commands)
+    # ⚠️ process_commands مسؤولية bot.py
     # ═══════════════════════════════════════
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -133,9 +134,8 @@ class Shortcuts(commands.Cog):
         if not content:
             return
 
-        # لو الرسالة بتبدأ بـ prefix → معالجة عادية (process_commands)
+        # ⚠️ لو الرسالة بتبدأ بـ prefix → نسيبها لـ bot.py (مفيش process_commands هنا)
         if content.startswith(("!", "/", ".", ",")):
-            await self.bot.process_commands(message)
             return
 
         # لو اختصار
