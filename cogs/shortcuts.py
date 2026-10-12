@@ -179,10 +179,7 @@ class Shortcuts(commands.Cog):
                 return
 
             try:
-                # ⚡ نبني Context من الرسالة
                 ctx = await self.bot.get_context(message)
-
-                # ⚡ نستخدم invoke عشان discord.py يحوّل الـ arguments
                 if args_text:
                     args = args_text.split()
                     await ctx.invoke(command, *args)
@@ -261,6 +258,157 @@ class Shortcuts(commands.Cog):
     async def reload_cmd(self, ctx: commands.Context):
         count = self.reload_shortcuts()
         await ctx.send(f"✅ تم إعادة تحميل **{count}** اختصار")
+
+    # ═══════════════════════════════════════
+    # 🔍 أمر فحص الاختصارات
+    # ═══════════════════════════════════════
+    @commands.command(name="فحص", aliases=["check", "فحص-الاختصارات"])
+    @commands.has_permissions(administrator=True)
+    async def check_shortcuts(self, ctx: commands.Context):
+        """فحص كل الاختصارات وعرض اللي مش شغال"""
+        msg = await ctx.send("🔍 جاري الفحص...")
+
+        # كل الأوامر في البوت
+        all_commands = set()
+        for cmd in self.bot.walk_commands():
+            all_commands.add(cmd.name)
+            for alias in cmd.aliases:
+                all_commands.add(alias)
+
+        # قوايم
+        working = []
+        not_found = []
+        no_shortcut = []
+
+        for command_name, data in self.config.items():
+            if not data.get("enabled", True):
+                continue
+
+            shortcut = data.get("shortcut", "").strip()
+
+            # ابحث عن الأمر
+            found = False
+            if command_name in all_commands:
+                found = True
+            elif " " in command_name:
+                # sub-command
+                parts = command_name.split()
+                parent = self.bot.get_command(parts[0])
+                if parent and hasattr(parent, "all_commands"):
+                    if parts[-1] in parent.all_commands:
+                        found = True
+
+            if not found:
+                not_found.append(command_name)
+            elif not shortcut:
+                no_shortcut.append(command_name)
+            else:
+                working.append((command_name, shortcut))
+
+        # بناء التقرير
+        embed = discord.Embed(
+            title="🔍 تقرير فحص الاختصارات",
+            color=0x9B59B6,
+            timestamp=discord.utils.utcnow()
+        )
+
+        embed.add_field(
+            name=f"✅ شغالة ({len(working)})",
+            value=f"`{len(working)}` اختصار شغال",
+            inline=True
+        )
+        embed.add_field(
+            name=f"❌ مش موجودة ({len(not_found)})",
+            value=f"`{len(not_found)}` أمر مش موجود في البوت",
+            inline=True
+        )
+        embed.add_field(
+            name=f"⚠️ بدون اختصار ({len(no_shortcut)})",
+            value=f"`{len(no_shortcut)}` أمر مفعّل بس مفيش اختصار",
+            inline=True
+        )
+
+        # أوامر مش موجودة
+        if not_found:
+            text = "\n".join(f"• `{cmd}`" for cmd in not_found[:20])
+            if len(not_found) > 20:
+                text += f"\n... و {len(not_found) - 20} أمر تاني"
+            embed.add_field(
+                name="❌ أوامر مش موجودة في البوت",
+                value=text[:1024],
+                inline=False
+            )
+
+        # أوامر بدون اختصار
+        if no_shortcut:
+            text = "\n".join(f"• `{cmd}`" for cmd in no_shortcut[:20])
+            if len(no_shortcut) > 20:
+                text += f"\n... و {len(no_shortcut) - 20} أمر تاني"
+            embed.add_field(
+                name="⚠️ أوامر بدون اختصار",
+                value=text[:1024],
+                inline=False
+            )
+
+        # أمثلة من اللي شغالة
+        if working:
+            text = "\n".join(f"• `{s}` → `{c}`" for c, s in working[:10])
+            embed.add_field(
+                name="✅ أمثلة للاختصارات الشغالة",
+                value=text[:1024],
+                inline=False
+            )
+
+        embed.set_footer(text=f"إجمالي الأوامر في Config: {len(self.config)}")
+        await msg.edit(content=None, embed=embed)
+
+    @commands.command(name="فحص-مفصل", aliases=["check-full"])
+    @commands.has_permissions(administrator=True)
+    async def check_full(self, ctx: commands.Context):
+        """فحص مفصل — يعرض كل الأوامر المش موجودة مع السبب"""
+        msg = await ctx.send("🔍 جاري الفحص المفصل...")
+
+        # كل الأوامر في البوت
+        all_commands = set()
+        for cmd in self.bot.walk_commands():
+            all_commands.add(cmd.name)
+            for alias in cmd.aliases:
+                all_commands.add(alias)
+
+        lines = []
+        for command_name, data in self.config.items():
+            if not data.get("enabled", True):
+                continue
+
+            shortcut = data.get("shortcut", "").strip()
+
+            # ابحث
+            found = False
+            if command_name in all_commands:
+                found = True
+            elif " " in command_name:
+                parts = command_name.split()
+                parent = self.bot.get_command(parts[0])
+                if parent and hasattr(parent, "all_commands"):
+                    if parts[-1] in parent.all_commands:
+                        found = True
+
+            status = "✅" if found else "❌"
+            lines.append(f"{status} `{command_name}` → `{shortcut}`")
+
+        # اقسم على رسايل
+        chunks = [lines[i:i + 30] for i in range(0, len(lines), 30)]
+
+        for i, chunk in enumerate(chunks[:5], 1):
+            embed = discord.Embed(
+                title=f"📋 الفحص المفصل ({i}/{min(len(chunks), 5)})",
+                description="\n".join(chunk),
+                color=0x3498DB
+            )
+            embed.set_footer(text="✅ = الأمر موجود في البوت | ❌ = مش موجود")
+            await ctx.send(embed=embed)
+
+        await msg.delete()
 
 
 async def setup(bot):
