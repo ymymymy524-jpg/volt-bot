@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import json
 import os
@@ -6,7 +7,7 @@ from config import Colors
 
 
 # ==========================================
-# 🛠️ الأوامر العامة (General Commands) - Prefix !
+# 🛠️ الأوامر العامة (General Commands) - Prefix + Slash
 # ==========================================
 
 class General(commands.Cog):
@@ -14,9 +15,9 @@ class General(commands.Cog):
         self.bot = bot
 
     # ═══════════════════════════════════════
-    # 🏓 أمر !ping
+    # 🏓 أمر !ping / /ping
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="ping",
         aliases=["p", "بنق"],
         description="🏓 عرض سرعة استجابة البوت"
@@ -36,13 +37,14 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════
-    # 🖼️ أمر !avatar
+    # 🖼️ أمر !avatar / /avatar
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="avatar",
         aliases=["av", "صورة"],
         description="🖼️ عرض الصورة الشخصية"
     )
+    @app_commands.describe(member="العضو المراد عرض صورته (اختياري)")
     async def avatar(self, ctx: commands.Context, member: discord.Member = None):
         """عرض صورة عضو"""
         member = member or ctx.author
@@ -71,13 +73,14 @@ class General(commands.Cog):
         await ctx.send(embed=embed, view=view)
 
     # ═══════════════════════════════════════
-    # 🎨 أمر !banner
+    # 🎨 أمر !banner / /banner
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="banner",
         aliases=["bn", "بانر"],
         description="🎨 عرض بانر عضو"
     )
+    @app_commands.describe(member="العضو المراد عرض بانره (اختياري)")
     async def banner(self, ctx: commands.Context, member: discord.Member = None):
         """عرض بانر عضو"""
         member = member or ctx.author
@@ -94,13 +97,14 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════
-    # 👤 أمر !user
+    # 👤 أمر !user / /user
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="user",
         aliases=["u", "userinfo", "معلومات"],
         description="👤 عرض معلومات عضو"
     )
+    @app_commands.describe(member="العضو المراد عرض معلوماته (اختياري)")
     async def user(self, ctx: commands.Context, member: discord.Member = None):
         """عرض معلومات عضو"""
         member = member or ctx.author
@@ -135,9 +139,9 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════
-    # 🏰 أمر !server
+    # 🏰 أمر !server / /server
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="server",
         aliases=["sv", "serverinfo", "سيرفر"],
         description="🏰 عرض معلومات السيرفر"
@@ -198,12 +202,16 @@ class General(commands.Cog):
         await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════
-    # 💎 أمر !volt
+    # 💎 أمر !volt / /volt
     # ═══════════════════════════════════════
-    @commands.command(
+    @commands.hybrid_command(
         name="volt",
         aliases=["v", "فولت"],
         description="💎 عرض رصيد Crypto لعضو"
+    )
+    @app_commands.describe(
+        member="العضو المراد عرض رصيده (اختياري)",
+        amount="المبلغ المراد إضافته أو خصمه (للمشرفين فقط)"
     )
     async def volt(self, ctx: commands.Context, member: discord.Member = None, amount: int = None):
         """عرض أو تعديل رصيد Crypto"""
