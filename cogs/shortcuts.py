@@ -1,7 +1,9 @@
-import unicodedata
+import discord
 from discord.ext import commands, tasks
 import json
 import os
+import asyncio
+import unicodedata
 
 # ═══════════════════════════════════════
 # 📁 إعدادات
@@ -47,12 +49,26 @@ class Shortcuts(commands.Cog):
         self.config = load_config()
         self.shortcuts_map = {}
 
+        # 1️⃣ من commands_config.json (اللي بتيجي من الـ Dashboard)
         for command_name, data in self.config.items():
             if not data.get("enabled", True):
                 continue
             shortcut = data.get("shortcut", "").strip().lower()
             if shortcut:
                 self.shortcuts_map[shortcut] = command_name
+
+        # 2️⃣ من aliases بتاعت الأوامر نفسها (في الكود)
+        try:
+            for cmd in self.bot.walk_commands():
+                cmd_name = cmd.name
+                if " " not in cmd_name:
+                    self.shortcuts_map.setdefault(cmd_name.lower(), cmd_name)
+                for alias in cmd.aliases:
+                    alias_lower = alias.strip().lower()
+                    if alias_lower:
+                        self.shortcuts_map.setdefault(alias_lower, cmd_name)
+        except Exception as e:
+            print(f"⚠️ [Shortcuts] فشل تحميل aliases: {e}")
 
         print(f"✅ [Shortcuts] تم تحميل {len(self.shortcuts_map)} اختصار")
         return len(self.shortcuts_map)
@@ -67,6 +83,9 @@ class Shortcuts(commands.Cog):
     @auto_reload.before_loop
     async def before_auto_reload(self):
         await self.bot.wait_until_ready()
+        # ⚡ نستنى 3 ثواني عشان الأوامر تتحمّل
+        await asyncio.sleep(3)
+        self.reload_shortcuts()
 
     # ═══════════════════════════════════════
     # 🎯 دوال للـ API
@@ -122,8 +141,7 @@ class Shortcuts(commands.Cog):
         return False
 
     # ═══════════════════════════════════════
-    # 📨 معالجة الرسائل — للاختصارات بس (بدون process_commands)
-    # ⚠️ process_commands مسؤولية bot.py
+    # 📨 معالجة الرسائل — للاختصارات بس
     # ═══════════════════════════════════════
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -134,7 +152,7 @@ class Shortcuts(commands.Cog):
         if not content:
             return
 
-        # ⚠️ لو الرسالة بتبدأ بـ prefix → نسيبها لـ bot.py (مفيش process_commands هنا)
+        # لو الرسالة بتبدأ بـ prefix → نسيبها لـ bot.py
         if content.startswith(("!", "/", ".", ",")):
             return
 
@@ -163,31 +181,31 @@ class Shortcuts(commands.Cog):
     # ═══════════════════════════════════════
     # 🔍 _find_command — يدوّر على الأوامر والـ aliases
     # ═══════════════════════════════════════
-def _find_command(self, command_name: str):
-    # ⚡ تطبيع العربي (عشان يتطابق صح)
-    normalized = unicodedata.normalize('NFC', command_name)
+    def _find_command(self, command_name: str):
+        # ⚡ تطبيع العربي
+        normalized = unicodedata.normalize('NFC', command_name)
 
-    # 1️⃣ جرب get_command مباشرة
-    command = self.bot.get_command(normalized)
-    if command:
-        return command
+        # 1️⃣ جرب get_command مباشرة
+        command = self.bot.get_command(normalized)
+        if command:
+            return command
 
-    # 2️⃣ جرب يدوّر على alias (مع تطبيع)
-    for cmd in self.bot.walk_commands():
-        # تطبيع aliases كمان
-        for alias in cmd.aliases:
-            alias_norm = unicodedata.normalize('NFC', alias)
-            if alias_norm == normalized:
-                return cmd
+        # 2️⃣ جرب يدوّر على alias (مع تطبيع)
+        for cmd in self.bot.walk_commands():
+            for alias in cmd.aliases:
+                alias_norm = unicodedata.normalize('NFC', alias)
+                if alias_norm == normalized:
+                    return cmd
 
-    # 3️⃣ جرب sub-commands
-    if " " in normalized:
-        parts = normalized.split()
-        parent = self.bot.get_command(parts[0])
-        if parent and hasattr(parent, 'all_commands'):
-            return parent.all_commands.get(parts[-1])
+        # 3️⃣ جرب sub-commands
+        if " " in normalized:
+            parts = normalized.split()
+            parent = self.bot.get_command(parts[0])
+            if parent and hasattr(parent, 'all_commands'):
+                return parent.all_commands.get(parts[-1])
 
-    return None
+        return None
+
     # ═══════════════════════════════════════
     # 🛠️ أوامر إدارة الاختصارات (Discord)
     # ═══════════════════════════════════════
