@@ -1,82 +1,64 @@
 {
-  "play": {
-    "shortcut": "ش",
-    "enabled": true,
-    "description": "🎵 تشغيل أغنية"
-  },
-  "skip": {
-    "shortcut": "سكب",
-    "enabled": true,
-    "description": "⏭️ تخطي الأغنية"
-  },
-  "stop": {
-    "shortcut": "وقف",
-    "enabled": true,
-    "description": "⏹️ إيقاف التشغيل"
-  },
-  "pause": {
-    "shortcut": "م",
-    "enabled": true,
-    "description": "⏸️ إيقاف مؤقت"
-  },
-  "resume": {
-    "shortcut": "كمل",
-    "enabled": true,
-    "description": "▶️ استكمال"
-  },
-  "ban": {
-    "shortcut": "برا",
-    "enabled": true,
-    "description": "🔨 حظر عضو"
-  },
-  "kick": {
-    "shortcut": "انطر",
-    "enabled": true,
-    "description": "👢 طرد عضو"
-  },
-  "mute": {
-    "shortcut": "تايم",
-    "enabled": true,
-    "description": "🔇 كتم عضو"
-  },
-  "clear": {
-    "shortcut": "م",
-    "enabled": true,
-    "description": "🧹 مسح رسائل"
-  },
-  "ping": {
-    "shortcut": "ب",
-    "enabled": true,
-    "description": "🏓 سرعة البوت"
-  },
-  "help": {
-    "shortcut": "مساعدة",
-    "enabled": true,
-    "description": "📋 قائمة المساعدة"
-  },
-  "balance": {
-    "shortcut": "رصيدي",
-    "enabled": true,
-    "description": "💰 رصيدك"
-  },
-  "daily": {
-    "shortcut": "يومي",
-    "enabled": true,
-    "description": "💰 المكافأة اليومية"
-  },
-  "work": {
-    "shortcut": "اشتغل",
-    "enabled": true,
-    "description": "💼 اشتغل"
-  },
-  "rank": {
-    "shortcut": "مستواي",
-    "enabled": true,
-    "description": "📊 مستواك"
-  },
-  "top": {
-    "shortcut": "المتصدرين",
-    "enabled": true,
-    "description": "🏆 أفضل الأعضاء"
-  }
+  "ban": {"enabled": true, "shortcut": "حظر"},
+  "kick": {"enabled": true, "shortcut": "طرد"},
+  "unban": {"enabled": true, "shortcut": "فك-الحظر"},
+  "ban-all": {"enabled": true, "shortcut": "حظر-الكل"},
+  "warn": {"enabled": true, "shortcut": "انذار"},
+  "warn add": {"enabled": true, "shortcut": "انذار-اضف"},
+  "warn list": {"enabled": true, "shortcut": "انذارات"},
+  "warn clear": {"enabled": true, "shortcut": "انذار-امسح"},
+  "mute": {"enabled": true, "shortcut": "كتم"},
+  "mute-all": {"enabled": true, "shortcut": "كتم-الكل"},
+  "unmute": {"enabled": true, "shortcut": "فك-الكتم"},
+  "timeout": {"enabled": true, "shortcut": "توقيت"},
+  "untimeout": {"enabled": true, "shortcut": "الغاء-التوقيت"},
+  "voicemute": {"enabled": true, "shortcut": "كتم-صوت"},
+  "voicedeafen": {"enabled": true, "shortcut": "منع-السماع"},
+  "clear": {"enabled": true, "shortcut": "مسح"},
+  "slowmode": {"enabled": true, "shortcut": "بطيء"},
+  "lock": {"enabled": true, "shortcut": "قفل"},
+  "unlock": {"enabled": true, "shortcut": "فتح"},
+  "hide": {"enabled": true, "shortcut": "اخفاء"},
+  "unhide": {"enabled": true, "shortcut": "اظهار"},
+  "move": {"enabled": true, "shortcut": "نقل"},
+  "nick": {"enabled": true, "shortcut": "لقب"},
+  "rank": {"enabled": true, "shortcut": "مستوى"},
+  "top": {"enabled": true, "shortcut": "توب"},
+  "setlevel": {"enabled": true, "shortcut": "عين-مستوى"},
+  "resetlevel": {"enabled": true, "shortcut": "صفر-مستوى"},
+  "ping": {"enabled": true, "shortcut": "بنق"},
+  "avatar": {"enabled": true, "shortcut": "صورة"},
+  "banner": {"enabled": true, "shortcut": "بانر"},
+  "user": {"enabled": true, "shortcut": "معلومات"},
+  "server": {"enabled": true, "shortcut": "سيرفر"},
+  "volt": {"enabled": true, "shortcut": "فولت"},
+  "balance": {"enabled": true, "shortcut": "رصيدي"},
+  "daily": {"enabled": true, "shortcut": "يومي"},
+  "work": {"enabled": true, "shortcut": "شغل"},
+  "transfer": {"enabled": true, "shortcut": "تحويل"},
+  "shop": {"enabled": true, "shortcut": "متجر"},
+  "buy": {"enabled": true, "shortcut": "اشتري"},
+  "history": {"enabled": true, "shortcut": "سجل"},
+  "play": {"enabled": true, "shortcut": "شغلة"},
+  "skip": {"enabled": true, "shortcut": "تخطي"},
+  "stop": {"enabled": true, "shortcut": "وقف"},
+  "pause": {"enabled": true, "shortcut": "ايقاف"},
+  "resume": {"enabled": true, "shortcut": "كمل"},
+  "queue": {"enabled": true, "shortcut": "قائمة"},
+  "nowplaying": {"enabled": true, "shortcut": "الان"},
+  "volume": {"enabled": true, "shortcut": "صوت"},
+  "shuffle": {"enabled": true, "shortcut": "خلط"},
+  "invites": {"enabled": true, "shortcut": "دعواتي"},
+  "inviter": {"enabled": true, "shortcut": "دعاني"},
+  "invitetop": {"enabled": true, "shortcut": "توب-الدعوات"},
+  "ticket": {"enabled": true, "shortcut": "تذكرة"},
+  "close": {"enabled": true, "shortcut": "اغلاق"},
+  "fizzy": {"enabled": true, "shortcut": "فيزي"},
+  "fizzytop": {"enabled": true, "shortcut": "توب-فيزي"},
+  "ask": {"enabled": true, "shortcut": "اسال"},
+  "imagine": {"enabled": true, "shortcut": "تخيل"},
+  "translate": {"enabled": true, "shortcut": "ترجم"},
+  "summarize": {"enabled": true, "shortcut": "لخص"},
+  "help": {"enabled": true, "shortcut": "مساعدة"},
+  "broadcast": {"enabled": true, "shortcut": "برودكاست"}
 }
