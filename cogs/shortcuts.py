@@ -1,4 +1,4 @@
-import discord
+import unicodedata
 from discord.ext import commands, tasks
 import json
 import os
@@ -163,26 +163,31 @@ class Shortcuts(commands.Cog):
     # ═══════════════════════════════════════
     # 🔍 _find_command — يدوّر على الأوامر والـ aliases
     # ═══════════════════════════════════════
-    def _find_command(self, command_name: str):
-        # 1️⃣ جرب get_command مباشرة
-        command = self.bot.get_command(command_name)
-        if command:
-            return command
+def _find_command(self, command_name: str):
+    # ⚡ تطبيع العربي (عشان يتطابق صح)
+    normalized = unicodedata.normalize('NFC', command_name)
 
-        # 2️⃣ جرب يدوّر على alias
-        for cmd in self.bot.walk_commands():
-            if command_name in cmd.aliases:
+    # 1️⃣ جرب get_command مباشرة
+    command = self.bot.get_command(normalized)
+    if command:
+        return command
+
+    # 2️⃣ جرب يدوّر على alias (مع تطبيع)
+    for cmd in self.bot.walk_commands():
+        # تطبيع aliases كمان
+        for alias in cmd.aliases:
+            alias_norm = unicodedata.normalize('NFC', alias)
+            if alias_norm == normalized:
                 return cmd
 
-        # 3️⃣ جرب sub-commands
-        if " " in command_name:
-            parts = command_name.split()
-            parent = self.bot.get_command(parts[0])
-            if parent and hasattr(parent, 'all_commands'):
-                return parent.all_commands.get(parts[-1])
+    # 3️⃣ جرب sub-commands
+    if " " in normalized:
+        parts = normalized.split()
+        parent = self.bot.get_command(parts[0])
+        if parent and hasattr(parent, 'all_commands'):
+            return parent.all_commands.get(parts[-1])
 
-        return None
-
+    return None
     # ═══════════════════════════════════════
     # 🛠️ أوامر إدارة الاختصارات (Discord)
     # ═══════════════════════════════════════
