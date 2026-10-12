@@ -67,7 +67,7 @@ class Economy(commands.Cog):
     # ═══════════════════════════════════════
     # 💰 !balance
     # ═══════════════════════════════════════
-    @commands.command(name="balance", aliases=["bal", "b", "رصيد"])
+    @commands.command(name="balance", aliases=["bal", "b", "رصيدي"])
     async def balance(self, ctx, member: discord.Member = None):
         """!balance [@user] — عرض الرصيد"""
         target = member or ctx.author
@@ -114,7 +114,7 @@ class Economy(commands.Cog):
     # ═══════════════════════════════════════
     # 💼 !work
     # ═══════════════════════════════════════
-    @commands.command(name="work", aliases=["w", "عمل"])
+    @commands.command(name="work", aliases=["w", "اشتغل"])
     async def work(self, ctx):
         """!work — اشتغل واكسب"""
         user = self.get_user(ctx.author.id)
@@ -144,7 +144,7 @@ class Economy(commands.Cog):
     # ═══════════════════════════════════════
     # 💸 !transfer
     # ═══════════════════════════════════════
-    @commands.command(name="transfer", aliases=["tr", "تحويل"])
+    @commands.command(name="transfer", aliases=["tr", "حول"])
     async def transfer(self, ctx, member: discord.Member, amount: int):
         """!transfer @user amount — تحويل"""
         if member.id == ctx.author.id:
@@ -192,7 +192,7 @@ class Economy(commands.Cog):
     # ═══════════════════════════════════════
     # 📜 !history
     # ═══════════════════════════════════════
-    @commands.command(name="history", aliases=["bh", "bitcoin-history", "سجل"])
+    @commands.command(name="history", aliases=["bh", "bitcoin-history", "سجلي"])
     async def history(self, ctx, member: discord.Member = None):
         """!history [@user] — سجل المعاملات"""
         target = member or ctx.author
@@ -270,7 +270,6 @@ class Economy(commands.Cog):
 
     @badmin.command(name="add", aliases=["اضف"])
     async def badmin_add(self, ctx, member: discord.Member, amount: int):
-        """!badmin add @user amount"""
         user = self.get_user(member.id)
         user["balance"] += amount
         user["total_earned"] += amount
@@ -281,7 +280,6 @@ class Economy(commands.Cog):
 
     @badmin.command(name="remove", aliases=["خصم"])
     async def badmin_remove(self, ctx, member: discord.Member, amount: int):
-        """!badmin remove @user amount"""
         user = self.get_user(member.id)
         user["balance"] = max(0, user["balance"] - amount)
         user["total_spent"] += amount
@@ -292,7 +290,6 @@ class Economy(commands.Cog):
 
     @badmin.command(name="set", aliases=["عين"])
     async def badmin_set(self, ctx, member: discord.Member, amount: int):
-        """!badmin set @user amount"""
         user = self.get_user(member.id)
         user["balance"] = amount
         self.add_transaction(member.id, "admin", amount, "تعيين الرصيد")
@@ -302,7 +299,6 @@ class Economy(commands.Cog):
 
     @badmin.command(name="reset", aliases=["صفر"])
     async def badmin_reset(self, ctx, member: discord.Member):
-        """!badmin reset @user"""
         self.data[str(member.id)] = {
             "balance": 0, "total_earned": 0, "total_spent": 0,
             "last_daily": None, "last_work": None,
@@ -312,9 +308,6 @@ class Economy(commands.Cog):
         embed = discord.Embed(title="🔄 تم التصفير", description=f"تم تصفير بيانات {member.mention}", color=0xE67E22)
         await ctx.send(embed=embed)
 
-    # ═══════════════════════════════════════
-    # ⚠️ معالجة الأخطاء
-    # ═══════════════════════════════════════
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("❌ مفيش عندك الصلاحيات المطلوبة!", delete_after=8)
