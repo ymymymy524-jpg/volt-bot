@@ -8,6 +8,7 @@ WIN_REWARD = 50
 MINI_WIN_REWARD = 5
 LOBBY_SECONDS = 45
 
+
 def load_data():
     if os.path.exists(GAMES_FILE):
         try:
@@ -16,6 +17,7 @@ def load_data():
         except json.JSONDecodeError:
             return {}
     return {}
+
 
 def save_data(data):
     with open(GAMES_FILE, "w", encoding="utf-8") as f:
@@ -36,7 +38,11 @@ class LobbyView(discord.ui.View):
     async def update_message(self):
         if not self.message:
             return
-        embed = discord.Embed(title=f"🎮 {self.game_name}", description=self.get_players_list(), color=discord.Color.blue())
+        embed = discord.Embed(
+            title=f"🎮 {self.game_name}",
+            description=self.get_players_list(),
+            color=discord.Color.blue()
+        )
         embed.set_footer(text=f"اللاعبين: {len(self.players)}/{self.max_players} | الحد الأدنى: {self.min_players} | يبدأ خلال {int(self.timeout)} ثانية")
         try:
             await self.message.edit(embed=embed, view=self)
@@ -57,7 +63,7 @@ class LobbyView(discord.ui.View):
         if len(self.players) >= self.max_players:
             return await interaction.response.send_message("❌ اللوبي ممتلئ!", ephemeral=True)
         self.players.append(interaction.user)
-        await interaction.response.send_message(f"✅ انضممت للعبة!", ephemeral=True)
+        await interaction.response.send_message("✅ انضممت للعبة!", ephemeral=True)
         await self.update_message()
 
     @discord.ui.button(label="خروج 🚪", style=discord.ButtonStyle.danger, custom_id="leave_btn")
@@ -67,7 +73,7 @@ class LobbyView(discord.ui.View):
         if interaction.user not in self.players:
             return await interaction.response.send_message("❌ أنت مش في اللوبي!", ephemeral=True)
         self.players.remove(interaction.user)
-        await interaction.response.send_message(f"👋 خرجت من اللعبة!", ephemeral=True)
+        await interaction.response.send_message("👋 خرجت من اللعبة!", ephemeral=True)
         await self.update_message()
 
     @discord.ui.button(label="بدء اللعبة ▶️", style=discord.ButtonStyle.primary, custom_id="start_btn")
@@ -90,7 +96,11 @@ class LobbyView(discord.ui.View):
         if self.started:
             return
         if len(self.players) < self.min_players and self.message:
-            embed = discord.Embed(title=f"⏰ انتهى وقت اللوبي - {self.game_name}", description="لم يصل عدد اللاعبين للحد الأدنى!", color=discord.Color.red())
+            embed = discord.Embed(
+                title=f"⏰ انتهى وقت اللوبي - {self.game_name}",
+                description="لم يصل عدد اللاعبين للحد الأدنى!",
+                color=discord.Color.red()
+            )
             try:
                 await self.message.edit(embed=embed, view=None)
             except:
@@ -98,6 +108,7 @@ class LobbyView(discord.ui.View):
 
 
 async def g_bomb(players, message, bot):
+    """القنبلة الموقوتة"""
     channel = message.channel
     current_players = list(players)
     fuse = random.randint(3, 8)
@@ -135,6 +146,7 @@ async def g_bomb(players, message, bot):
 
 
 async def g_button(players, message, bot):
+    """زر الحظ"""
     channel = message.channel
     current_players = list(players)
     while len(current_players) > 1:
@@ -168,6 +180,7 @@ async def g_button(players, message, bot):
 
 
 async def g_chairs(players, message, bot):
+    """الكراسي الموسيقية"""
     channel = message.channel
     current_players = list(players)
     while len(current_players) > 1:
@@ -186,6 +199,7 @@ async def g_chairs(players, message, bot):
 
 
 async def g_mafia(players, message, bot):
+    """المافيا"""
     channel = message.channel
     current_players = list(players)
     roles = ["مافيا 🗡️", "طبيب 💊", "محقق 🔍"] + ["مواطن 👤"] * (len(current_players) - 3)
@@ -234,6 +248,7 @@ async def g_mafia(players, message, bot):
 
 
 async def g_roulette(players, message, bot):
+    """الروليت الروسية"""
     channel = message.channel
     current_players = list(players)
     embed = discord.Embed(title="🔫 الروليت الروسية", description="كل واحد يسحب الزناد... احتمال 1/6!", color=discord.Color.dark_gray())
@@ -257,6 +272,7 @@ async def g_roulette(players, message, bot):
 
 
 async def g_colors(message, bot):
+    """تخمين الألوان"""
     colors = {"🔴 أحمر": discord.Color.red(), "🔵 أزرق": discord.Color.blue(), "🟢 أخضر": discord.Color.green(), "🟡 أصفر": discord.Color.gold(), "🟣 بنفسجي": discord.Color.purple()}
     correct = random.choice(list(colors.keys()))
     correct_color = colors[correct]
@@ -284,6 +300,7 @@ async def g_colors(message, bot):
 
 
 async def g_faster(message, bot):
+    """الأسرع في الكتابة"""
     words = ["python", "discord", "fizzy", "game", "winner", "fast", "speed", "keyboard"]
     word = random.choice(words)
     embed = discord.Embed(title="⚡ الأسرع في الكتابة!", description=f"اكتب الكلمة دي الأول: **{word}**", color=discord.Color.yellow())
@@ -301,6 +318,7 @@ async def g_faster(message, bot):
 
 
 async def g_flags(message, bot):
+    """تخمين الأعلام"""
     flags = {"🇪🇬": "مصر", "🇸🇦": "السعودية", "🇺🇸": "أمريكا", "🇫🇷": "فرنسا", "🇯🇵": "اليابان", "🇩🇪": "ألمانيا", "🇬🇧": "بريطانيا", "🇧🇷": "البرازيل"}
     flag_emoji, country = random.choice(list(flags.items()))
     embed = discord.Embed(title="🏳️ تخمين العلم!", description=f"أي دولة العلم ده؟ {flag_emoji}", color=discord.Color.blue())
@@ -343,11 +361,16 @@ class Games(commands.Cog):
     def save(self):
         save_data(self.data)
 
-    async def _run_game_text(self, ctx, game_name):
+    async def _run_game(self, ctx, game_name):
+        """تشغيل لعبة"""
         channel_id = ctx.channel.id
+
         if channel_id in self.active_games:
-            return await ctx.send("❌ يوجد لعبة نشطة!")
+            return await ctx.send("❌ يوجد لعبة نشطة! استنى اللعبة الحالية تخلص")
+
         self.active_games.add(channel_id)
+
+        # الألعاب السريعة (بدون lobby)
         if game_name in ["colors", "faster", "flags"]:
             try:
                 if game_name == "colors":
@@ -359,6 +382,8 @@ class Games(commands.Cog):
             finally:
                 self.active_games.discard(channel_id)
             return
+
+        # الألعاب الجماعية
         game_configs = {
             "bomb": ("💣 القنبلة الموقوتة", 2, 10, g_bomb),
             "button": ("🎲 زر الحظ", 2, 8, g_button),
@@ -366,83 +391,92 @@ class Games(commands.Cog):
             "mafia": ("🎭 المافيا", 5, 15, g_mafia),
             "roulette": ("🔫 الروليت الروسية", 2, 6, g_roulette),
         }
+
         title, min_p, max_p, callback = game_configs[game_name]
+
         async def game_callback(players, msg):
             try:
                 await callback(players, msg, self.bot)
             finally:
                 self.active_games.discard(channel_id)
+
         lobby = LobbyView(title, min_p, max_p, game_callback)
-        embed = discord.Embed(title=f"🎮 {title}", description=lobby.get_players_list(), color=discord.Color.blue())
+        embed = discord.Embed(
+            title=f"🎮 {title}",
+            description=lobby.get_players_list(),
+            color=discord.Color.blue()
+        )
         embed.set_footer(text=f"اللاعبين: 0/{max_p} | الحد الأدنى: {min_p}")
+
         lobby.message = await ctx.send(embed=embed, view=lobby)
         await lobby.wait()
         if not lobby.started:
             self.active_games.discard(channel_id)
 
-    @commands.command(name="game", aliases=["لعبة"])
-    async def game_text(self, ctx, game: str = None):
-        """!game [اسم اللعبة] — بدء لعبة"""
-        if not game:
-            return await ctx.send("❌ اكتب اسم اللعبة! المتاح: `bomb`, `button`, `chairs`, `colors`, `faster`, `flags`, `mafia`, `roulette`")
-        game = game.lower()
-        valid_games = ["bomb", "button", "chairs", "colors", "faster", "flags", "mafia", "roulette"]
-        if game not in valid_games:
-            return await ctx.send(f"❌ اللعبة مش موجودة! المتاح: `{', '.join(valid_games)}`")
-        await self._run_game_text(ctx, game)
+    # ═══════════════════════════════════════
+    # 🎮 أوامر الألعاب (كل لعبة بأمرها)
+    # ═══════════════════════════════════════
 
-    @commands.command(name="bomb")
-    async def bomb_text(self, ctx):
-        """!bomb — القنبلة"""
-        await self._run_game_text(ctx, "bomb")
+    @commands.command(name="bomb", aliases=["قنبلة"], description="💣 لعبة القنبلة الموقوتة")
+    async def bomb_cmd(self, ctx):
+        """القنبلة الموقوتة"""
+        await self._run_game(ctx, "bomb")
 
-    @commands.command(name="button")
-    async def button_text(self, ctx):
-        """!button — زر الحظ"""
-        await self._run_game_text(ctx, "button")
+    @commands.command(name="button", aliases=["ازرار"], description="🎲 لعبة زر الحظ")
+    async def button_cmd(self, ctx):
+        """زر الحظ"""
+        await self._run_game(ctx, "button")
 
-    @commands.command(name="chairs")
-    async def chairs_text(self, ctx):
-        """!chairs — الكراسي"""
-        await self._run_game_text(ctx, "chairs")
+    @commands.command(name="chairs", aliases=["كراسي"], description="🪑 لعبة الكراسي الموسيقية")
+    async def chairs_cmd(self, ctx):
+        """الكراسي الموسيقية"""
+        await self._run_game(ctx, "chairs")
 
-    @commands.command(name="colors", aliases=["الوان"])
-    async def colors_text(self, ctx):
-        """!colors — الألوان"""
-        await self._run_game_text(ctx, "colors")
+    @commands.command(name="colors", aliases=["الوان"], description="🎨 لعبة تخمين الألوان")
+    async def colors_cmd(self, ctx):
+        """تخمين الألوان"""
+        await self._run_game(ctx, "colors")
 
-    @commands.command(name="faster", aliases=["سرعة"])
-    async def faster_text(self, ctx):
-        """!faster — الأسرع"""
-        await self._run_game_text(ctx, "faster")
+    @commands.command(name="faster", aliases=["سرعة"], description="⚡ لعبة الأسرع في الكتابة")
+    async def faster_cmd(self, ctx):
+        """الأسرع في الكتابة"""
+        await self._run_game(ctx, "faster")
 
-    @commands.command(name="flags", aliases=["اعلام"])
-    async def flags_text(self, ctx):
-        """!flags — الأعلام"""
-        await self._run_game_text(ctx, "flags")
+    @commands.command(name="flags", aliases=["اعلام"], description="🏳️ لعبة تخمين الأعلام")
+    async def flags_cmd(self, ctx):
+        """تخمين الأعلام"""
+        await self._run_game(ctx, "flags")
 
-    @commands.command(name="mafia", aliases=["مافيا"])
-    async def mafia_text(self, ctx):
-        """!mafia — المافيا"""
-        await self._run_game_text(ctx, "mafia")
+    @commands.command(name="mafia", aliases=["مافيا"], description="🎭 لعبة المافيا")
+    async def mafia_cmd(self, ctx):
+        """المافيا"""
+        await self._run_game(ctx, "mafia")
 
-    @commands.command(name="roulette", aliases=["روليت"])
-    async def roulette_text(self, ctx):
-        """!roulette — الروليت"""
-        await self._run_game_text(ctx, "roulette")
+    @commands.command(name="roulette", aliases=["روليت"], description="🔫 لعبة الروليت الروسية")
+    async def roulette_cmd(self, ctx):
+        """الروليت الروسية"""
+        await self._run_game(ctx, "roulette")
 
-    @commands.command(name="fizzy", aliases=["fz"])
-    async def fizzy_text(self, ctx, member: discord.Member = None):
-        """!fizzy — رصيد Fizzy"""
+    # ═══════════════════════════════════════
+    # 💰 أوامر Fizzy
+    # ═══════════════════════════════════════
+
+    @commands.command(name="fizzy", aliases=["fz", "فيزي"], description="💰 عرض رصيد Fizzy")
+    async def fizzy_cmd(self, ctx, member: discord.Member = None):
+        """عرض رصيد Fizzy"""
         target = member or ctx.author
         user_data = self.get_user_data(target.id)
-        embed = discord.Embed(title=f"💰 رصيد Fizzy - {target.display_name}", description=f"رصيدك: **{user_data['fizzy']} Fizzy** 💎", color=discord.Color.green())
+        embed = discord.Embed(
+            title=f"💰 رصيد Fizzy - {target.display_name}",
+            description=f"رصيدك: **{user_data['fizzy']} Fizzy** 💎",
+            color=discord.Color.green()
+        )
         embed.set_thumbnail(url=target.display_avatar.url)
         await ctx.send(embed=embed)
 
-    @commands.command(name="fizzytop", aliases=["fzt"])
-    async def fizzytop_text(self, ctx):
-        """!fizzytop — أفضل 10 لاعبين"""
+    @commands.command(name="fizzytop", aliases=["fzt", "توب-فيزي"], description="🏆 أفضل 10 لاعبين في Fizzy")
+    async def fizzytop_cmd(self, ctx):
+        """أفضل 10 لاعبين في Fizzy"""
         if not self.data:
             return await ctx.send("❌ مفيش لاعبين!")
         sorted_users = sorted(self.data.items(), key=lambda x: x[1]["fizzy"], reverse=True)[:10]
@@ -455,7 +489,11 @@ class Games(commands.Cog):
             name = member.display_name if member else f"Unknown"
             medal = medals[i] if i < 3 else f"**{i+1}.**"
             desc += f"{medal} **{name}** — 💎 {udata['fizzy']}\n"
-        embed = discord.Embed(title="🏆 أفضل 10 لاعبين", description=desc or "لا توجد بيانات", color=discord.Color.gold())
+        embed = discord.Embed(
+            title="🏆 أفضل 10 لاعبين في Fizzy",
+            description=desc or "لا توجد بيانات",
+            color=discord.Color.gold()
+        )
         await ctx.send(embed=embed)
 
 
