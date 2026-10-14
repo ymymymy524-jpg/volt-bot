@@ -7,6 +7,28 @@ import os
 from api.server import run_api
 
 # ═══════════════════════════════════════
+# 🚫 إلغاء Slash — Hybrid يشتغل Prefix بس
+# ═══════════════════════════════════════
+# ده لازم يكون قبل تحميل الـ Cogs
+_original_hybrid_command = commands.hybrid_command
+
+def _prefix_only_hybrid_command(*args, **kwargs):
+    """يحول hybrid_command لـ command عادي (Prefix بس)"""
+    kwargs["with_app_command"] = False
+    return _original_hybrid_command(*args, **kwargs)
+
+commands.hybrid_command = _prefix_only_hybrid_command
+
+_original_hybrid_group = commands.hybrid_group
+
+def _prefix_only_hybrid_group(*args, **kwargs):
+    kwargs["with_app_command"] = False
+    return _original_hybrid_group(*args, **kwargs)
+
+commands.hybrid_group = _prefix_only_hybrid_group
+
+
+# ═══════════════════════════════════════
 # ⚙️ Intents
 # ═══════════════════════════════════════
 intents = discord.Intents.default()
@@ -54,7 +76,7 @@ class MyBot(commands.Bot):
         )
 
     async def setup_hook(self):
-        """تحميل الـ Cogs + مزامنة الأوامر"""
+        """تحميل الـ Cogs — بدون Slash"""
         print("📦 جاري تحميل الـ Cogs...")
         for ext in INITIAL_EXTENSIONS:
             try:
@@ -67,29 +89,26 @@ class MyBot(commands.Bot):
 
         print("")
         await asyncio.sleep(2)
-
         print(f"📊 عدد الأوامر: {len(list(self.commands))}")
 
-        # مزامنة Global
+        # ═══════════════════════════════════════
+        # 🚫 مسح كل Slash Commands
+        # ═══════════════════════════════════════
         try:
-            synced_global = await self.tree.sync()
-            print(f"✅ تم مزامنة {len(synced_global)} أمر عالمياً")
+            self.tree.clear_commands(guild=None)
+            await self.tree.sync()
+            print("✅ تم مسح كل Slash Commands عالمياً")
         except Exception as e:
-            print(f"⚠️ فشل المزامنة العالمية: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"⚠️ فشل مسح Slash: {e}")
 
-        # مزامنة Guild
         if config.TEST_GUILD_ID:
             try:
                 guild = discord.Object(id=config.TEST_GUILD_ID)
-                self.tree.copy_global_to(guild=guild)
-                synced_guild = await self.tree.sync(guild=guild)
-                print(f"✅ تم مزامنة {len(synced_guild)} أمر مع السيرفر: {config.TEST_GUILD_ID}")
+                self.tree.clear_commands(guild=guild)
+                await self.tree.sync(guild=guild)
+                print(f"✅ تم مسح Slash من السيرفر: {config.TEST_GUILD_ID}")
             except Exception as e:
-                print(f"⚠️ فشل مزامنة السيرفر: {e}")
-                import traceback
-                traceback.print_exc()
+                print(f"⚠️ فشل مسح Slash من السيرفر: {e}")
 
     async def on_ready(self):
         print("=" * 60)
@@ -102,7 +121,7 @@ class MyBot(commands.Bot):
         await self.change_presence(
             activity=discord.Activity(
                 type=discord.ActivityType.watching,
-                name="!help | /help"
+                name="!help"
             )
         )
 
