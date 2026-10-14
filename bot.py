@@ -32,8 +32,14 @@ INITIAL_EXTENSIONS = [
     "cogs.ai",
     "cogs.settings",
     "cogs.help",
+    "cogs.fun",
+    "cogs.utility",
+    "cogs.voice",
+    "cogs.admin",
+    "cogs.automation",
+    "cogs.backup",
     "cogs.shortcuts",
-    "cogs.dynamic_commands",   # ⭐ الجديد
+    "cogs.dynamic_commands",
     "cogs.broadcast",
 ]
 
@@ -63,20 +69,16 @@ class MyBot(commands.Bot):
 
         print(f"📊 عدد الأوامر: {len(list(self.commands))}")
 
-        # ═══════════════════════════════════════
-        # 1️⃣ مزامنة Global (لكل السيرفرات)
-        # ═══════════════════════════════════════
+        # مزامنة Global
         try:
             synced_global = await self.tree.sync()
-            print(f"✅ تم مزامنة {len(synced_global)} أمر عالمياً (لكل السيرفرات)")
+            print(f"✅ تم مزامنة {len(synced_global)} أمر عالمياً")
         except Exception as e:
             print(f"⚠️ فشل المزامنة العالمية: {e}")
             import traceback
             traceback.print_exc()
 
-        # ═══════════════════════════════════════
-        # 2️⃣ مزامنة Guild (للسيرفر بتاعك — فورية)
-        # ═══════════════════════════════════════
+        # مزامنة Guild
         if config.TEST_GUILD_ID:
             try:
                 guild = discord.Object(id=config.TEST_GUILD_ID)
@@ -89,7 +91,6 @@ class MyBot(commands.Bot):
                 traceback.print_exc()
 
     async def on_ready(self):
-        """لما البوت يشتغل"""
         print("=" * 60)
         print(f"🤖 البوت شغال: {self.user}")
         print(f"🆔 الآيدي: {self.user.id}")
@@ -105,58 +106,40 @@ class MyBot(commands.Bot):
         )
 
 
-# ═══════════════════════════════════════
-# ⚠️ معالج الأخطاء العام
-# ═══════════════════════════════════════
 async def on_command_error_handler(bot, ctx, error):
-    """معالج أخطاء موحد"""
     if isinstance(error, commands.CommandNotFound):
         return
-
-    # ⭐ أمر معطّل من الداشبورد
     if isinstance(error, commands.CheckFailure):
         return
-
     if isinstance(error, commands.MissingPermissions):
         await ctx.send("❌ معندكش الصلاحيات الكافية!")
         return
-
     if isinstance(error, commands.BotMissingPermissions):
         await ctx.send("❌ البوت معندوش الصلاحيات الكافية!")
         return
-
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(f"⚠️ ناقص بيانات: `{error.param.name}`")
         return
-
     if isinstance(error, commands.MemberNotFound):
         await ctx.send("❌ مش لاقي العضو ده!")
         return
-
     if isinstance(error, commands.ChannelNotFound):
         await ctx.send("❌ مش لاقي القناة دي!")
         return
-
     if isinstance(error, commands.RoleNotFound):
         await ctx.send("❌ مش لاقي الرتبة دي!")
         return
-
     if isinstance(error, commands.BadArgument):
         await ctx.send("❌ تأكد من البيانات المدخلة!")
         return
-
     if isinstance(error, commands.CommandOnCooldown):
         await ctx.send(f"⏱️ استنى {error.retry_after:.1f} ثانية!")
         return
-
     print(f"❌ خطأ في الأمر {ctx.command}: {error}")
     import traceback
     traceback.print_exc()
 
 
-# ═══════════════════════════════════════
-# 🎬 Main
-# ═══════════════════════════════════════
 async def main():
     bot = MyBot()
 

@@ -12,7 +12,7 @@ from auth import (
     get_guild_info, get_best_guild_for_user, is_user_admin,
     get_avatar_url, get_user_display_name, discord_login_required,
 )
-
+from commands_list import ALL_COMMANDS
 load_dotenv()
 
 app = Flask(__name__)
@@ -117,157 +117,8 @@ def get_all_users():
     return users
 
 
-ALL_COMMANDS = [
-    # ═══ 🛠️ عام (General) — 7 ═══
-    {"name": "ping", "description": "سرعة البوت", "category": "عام"},
-    {"name": "avatar", "description": "صورة عضو", "category": "عام"},
-    {"name": "banner", "description": "بانر عضو", "category": "عام"},
-    {"name": "user", "description": "معلومات عضو", "category": "عام"},
-    {"name": "server", "description": "معلومات السيرفر", "category": "عام"},
-    {"name": "volt", "description": "رصيد Bitcoin", "category": "عام"},
-    {"name": "help", "description": "قائمة المساعدة", "category": "عام"},
 
-    # ═══ 👑 إدارة (Moderation) — 27 ═══
-    {"name": "ban", "description": "حظر عضو", "category": "الإدارة"},
-    {"name": "ban-all", "description": "حظر جماعي", "category": "الإدارة"},
-    {"name": "unban", "description": "فك حظر", "category": "الإدارة"},
-    {"name": "kick", "description": "طرد عضو", "category": "الإدارة"},
-    {"name": "warn", "description": "أوامر الإنذارات", "category": "الإدارة"},
-    {"name": "warn add", "description": "إضافة إنذار", "category": "الإدارة"},
-    {"name": "warn list", "description": "عرض الإنذارات", "category": "الإدارة"},
-    {"name": "warn clear", "description": "مسح الإنذارات", "category": "الإدارة"},
-    {"name": "mute", "description": "كتم عضو", "category": "الإدارة"},
-    {"name": "unmute", "description": "فك الكتم", "category": "الإدارة"},
-    {"name": "timeout", "description": "توقيت عضو", "category": "الإدارة"},
-    {"name": "untimeout", "description": "إلغاء التوقيت", "category": "الإدارة"},
-    {"name": "clear", "description": "مسح رسائل", "category": "الإدارة"},
-    {"name": "slowmode", "description": "الوضع البطيء", "category": "الإدارة"},
-    {"name": "lock", "description": "قفل القناة", "category": "الإدارة"},
-    {"name": "unlock", "description": "فتح القناة", "category": "الإدارة"},
-    {"name": "nick", "description": "تغيير اللقب", "category": "الإدارة"},
-    {"name": "hide", "description": "إخفاء القناة", "category": "الإدارة"},
-    {"name": "unhide", "description": "إظهار القناة", "category": "الإدارة"},
-    {"name": "move", "description": "نقل عضو صوتي", "category": "الإدارة"},
-    {"name": "voicemute", "description": "كتم صوتي", "category": "الإدارة"},
-    {"name": "voicedeafen", "description": "منع السماع", "category": "الإدارة"},
-    {"name": "broadcast", "description": "إرسال رسالة للأعضاء", "category": "الإدارة"},
-    {"name": "broadcast-embed", "description": "إرسال Embed للأعضاء", "category": "الإدارة"},
-    {"name": "broadcast-cancel", "description": "إلغاء البرودكاست", "category": "الإدارة"},
-    {"name": "broadcast-status", "description": "حالة البرودكاست", "category": "الإدارة"},
-
-    # ═══ 🛡️ حماية (Protection) — 12 ═══
-    {"name": "protection", "description": "أوامر الحماية", "category": "الحماية"},
-    {"name": "protection auto", "description": "حماية تلقائية", "category": "الحماية"},
-    {"name": "protection spam", "description": "حماية من السبام", "category": "الحماية"},
-    {"name": "protection link", "description": "حماية من الروابط", "category": "الحماية"},
-    {"name": "protection join", "description": "حماية من الحسابات الجديدة", "category": "الحماية"},
-    {"name": "protection hacked", "description": "حماية من الاختراق", "category": "الحماية"},
-    {"name": "protection bans", "description": "حماية من الحظر الجماعي", "category": "الحماية"},
-    {"name": "protection kicks", "description": "حماية من الطرد الجماعي", "category": "الحماية"},
-    {"name": "protection channels", "description": "حماية القنوات", "category": "الحماية"},
-    {"name": "protection roles", "description": "حماية الرتب", "category": "الحماية"},
-    {"name": "protection bots", "description": "حماية من البوتات", "category": "الحماية"},
-    {"name": "protection status", "description": "حالة الحماية", "category": "الحماية"},
-
-    # ═══ 📊 مستويات (Levels) — 4 ═══
-    {"name": "rank", "description": "مستوى العضو", "category": "المستويات"},
-    {"name": "top", "description": "أفضل الأعضاء", "category": "المستويات"},
-    {"name": "setlevel", "description": "تعيين مستوى", "category": "المستويات"},
-    {"name": "resetlevel", "description": "تصفير المستوى", "category": "المستويات"},
-
-    # ═══ 👋 ترحيب (Welcome) — 4 ═══
-    {"name": "setwelcome", "description": "تعيين روم الترحيب", "category": "الترحيب"},
-    {"name": "setgoodbye", "description": "تعيين روم الوداع", "category": "الترحيب"},
-    {"name": "testwelcome", "description": "اختبار الترحيب", "category": "الترحيب"},
-    {"name": "welcome-set-status", "description": "تشغيل/إيقاف الترحيب", "category": "الترحيب"},
-
-    # ═══ 🎵 موسيقى (Music) — 9 ═══
-    {"name": "play", "description": "تشغيل أغنية", "category": "الموسيقى"},
-    {"name": "skip", "description": "تخطي الأغنية", "category": "الموسيقى"},
-    {"name": "stop", "description": "إيقاف التشغيل", "category": "الموسيقى"},
-    {"name": "pause", "description": "إيقاف مؤقت", "category": "الموسيقى"},
-    {"name": "resume", "description": "استكمال", "category": "الموسيقى"},
-    {"name": "queue", "description": "قائمة التشغيل", "category": "الموسيقى"},
-    {"name": "nowplaying", "description": "الأغنية الحالية", "category": "الموسيقى"},
-    {"name": "volume", "description": "مستوى الصوت", "category": "الموسيقى"},
-    {"name": "shuffle", "description": "خلط القائمة", "category": "الموسيقى"},
-
-    # ═══ 📨 دعوات (Invites) — 4 ═══
-    {"name": "invites", "description": "عدد الدعوات", "category": "الدعوات"},
-    {"name": "inviter", "description": "مين دعاك؟", "category": "الدعوات"},
-    {"name": "invitetop", "description": "أفضل الداعين", "category": "الدعوات"},
-    {"name": "resetinvites", "description": "تصفير الدعوات", "category": "الدعوات"},
-
-    # ═══ 🎫 تذاكر (Tickets) — 5 ═══
-    {"name": "ticket", "description": "فتح تذكرة", "category": "التذاكر"},
-    {"name": "close", "description": "إغلاق التذكرة", "category": "التذاكر"},
-    {"name": "add", "description": "إضافة عضو للتذكرة", "category": "التذاكر"},
-    {"name": "remove", "description": "إزالة عضو من التذكرة", "category": "التذاكر"},
-    {"name": "setticket", "description": "إعداد نظام التذاكر", "category": "التذاكر"},
-
-    # ═══ 🎮 ألعاب (Games) — 10 ═══
-    {"name": "bomb", "description": "لعبة القنبلة الموقوتة", "category": "الألعاب"},
-    {"name": "button", "description": "لعبة زر الحظ", "category": "الألعاب"},
-    {"name": "chairs", "description": "لعبة الكراسي الموسيقية", "category": "الألعاب"},
-    {"name": "colors", "description": "لعبة تخمين الألوان", "category": "الألعاب"},
-    {"name": "faster", "description": "لعبة الأسرع في الكتابة", "category": "الألعاب"},
-    {"name": "flags", "description": "لعبة تخمين الأعلام", "category": "الألعاب"},
-    {"name": "mafia", "description": "لعبة المافيا", "category": "الألعاب"},
-    {"name": "roulette", "description": "لعبة الروليت الروسية", "category": "الألعاب"},
-    {"name": "fizzy", "description": "رصيد Fizzy", "category": "الألعاب"},
-    {"name": "fizzytop", "description": "أفضل 10 لاعبين في Fizzy", "category": "الألعاب"},
-
-    # ═══ 💎 اقتصاد (Economy) — 13 ═══
-    {"name": "balance", "description": "عرض الرصيد", "category": "الاقتصاد"},
-    {"name": "daily", "description": "المكافأة اليومية", "category": "الاقتصاد"},
-    {"name": "work", "description": "العمل", "category": "الاقتصاد"},
-    {"name": "transfer", "description": "تحويل الرصيد", "category": "الاقتصاد"},
-    {"name": "crypto-top", "description": "أغنى الأعضاء", "category": "الاقتصاد"},
-    {"name": "history", "description": "سجل المعاملات", "category": "الاقتصاد"},
-    {"name": "shop", "description": "المتجر", "category": "الاقتصاد"},
-    {"name": "buy", "description": "شراء من المتجر", "category": "الاقتصاد"},
-    {"name": "badmin", "description": "إدارة الاقتصاد", "category": "الاقتصاد"},
-    {"name": "badmin add", "description": "إضافة رصيد", "category": "الاقتصاد"},
-    {"name": "badmin remove", "description": "خصم رصيد", "category": "الاقتصاد"},
-    {"name": "badmin set", "description": "تعيين رصيد", "category": "الاقتصاد"},
-    {"name": "badmin reset", "description": "تصفير بيانات", "category": "الاقتصاد"},
-
-    # ═══ 🤖 ذكاء اصطناعي (AI) — 7 ═══
-    {"name": "ask", "description": "اسأل الـ AI", "category": "الذكاء الاصطناعي"},
-    {"name": "imagine", "description": "تخيل فكرة", "category": "الذكاء الاصطناعي"},
-    {"name": "translate", "description": "ترجمة نص", "category": "الذكاء الاصطناعي"},
-    {"name": "summarize", "description": "تلخيص نص", "category": "الذكاء الاصطناعي"},
-    {"name": "code", "description": "مساعدة في الكود", "category": "الذكاء الاصطناعي"},
-    {"name": "story", "description": "كتابة قصة", "category": "الذكاء الاصطناعي"},
-    {"name": "analyze", "description": "تحليل نص", "category": "الذكاء الاصطناعي"},
-
-    # ═══ ⚙️ إعدادات (Settings) — 23 ═══
-    {"name": "setup", "description": "معالج الإعداد", "category": "الإعدادات"},
-    {"name": "add-emoji", "description": "إضافة إيموجي", "category": "الإعدادات"},
-    {"name": "auto-message", "description": "الرسائل التلقائية", "category": "الإعدادات"},
-    {"name": "auto-message add", "description": "إضافة رسالة", "category": "الإعدادات"},
-    {"name": "auto-message delete", "description": "حذف رسالة", "category": "الإعدادات"},
-    {"name": "auto-message list", "description": "عرض الرسائل", "category": "الإعدادات"},
-    {"name": "auto-reply", "description": "الردود التلقائية", "category": "الإعدادات"},
-    {"name": "auto-reply add", "description": "إضافة رد", "category": "الإعدادات"},
-    {"name": "auto-reply delete", "description": "حذف رد", "category": "الإعدادات"},
-    {"name": "auto-reply show", "description": "عرض الردود", "category": "الإعدادات"},
-    {"name": "automod", "description": "الإشراف التلقائي", "category": "الإعدادات"},
-    {"name": "automod create", "description": "إنشاء قاعدة", "category": "الإعدادات"},
-    {"name": "automod delete", "description": "حذف قاعدة", "category": "الإعدادات"},
-    {"name": "autorole", "description": "رتبة تلقائية", "category": "الإعدادات"},
-    {"name": "log", "description": "السجلات", "category": "الإعدادات"},
-    {"name": "log set", "description": "تعيين روم اللوج", "category": "الإعدادات"},
-    {"name": "log stop", "description": "إيقاف السجلات", "category": "الإعدادات"},
-    {"name": "perms", "description": "الصلاحيات", "category": "الإعدادات"},
-    {"name": "settings", "description": "إعدادات السيرفر", "category": "الإعدادات"},
-    {"name": "اختصارات", "description": "عرض الاختصارات", "category": "الإعدادات"},
-    {"name": "تحديث-اختصارات", "description": "إعادة تحميل الاختصارات", "category": "الإعدادات"},
-    {"name": "reload-shortcuts", "description": "إعادة تحميل الاختصارات", "category": "الإعدادات"},
-]
-
-
-
+    
 # =================== Routes ===================
 
 @app.route('/')
