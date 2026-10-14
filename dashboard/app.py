@@ -56,6 +56,36 @@ def save_json_file(filename, data):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 
+def auto_apply_shortcuts(config):
+    """⭐ Auto-Apply: يبعت الاختصارات للـ Railway تلقائي"""
+    try:
+        auto_data = {
+            key: {
+                "enabled": val.get("enabled", True),
+                "shortcut": val.get("shortcut", "")
+            }
+            for key, val in config.items()
+        }
+        
+        response = requests.post(
+            f"{RAILWAY_API_URL}/api/shortcuts/apply",
+            json={"shortcuts": auto_data},
+            headers={
+                "Authorization": f"Bearer {BOT_API_SECRET}",
+                "Content-Type": "application/json"
+            },
+            timeout=10
+        )
+        
+        if response.ok:
+            result = response.json()
+            return result.get("count", 0)
+        return None
+    except Exception as e:
+        print(f"⚠️ Auto-apply error: {e}")
+        return None
+
+
 def get_all_users():
     bitcoin_data = load_json_file('bitcoin.json')
     levels_data = load_json_file('levels.json')
@@ -88,18 +118,16 @@ def get_all_users():
 
 
 ALL_COMMANDS = [
-    # ═══ 🛠️ عام (General) — 6 ═══
+    # ═══ 🛠️ عام (General) — 7 ═══
     {"name": "ping", "description": "سرعة البوت", "category": "عام"},
     {"name": "avatar", "description": "صورة عضو", "category": "عام"},
     {"name": "banner", "description": "بانر عضو", "category": "عام"},
     {"name": "user", "description": "معلومات عضو", "category": "عام"},
     {"name": "server", "description": "معلومات السيرفر", "category": "عام"},
     {"name": "volt", "description": "رصيد Bitcoin", "category": "عام"},
-
-    # ═══ 📚 مساعدة (Help) — 1 ═══
     {"name": "help", "description": "قائمة المساعدة", "category": "عام"},
 
-    # ═══ 👑 إدارة (Moderation) — 19 ═══
+    # ═══ 👑 إدارة (Moderation) — 27 ═══
     {"name": "ban", "description": "حظر عضو", "category": "الإدارة"},
     {"name": "ban-all", "description": "حظر جماعي", "category": "الإدارة"},
     {"name": "unban", "description": "فك حظر", "category": "الإدارة"},
@@ -213,7 +241,7 @@ ALL_COMMANDS = [
     {"name": "story", "description": "كتابة قصة", "category": "الذكاء الاصطناعي"},
     {"name": "analyze", "description": "تحليل نص", "category": "الذكاء الاصطناعي"},
 
-    # ═══ ⚙️ إعدادات (Settings) — 24 ═══
+    # ═══ ⚙️ إعدادات (Settings) — 23 ═══
     {"name": "setup", "description": "معالج الإعداد", "category": "الإعدادات"},
     {"name": "add-emoji", "description": "إضافة إيموجي", "category": "الإعدادات"},
     {"name": "auto-message", "description": "الرسائل التلقائية", "category": "الإعدادات"},
@@ -235,6 +263,7 @@ ALL_COMMANDS = [
     {"name": "settings", "description": "إعدادات السيرفر", "category": "الإعدادات"},
     {"name": "اختصارات", "description": "عرض الاختصارات", "category": "الإعدادات"},
     {"name": "تحديث-اختصارات", "description": "إعادة تحميل الاختصارات", "category": "الإعدادات"},
+    {"name": "reload-shortcuts", "description": "إعادة تحميل الاختصارات", "category": "الإعدادات"},
 ]
 
 
@@ -500,6 +529,9 @@ def api_economy():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ═══════════════════════════════════════
+# 🎯 Commands API
+# ═══════════════════════════════════════
 @app.route('/api/commands')
 @login_required
 def api_commands():
@@ -541,7 +573,19 @@ def api_save_command():
             config[cmd_name]['description'] = description
         
         save_json_file('commands_config.json', config)
-        return jsonify({'success': True, 'message': f'تم حفظ الأمر {cmd_name}'})
+        
+        # ⭐ Auto-Apply
+        count = auto_apply_shortcuts(config)
+        if count is not None:
+            return jsonify({
+                'success': True,
+                'message': f'✅ تم الحفظ + التطبيق ({count} اختصار)'
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'message': '⚠️ تم الحفظ — بس البوت مش مستجيب'
+            })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -561,9 +605,17 @@ def api_toggle_command():
         config[command_name]['enabled'] = enabled
         save_json_file('commands_config.json', config)
         
+        # ⭐ Auto-Apply
+        count = auto_apply_shortcuts(config)
+        status = "تفعيل" if enabled else "تعطيل"
+        if count is not None:
+            return jsonify({
+                'success': True,
+                'message': f'✅ تم {status} + التطبيق'
+            })
         return jsonify({
             'success': True,
-            'message': f'تم {"تفعيل" if enabled else "تعطيل"} الأمر'
+            'message': f'⚠️ تم {status} — بس البوت مش مستجيب'
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -574,13 +626,8 @@ def api_toggle_command():
 def api_apply_shortcuts():
     try:
         data = request.get_json()
-        
         if not data or 'shortcuts' not in data:
-            return jsonify({
-                'success': False,
-                'status': 'error',
-                'error': '❌ مفيش بيانات للاختصارات'
-            }), 400
+            return jsonify({'success': False, 'status': 'error', 'error': '❌ مفيش بيانات'}), 400
         
         print(f"📤 جاري إرسال {len(data['shortcuts'])} اختصار للـ Railway...")
         
@@ -599,44 +646,28 @@ def api_apply_shortcuts():
         except:
             result = {"detail": response.text}
         
-        print(f"📥 رد من Railway: {response.status_code} - {result}")
+        print(f"📥 رد من Railway: {response.status_code}")
         
         if response.ok:
             return jsonify({
                 'success': True,
                 'status': 'ok',
-                'message': result.get('message', '✅ تم تطبيق الاختصارات'),
+                'message': result.get('message', '✅ تم التطبيق'),
                 'count': result.get('count', 0)
             })
         else:
             return jsonify({
                 'success': False,
                 'status': 'error',
-                'error': result.get('detail', 'فشل التطبيق على البوت')
+                'error': result.get('detail', 'فشل التطبيق')
             }), response.status_code
         
     except requests.exceptions.Timeout:
-        return jsonify({
-            'success': False,
-            'status': 'error',
-            'error': '❌ البوت مش مستجيب (timeout) - جرب تاني'
-        }), 504
-        
-    except requests.exceptions.ConnectionError as e:
-        print(f"❌ Connection Error: {e}")
-        return jsonify({
-            'success': False,
-            'status': 'error',
-            'error': '❌ مش قادر أوصل للبوت على Railway - تأكد إنه شغال'
-        }), 503
-        
+        return jsonify({'success': False, 'status': 'error', 'error': '❌ البوت مش مستجيب'}), 504
+    except requests.exceptions.ConnectionError:
+        return jsonify({'success': False, 'status': 'error', 'error': '❌ مش قادر أوصل للبوت'}), 503
     except Exception as e:
-        print(f"❌ خطأ في /api/shortcuts/apply: {e}")
-        return jsonify({
-            'success': False,
-            'status': 'error',
-            'error': f'❌ خطأ: {str(e)}'
-        }), 500
+        return jsonify({'success': False, 'status': 'error', 'error': f'❌ خطأ: {str(e)}'}), 500
 
 
 @app.route('/api/users/<user_id>/balance', methods=['POST'])
@@ -678,7 +709,6 @@ def api_logs():
     try:
         bitcoin_data = load_json_file('bitcoin.json')
         all_logs = []
-        
         for user_id, data in bitcoin_data.items():
             for tx in data.get('transactions', []):
                 all_logs.append({
@@ -689,7 +719,6 @@ def api_logs():
                     'amount': tx.get('amount'),
                     'timestamp': tx.get('timestamp')
                 })
-        
         all_logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
         return jsonify({'success': True, 'data': all_logs[:100]})
     except Exception as e:
@@ -718,6 +747,4 @@ def api_settings():
 if __name__ == '__main__':
     port = int(os.getenv('DASHBOARD_PORT', 8000))
     print(f"🚀 Dashboard يعمل على: http://localhost:{port}")
-    print(f"🔐 تسجيل الدخول عبر Discord OAuth2")
-    print(f"🔗 Railway API: {RAILWAY_API_URL}")
     app.run(host='0.0.0.0', port=port, debug=False)
