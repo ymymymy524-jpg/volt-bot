@@ -151,7 +151,7 @@ class Economy(commands.Cog):
         embed.set_footer(text=f"رصيدك: {sender['balance']:,} {COIN_SYMBOL}")
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command(name="top", aliases=["btop", "crypto-top"], description="🏆 أغنى 10 أعضاء")
+    @commands.hybrid_command(name="crypto-top", aliases=["btop", "اغنى"], description="🏆 أغنى 10 أعضاء")
     async def top(self, ctx: commands.Context):
         if not self.data:
             await ctx.send("📭 مفيش بيانات!")
