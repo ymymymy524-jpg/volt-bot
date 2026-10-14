@@ -57,7 +57,6 @@ class Shortcuts(commands.Cog):
         self.config = load_config()
         self.shortcuts_map = {}
 
-        # 1️⃣ من commands_config.json
         for command_name, data in self.config.items():
             if not data.get("enabled", True):
                 continue
@@ -119,7 +118,7 @@ class Shortcuts(commands.Cog):
         count = self.reload_shortcuts()
         print(f"✅ [API] تم تحديث {count} اختصار")
         
-        # ⭐ الجديد: reload للـ DynamicCommands
+        # ⭐ reload للـ DynamicCommands
         dynamic = self.bot.get_cog("DynamicCommands")
         if dynamic:
             dynamic.reload_now()
@@ -152,6 +151,9 @@ class Shortcuts(commands.Cog):
             return
 
         words = content.split()
+        if not words:
+            return
+
         first_word = words[0]
         key = normalize_text(first_word)
 
@@ -166,29 +168,55 @@ class Shortcuts(commands.Cog):
         try:
             ctx = await self.bot.get_context(message)
 
-            # ⚡ الطريقة الصحيحة: نبني الأمر يدوياً
-            # 1️⃣ نجرب get_command الأول
-            command = self.bot.get_command(command_name)
+            # ⭐ بناء الأمر من الأجزاء (يدعم subcommands)
+            command = None
+            parts = command_name.split()
 
-            # 2️⃣ لو مش موجود، ندور على sub-commands
-            if command is None and " " in command_name:
-                parts = command_name.split()
-                parent = self.bot.get_command(parts[0])
-                if parent and hasattr(parent, 'all_commands'):
-                    sub = parent.all_commands.get(parts[-1])
-                    if sub:
-                        command = sub
+            # 1️⃣ لو الأمر بسيط (كلمة واحدة)
+            if len(parts) == 1:
+                command = self.bot.get_command(parts[0])
 
-            # 3️⃣ لو لسه مش موجود، ندور على aliases
+            # 2️⃣ لو الأمر مركّب (warn add, badmin set...)
+            else:
+                # جرّب get_command بالكامل الأول
+                command = self.bot.get_command(command_name)
+
+                # لو مش موجود، دور على subcommand
+                if command is None:
+                    parent = self.bot.get_command(parts[0])
+                    if parent:
+                        for i in range(1, len(parts)):
+                            if hasattr(parent, 'all_commands'):
+                                sub = parent.all_commands.get(parts[i])
+                                if sub:
+                                    parent = sub
+                                    command = parent
+                                else:
+                                    break
+
+            # 3️⃣ لو لسه مش موجود، دوّر في كل الأوامر
             if command is None:
                 for cmd in self.bot.walk_commands():
                     if cmd.name == command_name or command_name in cmd.aliases:
                         command = cmd
                         break
+                    if cmd.qualified_name == command_name:
+                        command = cmd
+                        break
 
             if command is None:
                 print(f"❌ الأمر {command_name} مش موجود")
+                await message.channel.send(
+                    f"❌ الأمر `{command_name}` مش موجود!",
+                    delete_after=8
+                )
                 return
+
+            # ⭐ لو الأمر من subcommand، محتاج نبعت الـ subcommand كـ arg
+            if " " in command_name and command.parent:
+                sub_name = command.name
+                if sub_name not in args:
+                    args = [sub_name] + args
 
             # ⚡ نستخدم invoke
             await ctx.invoke(command, *args)
@@ -207,6 +235,9 @@ class Shortcuts(commands.Cog):
             await message.channel.send("❌ مفيش عندك الصلاحيات!", delete_after=8)
         except commands.BotMissingPermissions:
             await message.channel.send("❌ البوت مفيش عنده الصلاحيات!", delete_after=8)
+        except commands.CheckFailure:
+            # أمر معطّل — DynamicCommands بيعرض الرسالة
+            pass
         except Exception as e:
             print(f"⚠️ خطأ في {command_name}: {e}")
             traceback.print_exc()
