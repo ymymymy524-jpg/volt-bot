@@ -146,7 +146,6 @@ class Shortcuts(commands.Cog):
         if not content:
             return
 
-        # تجاهل prefix
         if content.startswith(("!", "/", ".", ",")):
             return
 
@@ -157,7 +156,11 @@ class Shortcuts(commands.Cog):
         first_word = words[0]
         key = normalize_text(first_word)
 
+        # ⭐ DEBUG: اعرض كل رسالة
+        print(f"📨 [Shortcuts] رسالة: '{content}' | key: '{key}'")
+
         if key not in self.shortcuts_map:
+            print(f"   ⏭️ مش اختصار (عدد الاختصارات: {len(self.shortcuts_map)})")
             return
 
         command_name = self.shortcuts_map[key]
@@ -167,21 +170,13 @@ class Shortcuts(commands.Cog):
 
         try:
             ctx = await self.bot.get_context(message)
-
-            # ⭐ بناء الأمر من الأجزاء (يدعم subcommands)
             command = None
             parts = command_name.split()
 
-            # 1️⃣ لو الأمر بسيط (كلمة واحدة)
             if len(parts) == 1:
                 command = self.bot.get_command(parts[0])
-
-            # 2️⃣ لو الأمر مركّب (warn add, badmin set...)
             else:
-                # جرّب get_command بالكامل الأول
                 command = self.bot.get_command(command_name)
-
-                # لو مش موجود، دور على subcommand
                 if command is None:
                     parent = self.bot.get_command(parts[0])
                     if parent:
@@ -194,7 +189,6 @@ class Shortcuts(commands.Cog):
                                 else:
                                     break
 
-            # 3️⃣ لو لسه مش موجود، دوّر في كل الأوامر
             if command is None:
                 for cmd in self.bot.walk_commands():
                     if cmd.name == command_name or command_name in cmd.aliases:
@@ -205,23 +199,21 @@ class Shortcuts(commands.Cog):
                         break
 
             if command is None:
-                print(f"❌ الأمر {command_name} مش موجود")
-                await message.channel.send(
-                    f"❌ الأمر `{command_name}` مش موجود!",
-                    delete_after=8
-                )
+                print(f"   ❌ الأمر '{command_name}' مش موجود!")
+                await message.channel.send(f"❌ الأمر `{command_name}` مش موجود!", delete_after=8)
                 return
 
-            # ⭐ لو الأمر من subcommand، محتاج نبعت الـ subcommand كـ arg
+            print(f"   ✅ هيتم تنفيذ: '{command.qualified_name}'")
+
             if " " in command_name and command.parent:
                 sub_name = command.name
                 if sub_name not in args:
                     args = [sub_name] + args
 
-            # ⚡ نستخدم invoke
             await ctx.invoke(command, *args)
 
         except commands.MissingRequiredArgument as e:
+            print(f"   ⚠️ ناقص: {e.param.name}")
             await message.channel.send(f"❌ ناقص بيانات: `{e.param.name}`", delete_after=8)
         except commands.MemberNotFound:
             await message.channel.send("❌ مش لاقي العضو ده!", delete_after=8)
@@ -236,10 +228,10 @@ class Shortcuts(commands.Cog):
         except commands.BotMissingPermissions:
             await message.channel.send("❌ البوت مفيش عنده الصلاحيات!", delete_after=8)
         except commands.CheckFailure:
-            # أمر معطّل — DynamicCommands بيعرض الرسالة
+            print(f"   🚫 الأمر معطّل")
             pass
         except Exception as e:
-            print(f"⚠️ خطأ في {command_name}: {e}")
+            print(f"   ❌ خطأ: {e}")
             traceback.print_exc()
 
     # ═══════════════════════════════════════
