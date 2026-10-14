@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">
+        <i class="fas fa-terminal text-primary me-2"></i>
+        إدارة الأوامر
+    </h2>
+    <button class="btn btn-outline-primary btn-sm" onclick="loadCommands()">
+        <i class="fas fa-sync-alt me-1"></i> تحديث
+    </button>
+</div>
+
+<!-- كروت الإحصائيات -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">إجمالي الأوامر</p>
+                        <h3 class="fw-bold mb-0" id="total-commands">0</h3>
+                    </div>
+                    <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="fas fa-list"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">الأوامر المفعّلة</p>
+                        <h3 class="fw-bold mb-0 text-success" id="enabled-commands">0</h3>
+                    </div>
+                    <div class="stats-icon bg-success bg-opacity-10 text-success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">الأوامر المعطّلة</p>
+                        <h3 class="fw-bold mb-0 text-danger" id="disabled-commands">0</h3>
+                    </div>
+                    <div class="stats-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ⭐ زر Apply - تطبيق التعديلات على البوت -->
+<div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1)); border: 1px solid rgba(16, 185, 129, 0.3) !important;">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="mb-1 fw-bold">
+                <i class="fas fa-rocket text-success me-2"></i>
+                تطبيق التعديلات على البوت
+            </h6>
+            <p class="text-muted small mb-0">
+                بعد ما تعدّل الاختصارات، اضغط هنا عشان تشتغل فوراً على ديسكورد ⚡
+            </p>
+        </div>
+        <button 
+            class="btn btn-success btn-lg px-4" 
+            id="apply-btn"
+            onclick="applyChanges()"
+        >
+            <i class="fas fa-check-circle me-2"></i>
+            Apply
+        </button>
+    </div>
+</div>
+
+<!-- شريط البحث والفلترة -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-light">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input 
+                        type="text" 
+                        class="form-control" 
+                        id="search-input" 
+                        placeholder="ابحث عن أمر..."
+                        oninput="filterCommands()"
+                    >
+                </div>
+            </div>
+            <div class="col-md-6">
+                <select class="form-select" id="category-filter" onchange="filterCommands()">
+                    <option value="all">📂 جميع الأقسام</option>
+                    <option value="عام">🛠️ عام</option>
+                    <option value="الإدارة">👑 الإدارة</option>
+                    <option value="الحماية">🛡️ الحماية</option>
+                    <option value="المستويات">📊 المستويات</option>
+                    <option value="الترحيب">👋 الترحيب</option>
+                    <option value="الموسيقى">🎵 الموسيقى</option>
+                    <option value="الدعوات">📨 الدعوات</option>
+                    <option value="التذاكر">🎫 التذاكر</option>
+                    <option value="الألعاب">🎮 الألعاب</option>
+                    <option value="الاقتصاد">💎 الاقتصاد</option>
+                    <option value="الذكاء الاصطناعي">🤖 الذكاء الاصطناعي</option>
+                    <option value="الإعدادات">⚙️ الإعدادات</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- جدول الأوامر -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-dark border-0 py-3">
+        <h5 class="mb-0 fw-bold">
+            <i class="fas fa-cogs text-primary me-2"></i>
+            قائمة الأوامر
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4">#</th>
+                        <th>اسم الأمر</th>
+                        <th>الوصف</th>
+                        <th>القسم</th>
+                        <th class="text-center">الاختصار</th>
+                        <th class="text-center">الحالة</th>
+                        <th class="text-center pe-4">حفظ</th>
+                    </tr>
+                </thead>
+                <tbody id="commands-table-body">
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="text-muted mt-2">جاري تحميل الأوامر...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal تعديل الأمر -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">✏️ تعديل الأمر</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">اسم الأمر</label>
+                    <input type="text" id="edit-name" class="form-control" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">الاختصار (عربي أو إنجليزي)</label>
+                    <input type="text" id="edit-shortcut" class="form-control" placeholder="مثال: شغ">
+                    <small class="text-muted">اكتب الاختصار اللي عايزه (من غير ! أو /)</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">الوصف</label>
+                    <input type="text" id="edit-description" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="saveCommand()">
+                    <i class="fas fa-save me-1"></i> حفظ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let allCommands = [];
+    let currentEditCommand = '';
+    let editModal = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        editModal = new bootstrap.Modal(document.getElementById('editModal'));
+        loadCommands();
+    });
+
+    async function loadCommands() {
+        try {
+            const response = await fetch('/api/commands');
+            const result = await response.json();
+            
+            if (result.success) {
+                allCommands = result.data;
+                updateStats();
+                renderCommands(allCommands);
+            } else {
+                showNotification('خطأ في تحميل الأوامر', 'danger');
+            }
+        } catch (error) {
+            console.error('خطأ:', error);
+            showNotification('حدث خطأ في الاتصال', 'danger');
+        }
+    }
+
+    function updateStats() {
+        const total = allCommands.length;
+        const enabled = allCommands.filter(c => c.enabled).length;
+        const disabled = total - enabled;
+        
+        document.getElementById('total-commands').textContent = total;
+        document.getElementById('enabled-commands').textContent = enabled;
+        document.getElementById('disabled-commands').textContent = disabled;
+    }
+
+    function filterCommands() {
+        const searchTerm = document.getElementById('search-input').value.toLowerCase();
+        const category = document.getElementById('category-filter').value;
+        
+        let filtered = allCommands;
+        
+        if (searchTerm) {
+            filtered = filtered.filter(cmd => 
+                cmd.name.toLowerCase().includes(searchTerm) ||
+                (cmd.description && cmd.description.toLowerCase().includes(searchTerm)) ||
+                (cmd.shortcut && cmd.shortcut.toLowerCase().includes(searchTerm))
+            );
+        }
+        
+        if (category !== 'all') {
+            filtered = filtered.filter(cmd => cmd.category === category);
+        }
+        
+        renderCommands(filtered);
+    }
+
+    function renderCommands(commands) {
+        const tbody = document.getElementById('commands-table-body');
+        
+        if (commands.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">لا توجد أوامر مطابقة</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = commands.map((cmd, index) => `
+            <tr>
+                <td class="ps-4 align-middle">${index + 1}</td>
+                <td class="align-middle">
+                    <code class="fw-bold text-info">!${cmd.name}</code>
+                </td>
+                <td class="align-middle">${cmd.description || '-'}</td>
+                <td class="align-middle">
+                    <span class="badge bg-${getCategoryColor(cmd.category)}">${cmd.category}</span>
+                </td>
+                <td class="align-middle text-center">
+                    ${cmd.shortcut ? 
+                        `<span class="badge bg-success">${cmd.shortcut}</span>` : 
+                        `<span class="badge bg-secondary">بدون</span>`}
+                </td>
+                <td class="align-middle text-center">
+                    <div class="form-check form-switch d-inline-block">
+                        <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            ${cmd.enabled ? 'checked' : ''}
+                            onchange="toggleCommand('${cmd.name}', this.checked)"
+                        >
+                    </div>
+                </td>
+                <td class="align-middle text-center pe-4">
+                    <button class="btn btn-sm btn-primary" onclick="openEditModal('${cmd.name}')">
+                        <i class="fas fa-edit me-1"></i> تعديل
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function openEditModal(commandName) {
+        const cmd = allCommands.find(c => c.name === commandName);
+        if (!cmd) return;
+        
+        currentEditCommand = commandName;
+        document.getElementById('edit-name').value = commandName;
+        document.getElementById('edit-shortcut').value = cmd.shortcut || '';
+        document.getElementById('edit-description').value = cmd.description || '';
+        editModal.show();
+    }
+
+    async function saveCommand() {
+        const shortcut = document.getElementById('edit-shortcut').value.trim();
+        const description = document.getElementById('edit-description').value.trim();
+        
+        try {
+            const response = await fetch('/api/commands/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: currentEditCommand,
+                    shortcut: shortcut,
+                    description: description,
+                    enabled: true
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                const cmd = allCommands.find(c => c.name === currentEditCommand);
+                if (cmd) {
+                    cmd.shortcut = shortcut;
+                    cmd.description = description;
+                }
+                editModal.hide();
+                filterCommands();
+                showNotification('✅ تم الحفظ', 'success');
+            } else {
+                showNotification(result.error || 'حدث خطأ', 'danger');
+            }
+        } catch (error) {
+            console.error('خطأ:', error);
+            showNotification('حدث خطأ في الاتصال', 'danger');
+        }
+    }
+
+    async function toggleCommand(commandName, enabled) {
+        try {
+            const response = await fetch('/api/commands/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: commandName, enabled: enabled })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                const cmd = allCommands.find(c => c.name === commandName);
+                if (cmd) cmd.enabled = enabled;
+                
+                updateStats();
+                showNotification(result.message, 'success');
+            } else {
+                showNotification(result.error || 'حدث خطأ', 'danger');
+            }
+        } catch (error) {
+            showNotification('حدث خطأ في الاتصال', 'danger');
+        }
+    }
+
+    function getCategoryColor(category) {
+        const colors = {
+            'عام': 'secondary',
+            'الإدارة': 'danger',
+            'الحماية': 'warning',
+            'المستويات': 'primary',
+            'الترحيب': 'success',
+            'الموسيقى': 'info',
+            'الدعوات': 'secondary',
+            'التذاكر': 'success',
+            'الألعاب': 'warning',
+            'الاقتصاد': 'warning',
+            'الذكاء الاصطناعي': 'danger',
+            'الإعدادات': 'dark'
+        };
+        return colors[category] || 'secondary';
+    }
+
+    function showNotification(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} position-fixed top-0 end-0 m-3 shadow`;
+        alertDiv.style.zIndex = '9999';
+        alertDiv.style.minWidth = '300px';
+        alertDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}`;
+        document.body.appendChild(alertDiv);
+        setTimeout(() => {
+            alertDiv.style.opacity = '0';
+            setTimeout(() => alertDiv.remove(), 300);
+        }, 3000);
+    }
+
+    // ═══════════════════════════════════════
+    // ⭐ زر Apply - تطبيق التعديلات على البوت
+    // ═══════════════════════════════════════
+    async function applyChanges() {
+        const btn = document.getElementById('apply-btn');
+        const originalHTML = btn.innerHTML;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> جاري التطبيق...';
+        
+        try {
+            const shortcutsData = {};
+            allCommands.forEach(cmd => {
+                shortcutsData[cmd.name] = {
+                    enabled: cmd.enabled,
+                    shortcut: cmd.shortcut || ''
+                };
+            });
+            
+            const response = await fetch('/api/shortcuts/apply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ shortcuts: shortcutsData })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.status === 'ok') {
+                showNotification(`✅ ${result.message || 'تم التطبيق بنجاح'}`, 'success');
+            } else {
+                showNotification(`❌ ${result.error || result.detail || 'فشل التطبيق'}`, 'danger');
+            }
+        } catch (error) {
+            console.error('خطأ:', error);
+            showNotification('❌ حدث خطأ في الاتصال بالبوت', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    }
+</script>
+{% endblock %}
