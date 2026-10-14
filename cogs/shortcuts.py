@@ -118,6 +118,13 @@ class Shortcuts(commands.Cog):
         save_config(self.config)
         count = self.reload_shortcuts()
         print(f"✅ [API] تم تحديث {count} اختصار")
+        
+        # ⭐ الجديد: reload للـ DynamicCommands
+        dynamic = self.bot.get_cog("DynamicCommands")
+        if dynamic:
+            dynamic.reload_now()
+            print("🔄 [Shortcuts] تم تحديث DynamicCommands")
+        
         return count
 
     def delete_shortcut(self, command_name: str):

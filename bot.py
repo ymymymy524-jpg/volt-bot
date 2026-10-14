@@ -33,6 +33,7 @@ INITIAL_EXTENSIONS = [
     "cogs.settings",
     "cogs.help",
     "cogs.shortcuts",
+    "cogs.dynamic_commands",   # ⭐ الجديد
     "cogs.broadcast",
 ]
 
@@ -110,6 +111,10 @@ class MyBot(commands.Bot):
 async def on_command_error_handler(bot, ctx, error):
     """معالج أخطاء موحد"""
     if isinstance(error, commands.CommandNotFound):
+        return
+
+    # ⭐ أمر معطّل من الداشبورد
+    if isinstance(error, commands.CheckFailure):
         return
 
     if isinstance(error, commands.MissingPermissions):
