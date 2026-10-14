@@ -1,0 +1,383 @@
+﻿
+cogs\ai.py:46:    @commands.hybrid_command(
+cogs\ai.py:47:        name="ask",
+cogs\ai.py:82:    @commands.hybrid_command(
+cogs\ai.py:83:        name="imagine",
+cogs\ai.py:114:    @commands.hybrid_command(
+cogs\ai.py:115:        name="translate",
+cogs\ai.py:146:    @commands.hybrid_command(
+cogs\ai.py:147:        name="summarize",
+cogs\ai.py:178:    @commands.hybrid_command(
+cogs\ai.py:179:        name="code",
+cogs\ai.py:211:    @commands.hybrid_command(
+cogs\ai.py:212:        name="story",
+cogs\ai.py:243:    @commands.hybrid_command(
+cogs\ai.py:244:        name="analyze",
+cogs\broadcast.py:38:    @commands.hybrid_command(
+cogs\broadcast.py:39:        name="broadcast",
+cogs\broadcast.py:80:    @commands.hybrid_command(
+cogs\broadcast.py:81:        name="broadcast-embed",
+cogs\broadcast.py:238:    @commands.hybrid_command(
+cogs\broadcast.py:239:        name="broadcast-cancel",
+cogs\broadcast.py:257:    @commands.hybrid_command(
+cogs\broadcast.py:258:        name="broadcast-status",
+cogs\economy.py:66:    @commands.hybrid_command(name="balance", 
+aliases=["bal", "رصيدي"], description="💰 عرض الرصيد")
+cogs\economy.py:73:        embed.add_field(name="💰 الرصيد", 
+value=f"**{user['balance']:,} {COIN_SYMBOL}**", inline=True)
+cogs\economy.py:74:        embed.add_field(name="📈 المكتسب", 
+value=f"**{user['total_earned']:,} {COIN_SYMBOL}**", inline=True)
+cogs\economy.py:75:        embed.add_field(name="📉 المنفق", 
+value=f"**{user['total_spent']:,} {COIN_SYMBOL}**", inline=True)
+cogs\economy.py:76:        embed.add_field(name="🎒 العناصر", 
+value=f"**{len(user.get('inventory', []))}**", inline=True)
+cogs\economy.py:80:    @commands.hybrid_command(name="daily", 
+aliases=["يومي"], description="🎁 المكافأة اليومية")
+cogs\economy.py:103:    @commands.hybrid_command(name="work", 
+aliases=["اشتغل"], description="💼 اشتغل واكسب")
+cogs\economy.py:126:    @commands.hybrid_command(name="transfer", 
+aliases=["حول"], description="💸 تحويل")
+cogs\economy.py:154:    @commands.hybrid_command(name="crypto-top", 
+aliases=["btop", "اغنى"], description="🏆 أغنى 10 أعضاء")
+cogs\economy.py:171:    @commands.hybrid_command(name="history", 
+aliases=["bh", "سجلي"], description="📜 سجل المعاملات")
+cogs\economy.py:177:        embed.add_field(name="💰 الرصيد", 
+value=f"`{user['balance']:,}` {COIN_SYMBOL}", inline=False)
+cogs\economy.py:178:        embed.add_field(name="📈 المكتسب", 
+value=f"`{user['total_earned']:,}` {COIN_SYMBOL}", inline=False)
+cogs\economy.py:179:        embed.add_field(name="📉 المنفق", 
+value=f"`{user['total_spent']:,}` {COIN_SYMBOL}", inline=False)
+cogs\economy.py:186:            embed.add_field(name="📋 آخر 10 
+معاملات", value=tx_text[:1024], inline=False)
+cogs\economy.py:189:    @commands.hybrid_command(name="shop", 
+aliases=["متجر"], description="🛒 المتجر")
+cogs\economy.py:193:            embed.add_field(name=f"{item['name']} 
+(`{item_id}`)", value=f"💰 `{item['price']:,}` {COIN_SYMBOL}\n📝 
+{item['description']}", inline=False)
+cogs\economy.py:197:    @commands.hybrid_command(name="buy", 
+aliases=["اشتري"], description="💳 شراء")
+cogs\economy.py:223:    @commands.hybrid_group(name="badmin", 
+aliases=["bitcoin-admin"], description="🛠️ إدارة Crypto", 
+invoke_without_command=True)
+cogs\economy.py:230:    @badmin.command(name="add", aliases=["اضف"], 
+description="إضافة رصيد")
+cogs\economy.py:240:    @badmin.command(name="remove", aliases=["خصم"], 
+description="خصم رصيد")
+cogs\economy.py:250:    @badmin.command(name="set", aliases=["عين"], 
+description="تعيين رصيد")
+cogs\economy.py:259:    @badmin.command(name="reset", aliases=["صفر"], 
+description="تصفير")
+cogs\games.py:418:    @commands.hybrid_command(name="bomb", 
+aliases=["قنبلة"], description="💣 لعبة القنبلة الموقوتة")
+cogs\games.py:426:    @commands.hybrid_command(name="button", 
+aliases=["ازرار"], description="🎲 لعبة زر الحظ")
+cogs\games.py:434:    @commands.hybrid_command(name="chairs", 
+aliases=["كراسي"], description="🪑 لعبة الكراسي الموسيقية")
+cogs\games.py:442:    @commands.hybrid_command(name="colors", 
+aliases=["الوان"], description="🎨 لعبة تخمين الألوان")
+cogs\games.py:450:    @commands.hybrid_command(name="faster", 
+aliases=["سرعة"], description="⚡ لعبة الأسرع في الكتابة")
+cogs\games.py:458:    @commands.hybrid_command(name="flags", 
+aliases=["اعلام"], description="🏳️ لعبة تخمين الأعلام")
+cogs\games.py:466:    @commands.hybrid_command(name="mafia", 
+aliases=["مافيا"], description="🎭 لعبة المافيا")
+cogs\games.py:474:    @commands.hybrid_command(name="roulette", 
+aliases=["روليت"], description="🔫 لعبة الروليت الروسية")
+cogs\games.py:482:    @commands.hybrid_command(name="fizzy", 
+aliases=["fz", "فيزي"], description="💰 عرض رصيد Fizzy")
+cogs\games.py:499:    @commands.hybrid_command(name="fizzytop", 
+aliases=["fzt", "توب-فيزي"], description="🏆 أفضل 10 لاعبين في Fizzy")
+cogs\general.py:13:    @commands.hybrid_command(
+cogs\general.py:14:        name="ping",
+cogs\general.py:28:    @commands.hybrid_command(
+cogs\general.py:29:        name="avatar",
+cogs\general.py:48:    @commands.hybrid_command(
+cogs\general.py:49:        name="banner",
+cogs\general.py:65:    @commands.hybrid_command(
+cogs\general.py:66:        name="user",
+cogs\general.py:81:        embed.add_field(name="🆔 المعرف", 
+value=f"`{member.id}`", inline=True)
+cogs\general.py:82:        embed.add_field(name="📛 الاسم الكامل", 
+value=f"{member}", inline=True)
+cogs\general.py:83:        embed.add_field(name="👑 أعلى رتبة", 
+value=top_role, inline=True)
+cogs\general.py:84:        embed.add_field(name="📅 تاريخ الانضمام", 
+value=joined_at, inline=False)
+cogs\general.py:85:        embed.add_field(name="🎂 تاريخ إنشاء الحساب", 
+value=created_at, inline=False)
+cogs\general.py:91:            embed.add_field(name=f"🎭 الرتب 
+[{len(roles)}]", value=roles_text, inline=False)
+cogs\general.py:96:    @commands.hybrid_command(
+cogs\general.py:97:        name="server",
+cogs\general.py:116:        embed.add_field(name="🆔 المعرف", 
+value=f"`{guild.id}`", inline=True)
+cogs\general.py:117:        embed.add_field(name="👑 المالك", 
+value=guild.owner.mention if guild.owner else "غير معروف", inline=True)
+cogs\general.py:118:        embed.add_field(name="📅 الإنشاء", 
+value=discord.utils.format_dt(guild.created_at, style='R'), inline=True)
+cogs\general.py:119:        embed.add_field(name="👥 الأعضاء", 
+value=f"**الإجمالي:** {total_members}\n**بشر:** {humans}\n**بوتات:** 
+{bots}", inline=True)
+cogs\general.py:120:        embed.add_field(name="💬 القنوات", 
+value=f"**نصية:** {len(guild.text_channels)}\n**صوتية:** 
+{len(guild.voice_channels)}", inline=True)
+cogs\general.py:121:        embed.add_field(name="🎭 الرتب", 
+value=f"`{len(guild.roles) - 1}` رتبة", inline=True)
+cogs\general.py:126:    @commands.hybrid_command(
+cogs\general.py:127:        name="volt",
+cogs\help.py:266:            embed.set_author(name=user.display_name, 
+icon_url=user.display_avatar.url)
+cogs\help.py:272:    @commands.hybrid_command(
+cogs\help.py:273:        name="help",
+cogs\invites.py:162:    @commands.hybrid_command(
+cogs\invites.py:163:        name="invites",
+cogs\invites.py:186:        embed.add_field(name="✅ حقيقية", 
+value=f"**{real}**", inline=True)
+cogs\invites.py:187:        embed.add_field(name="⚠️ وهمية", 
+value=f"**{fake}**", inline=True)
+cogs\invites.py:188:        embed.add_field(name="📊 الإجمالي", 
+value=f"**{total}**", inline=True)
+cogs\invites.py:189:        embed.add_field(name="👥 أعضاء مدعوين", 
+value=f"**{invited_count}**", inline=False)
+cogs\invites.py:196:    @commands.hybrid_command(
+cogs\invites.py:197:        name="inviter",
+cogs\invites.py:243:    @commands.hybrid_command(
+cogs\invites.py:244:        name="invitetop",
+cogs\invites.py:290:    @commands.hybrid_command(
+cogs\invites.py:291:        name="resetinvites",
+cogs\levels.py:85:    @commands.hybrid_command(name="rank", 
+aliases=["مستوى", "لفل", "level"], description="📊 عرض المستوى")
+cogs\levels.py:104:        embed.add_field(name="🏆 المستوى", 
+value=f"**{level}**", inline=True)
+cogs\levels.py:105:        embed.add_field(name="⭐ XP", 
+value=f"**{xp}/{needed}**", inline=True)
+cogs\levels.py:106:        embed.add_field(name="🥇 الترتيب", 
+value=f"**#{rank_pos}**", inline=True)
+cogs\levels.py:107:        embed.add_field(name="📈 التقدم", 
+value=self.progress_bar(xp, needed), inline=False)
+cogs\levels.py:111:    @commands.hybrid_command(name="top", 
+aliases=["توب", "افضل", "leaderboard", "lb"], description="🏆 أفضل 10 
+أعضاء")
+cogs\levels.py:129:    @commands.hybrid_command(name="setlevel", 
+aliases=["sl", "تحديد-مستوى"], description="📊 تعيين مستوى (للإدارة)")
+cogs\levels.py:146:    @commands.hybrid_command(name="resetlevel", 
+aliases=["rl", "تصفير-مستوى"], description="📊 تصفير مستوى (للإدارة)")
+cogs\moderation.py:27:    @commands.hybrid_command(name="ban", 
+aliases=["حظر"], description="🔨 حظر عضو")
+cogs\moderation.py:43:    @commands.hybrid_command(name="ban-all", 
+aliases=["ball", "حظر-الكل"], description="🔨 حظر جماعي")
+cogs\moderation.py:61:    @commands.hybrid_command(name="unban", 
+aliases=["فك-الحظر"], description="🔓 فك حظر")
+cogs\moderation.py:77:    @commands.hybrid_command(name="kick", 
+aliases=["طرد"], description="👢 طرد عضو")
+cogs\moderation.py:93:    @commands.hybrid_group(name="warn", 
+aliases=["انذار", "تحذير"], description="⚠️ أوامر الإنذارات", 
+invoke_without_command=True)
+cogs\moderation.py:100:    @warn_group.command(name="add", 
+aliases=["+"], description="⚠️ إضافة إنذار")
+cogs\moderation.py:112:    @warn_group.command(name="list", 
+aliases=["ls"], description="📋 عرض الإنذارات")
+cogs\moderation.py:124:            embed.add_field(name=f"#{i} - 
+{w['date'][:10]}", value=f"**السبب:** {w['reason']}\n**بواسطة:** 
+{w['moderator']}", inline=False)
+cogs\moderation.py:127:    @warn_group.command(name="clear", 
+aliases=["reset"], description="🗑️ مسح الإنذارات")
+cogs\moderation.py:138:    @commands.hybrid_command(name="mute", 
+aliases=["كتم"], description="🔇 كتم عضو")
+cogs\moderation.py:151:    @commands.hybrid_command(name="unmute", 
+aliases=["فك-الكتم"], description="🔊 فك الكتم")
+cogs\moderation.py:164:    @commands.hybrid_command(name="timeout", 
+aliases=["توقيت"], description="⏱️ توقيت عضو")
+cogs\moderation.py:181:    @commands.hybrid_command(name="untimeout", 
+aliases=["الغاء-التوقيت"], description="⏱️ إلغاء التوقيت")
+cogs\moderation.py:194:    @commands.hybrid_command(name="clear", 
+aliases=["مسح", "purge"], description="🧹 مسح رسائل")
+cogs\moderation.py:215:    @commands.hybrid_command(name="slowmode", 
+aliases=["وضع-بطيء"], description="🐌 الوضع البطيء")
+cogs\moderation.py:232:    @commands.hybrid_command(name="lock", 
+aliases=["قفل"], description="🔒 قفل القناة")
+cogs\moderation.py:244:    @commands.hybrid_command(name="unlock", 
+aliases=["فتح"], description="🔓 فتح القناة")
+cogs\moderation.py:256:    @commands.hybrid_command(name="nick", 
+aliases=["اسم", "لقب"], description="✏️ تغيير اللقب")
+cogs\moderation.py:260:    @app_commands.describe(member="العضو", 
+nickname="اللقب الجديد")
+cogs\music.py:43:    @commands.hybrid_command(name="play", 
+aliases=["شغل", "شغ"], description="🎵 تشغيل أغنية")
+cogs\music.py:77:    @commands.hybrid_command(name="skip", 
+aliases=["تخطي", "سكيب"], description="⏭️ تخطي الأغنية")
+cogs\music.py:86:    @commands.hybrid_command(name="stop", 
+aliases=["ايقاف", "وقف"], description="⏹️ إيقاف التشغيل")
+cogs\music.py:95:    @commands.hybrid_command(name="pause", 
+aliases=["ايقاف-مؤقت"], description="⏸️ إيقاف مؤقت")
+cogs\music.py:104:    @commands.hybrid_command(name="resume", 
+aliases=["استكمال", "كمل"], description="▶️ استكمال")
+cogs\music.py:113:    @commands.hybrid_command(name="queue", 
+aliases=["قائمة", "القائمة"], description="📋 قائمة التشغيل")
+cogs\music.py:127:    @commands.hybrid_command(name="nowplaying", 
+aliases=["الحالية", "الان"], description="🎵 الأغنية الحالية")
+cogs\music.py:143:    @commands.hybrid_command(name="volume", 
+aliases=["صوت", "الصوت"], description="🔊 الصوت (0-100)")
+cogs\music.py:159:    @commands.hybrid_command(name="shuffle", 
+aliases=["خلط", "عشوائي"], description="🔀 خلط القائمة")
+cogs\protection.py:69:        name="protection",
+cogs\protection.py:102:    @protection.command(name="auto", 
+aliases=["تلقائي"], description="🤖 تفعيل/تعطيل الحماية التلقائية")
+cogs\protection.py:105:        app_commands.Choice(name="تفعيل ✅", 
+value="on"),
+cogs\protection.py:106:        app_commands.Choice(name="تعطيل ❌", 
+value="off")
+cogs\protection.py:129:    @protection.command(name="spam", 
+aliases=["سبام"], description="🚫 حماية من السبام")
+cogs\protection.py:132:        app_commands.Choice(name="تفعيل ✅", 
+value="on"),
+cogs\protection.py:133:        app_commands.Choice(name="تعطيل ❌", 
+value="off")
+cogs\protection.py:164:    @protection.command(name="link", 
+aliases=["links", "روابط"], description="🔗 حماية من الروابط")
+cogs\protection.py:168:            app_commands.Choice(name="تفعيل ✅", 
+value="on"),
+cogs\protection.py:169:            app_commands.Choice(name="تعطيل ❌", 
+value="off")
+cogs\protection.py:172:            app_commands.Choice(name="جميع 
+الروابط", value="all"),
+cogs\protection.py:173:            app_commands.Choice(name="روابط 
+الديسكورد فقط", value="discord"),
+cogs\protection.py:174:            app_commands.Choice(name="الروابط 
+الخارجية فقط", value="external")
+cogs\protection.py:209:    @protection.command(name="join", 
+aliases=["انضمام"], description="🚪 حماية من الحسابات الجديدة")
+cogs\protection.py:212:        app_commands.Choice(name="تفعيل ✅", 
+value="on"),
+cogs\protection.py:213:        app_commands.Choice(name="تعطيل ❌", 
+value="off")
+cogs\protection.py:240:    @protection.command(name="hacked", 
+aliases=["مخترقة"], description="🔐 حماية من الحسابات المخترقة")
+cogs\protection.py:243:        app_commands.Choice(name="تفعيل ✅", 
+value="on"),
+cogs\protection.py:244:        app_commands.Choice(name="تعطيل ❌", 
+value="off")
+cogs\protection.py:272:    @protection.command(name="bans", 
+aliases=["حظر-جماعي"], description="🔨 حماية من الحظر الجماعي")
+cogs\protection.py:275:        app_commands.Choice(name="تفعيل ✅", 
+value="on"),
+cogs\protection.py:276:        app_commands.Choice(name="تعطيل ❌", 
+value="off")
+cogs\protection.py:304:    @protection.command(name="kicks", 
+aliases=["طرد-جماعي"], description="👢 حماية من الطرد الجماعي")
+cogs\protection.py:307:        app_commands.Choice(name="تفعيل ✅", 
+value="on"),
+cogs\protection.py:308:        app_commands.Choice(name="تعطيل ❌", 
+value="off")
+cogs\protection.py:336:    @protection.command(name="channels", 
+aliases=["قنوات"], description="📺 حماية من حذف/إنشاء القنوات")
+cogs\protection.py:339:        app_commands.Choice(name="تفعيل ✅", 
+value="on"),
+cogs\protection.py:340:        app_commands.Choice(name="تعطيل ❌", 
+value="off")
+cogs\protection.py:368:    @protection.command(name="roles", 
+aliases=["رتب"], description="🎭 حماية من تعديل الرتب")
+cogs\protection.py:371:        app_commands.Choice(name="تفعيل ✅", 
+value="on"),
+cogs\protection.py:372:        app_commands.Choice(name="تعطيل ❌", 
+value="off")
+cogs\protection.py:400:    @protection.command(name="bots", 
+aliases=["بوتات"], description="🤖 حماية من إضافة البوتات")
+cogs\protection.py:404:            app_commands.Choice(name="تفعيل ✅", 
+value="on"),
+cogs\protection.py:405:            app_commands.Choice(name="تعطيل ❌", 
+value="off")
+cogs\protection.py:408:            app_commands.Choice(name="طرد البوت", 
+value="kick"),
+cogs\protection.py:409:            app_commands.Choice(name="حظر البوت", 
+value="ban"),
+cogs\protection.py:410:            app_commands.Choice(name="تنبيه فقط", 
+value="notify")
+cogs\protection.py:445:    @protection.command(name="status", 
+aliases=["حالة", "عرض"], description="📊 عرض حالة جميع أنظمة الحماية")
+cogs\protection.py:479:                name="🚫 تفاصيل حماية السبام",
+cogs\protection.py:486:                name="🚪 تفاصيل حماية الانضمام",
+cogs\settings.py:53:    @commands.hybrid_command(
+cogs\settings.py:54:        name="setup",
+cogs\settings.py:188:    @commands.hybrid_command(
+cogs\settings.py:189:        name="add-emoji",
+cogs\settings.py:196:    @app_commands.describe(name="اسم الإيموجي", 
+url="رابط الصورة")
+cogs\settings.py:210:            emoji = await 
+ctx.guild.create_custom_emoji(name=name, image=image_bytes)
+cogs\settings.py:224:        name="auto-message",
+cogs\settings.py:247:    @auto_message.command(name="add", aliases=["+", 
+"اضف"], description="إضافة رسالة تلقائية")
+cogs\settings.py:271:    @auto_message.command(name="delete", 
+aliases=["del", "احذف"], description="حذف رسالة تلقائية")
+cogs\settings.py:284:    @auto_message.command(name="list", 
+aliases=["ls", "عرض"], description="عرض الرسائل التلقائية")
+cogs\settings.py:304:        name="auto-reply",
+cogs\settings.py:327:    @auto_reply.command(name="add", aliases=["+", 
+"اضف"], description="إضافة رد تلقائي")
+cogs\settings.py:339:    @auto_reply.command(name="delete", 
+aliases=["del", "احذف"], description="حذف رد تلقائي")
+cogs\settings.py:354:    @auto_reply.command(name="show", 
+aliases=["عرض"], description="عرض الردود التلقائية")
+cogs\settings.py:370:        name="automod",
+cogs\settings.py:390:    @automod.command(name="create", aliases=["+", 
+"انشئ"], description="إنشاء قاعدة")
+cogs\settings.py:391:    @app_commands.describe(name="اسم القاعدة", 
+trigger="الكلمات المفتاحية مفصولة بفاصلة")
+cogs\settings.py:402:    @automod.command(name="delete", aliases=["del", 
+"احذف"], description="حذف قاعدة")
+cogs\settings.py:403:    @app_commands.describe(name="اسم القاعدة")
+cogs\settings.py:420:    @commands.hybrid_command(
+cogs\settings.py:421:        name="autorole",
+cogs\settings.py:440:        name="log",
+cogs\settings.py:459:    @log.command(name="set", aliases=["عين"], 
+description="تعيين روم السجلات")
+cogs\settings.py:468:    @log.command(name="stop", aliases=["ايقاف", 
+"وقف"], description="إيقاف السجلات")
+cogs\settings.py:479:    @commands.hybrid_command(
+cogs\settings.py:480:        name="perms",
+cogs\settings.py:500:    @commands.hybrid_command(
+cogs\settings.py:501:        name="settings",
+cogs\settings.py:509:        embed.add_field(name="📝 الرسائل 
+التلقائية", value=f"{len(guild_data['auto_messages'])}", inline=True)
+cogs\settings.py:510:        embed.add_field(name="💬 الردود", 
+value=f"{len(guild_data['auto_replies'])}", inline=True)
+cogs\settings.py:511:        embed.add_field(name="🛡️ AutoMod", 
+value=f"{len(guild_data['automod_rules'])}", inline=True)
+cogs\settings.py:512:        embed.add_field(name="🎭 Autorole", 
+value="✅" if guild_data.get("autorole") else "❌", inline=True)
+cogs\settings.py:513:        embed.add_field(name="📋 Logs", value="✅" 
+if guild_data.get("log_channel") else "❌", inline=True)
+cogs\shortcuts.py:240:    @commands.command(name="اختصارات", 
+aliases=["shortcuts"])
+cogs\shortcuts.py:260:    @commands.command(name="تحديث-اختصارات", 
+aliases=["reload-shortcuts"])
+cogs\tickets.py:46:    @commands.hybrid_command(
+cogs\tickets.py:47:        name="setticket",
+cogs\tickets.py:72:    @commands.hybrid_command(
+cogs\tickets.py:73:    name="ticket",
+cogs\tickets.py:113:        support_role = 
+discord.utils.get(ctx.guild.roles, name="Support")
+cogs\tickets.py:119:        admin_role = 
+discord.utils.get(ctx.guild.roles, name="Admin")
+cogs\tickets.py:127:                name=channel_name,
+cogs\tickets.py:167:    @commands.hybrid_command(
+cogs\tickets.py:168:        name="close",
+cogs\tickets.py:217:    @commands.hybrid_command(
+cogs\tickets.py:218:        name="add",
+cogs\tickets.py:267:    @commands.hybrid_command(
+cogs\tickets.py:268:        name="remove",
+cogs\welcome.py:128:    @commands.hybrid_command(
+cogs\welcome.py:129:        name="setwelcome",
+cogs\welcome.py:153:    @commands.hybrid_command(
+cogs\welcome.py:154:        name="setgoodbye",
+cogs\welcome.py:178:    @commands.hybrid_command(
+cogs\welcome.py:179:        name="testwelcome",
+cogs\welcome.py:219:    @commands.hybrid_command(
+cogs\welcome.py:220:        name="welcome-set-status",
+cogs\welcome.py:228:        app_commands.Choice(name="تفعيل ✅", 
+value="on"),
+cogs\welcome.py:229:        app_commands.Choice(name="إيقاف ❌", 
+value="off")
+
+
