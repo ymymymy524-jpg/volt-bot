@@ -70,10 +70,11 @@ class Tickets(commands.Cog):
     # 🎫 !ticket / /ticket
     # ═══════════════════════════════════════
     @commands.hybrid_command(
-        name="ticket",
-        aliases=["t", "تذكرة"],
-        description="🎫 فتح تذكرة دعم جديدة"
-    )
+    name="ticket",
+   aliases=["t", "تذكرة"],
+    description="🎫 فتح تذكرة"
+)
+
     @commands.bot_has_permissions(manage_channels=True)
     @app_commands.describe(reason="سبب فتح التذكرة (اختياري)")
     async def ticket(self, ctx: commands.Context, *, reason: str = None):

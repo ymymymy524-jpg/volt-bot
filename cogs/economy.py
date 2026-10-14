@@ -36,8 +36,6 @@ def save_data(data):
 
 
 class Economy(commands.Cog):
-    """نظام الاقتصاد — Crypto (Prefix + Slash)"""
-
     def __init__(self, bot):
         self.bot = bot
         self.data = load_data()
@@ -65,23 +63,12 @@ class Economy(commands.Cog):
         if len(user["transactions"]) > 50:
             user["transactions"] = user["transactions"][-50:]
 
-    # ═══════════════════════════════════════
-    # 💰 !balance / /balance
-    # ═══════════════════════════════════════
-    @commands.hybrid_command(
-        name="balance",
-        aliases=["bal", "b", "رصيدي"],
-        description="💰 عرض رصيدك أو رصيد عضو"
-    )
-    @app_commands.describe(member="العضو المراد عرض رصيده (اختياري)")
+    @commands.hybrid_command(name="balance", aliases=["bal", "رصيدي"], description="💰 عرض الرصيد")
+    @app_commands.describe(member="العضو (اختياري)")
     async def balance(self, ctx: commands.Context, member: discord.Member = None):
-        """عرض الرصيد"""
         target = member or ctx.author
         user = self.get_user(target.id)
-        embed = discord.Embed(
-            title=f"💎 محفظة {COIN_NAME} — {target.display_name}",
-            color=0xF7931A, timestamp=discord.utils.utcnow()
-        )
+        embed = discord.Embed(title=f"💎 محفظة {COIN_NAME} — {target.display_name}", color=0xF7931A, timestamp=discord.utils.utcnow())
         embed.set_thumbnail(url=target.display_avatar.url)
         embed.add_field(name="💰 الرصيد", value=f"**{user['balance']:,} {COIN_SYMBOL}**", inline=True)
         embed.add_field(name="📈 المكتسب", value=f"**{user['total_earned']:,} {COIN_SYMBOL}**", inline=True)
@@ -90,16 +77,8 @@ class Economy(commands.Cog):
         embed.set_footer(text=f"ID: {target.id}")
         await ctx.send(embed=embed)
 
-    # ═══════════════════════════════════════
-    # 🎁 !daily / /daily
-    # ═══════════════════════════════════════
-    @commands.hybrid_command(
-        name="daily",
-        aliases=["d", "يومي"],
-        description="🎁 الحصول على المكافأة اليومية"
-    )
+    @commands.hybrid_command(name="daily", aliases=["يومي"], description="🎁 المكافأة اليومية")
     async def daily(self, ctx: commands.Context):
-        """المكافأة اليومية"""
         user = self.get_user(ctx.author.id)
         now = discord.utils.utcnow()
         if user.get("last_daily"):
@@ -117,37 +96,22 @@ class Economy(commands.Cog):
         user["last_daily"] = now.isoformat()
         self.add_transaction(ctx.author.id, "daily", amount, "مكافأة يومية")
         self.save()
-        embed = discord.Embed(
-            title="🎁 المكافأة اليومية",
-            description=f"حصلت على **{amount} {COIN_SYMBOL}**!",
-            color=0xF7931A
-        )
+        embed = discord.Embed(title="🎁 المكافأة اليومية", description=f"حصلت على **{amount} {COIN_SYMBOL}**!", color=0xF7931A)
         embed.set_footer(text=f"رصيدك: {user['balance']:,} {COIN_SYMBOL}")
         await ctx.send(embed=embed)
 
-    # ═══════════════════════════════════════
-    # 💼 !work / /work
-    # ═══════════════════════════════════════
-    @commands.hybrid_command(
-        name="work",
-        aliases=["w", "اشتغل"],
-        description="💼 اشتغل واكسب Crypto"
-    )
+    @commands.hybrid_command(name="work", aliases=["اشتغل"], description="💼 اشتغل واكسب")
     async def work(self, ctx: commands.Context):
-        """اشتغل واكسب"""
         user = self.get_user(ctx.author.id)
         now = discord.utils.utcnow()
         if user.get("last_work"):
             last = datetime.fromisoformat(user["last_work"])
             diff = (now - last).total_seconds()
             if diff < 3600:
-                remaining = 3600 - diff
-                minutes = int(remaining // 60)
+                minutes = int((3600 - diff) // 60)
                 await ctx.send(f"⏰ ارتاح شوية! ارجع بعد **{minutes}د**")
                 return
-        jobs = ["مبرمج 👨‍💻", "طبيب 👨‍⚕️", "مهندس 👷", "معلم 👨‍🏫",
-                "طباخ 👨‍🍳", "فنان 🎨", "كاتب ✍️", "مصور 📸",
-                "سائق 🚗", "مزارع 🌾", "صائد سمك 🎣", "نجار 🔨"]
+        jobs = ["مبرمج 👨‍💻", "طبيب 👨‍⚕️", "مهندس 👷", "معلم 👨‍🏫", "طباخ 👨‍🍳", "فنان 🎨", "كاتب ✍️", "مصور 📸"]
         job = random.choice(jobs)
         amount = random.randint(50, 200)
         user["balance"] += amount
@@ -155,25 +119,13 @@ class Economy(commands.Cog):
         user["last_work"] = now.isoformat()
         self.add_transaction(ctx.author.id, "work", amount, f"عمل كـ {job}")
         self.save()
-        embed = discord.Embed(
-            title=f"💼 {job}",
-            description=f"اشتغلت وكسبت **{amount} {COIN_SYMBOL}**!",
-            color=0x3498DB
-        )
+        embed = discord.Embed(title=f"💼 {job}", description=f"اشتغلت وكسبت **{amount} {COIN_SYMBOL}**!", color=0x3498DB)
         embed.set_footer(text=f"رصيدك: {user['balance']:,} {COIN_SYMBOL}")
         await ctx.send(embed=embed)
 
-    # ═══════════════════════════════════════
-    # 💸 !transfer / /transfer
-    # ═══════════════════════════════════════
-    @commands.hybrid_command(
-        name="transfer",
-        aliases=["tr", "حول"],
-        description="💸 تحويل Crypto لعضو تاني"
-    )
-    @app_commands.describe(member="العضو المراد التحويل له", amount="المبلغ")
+    @commands.hybrid_command(name="transfer", aliases=["حول"], description="💸 تحويل")
+    @app_commands.describe(member="العضو", amount="المبلغ")
     async def transfer(self, ctx: commands.Context, member: discord.Member, amount: int):
-        """تحويل"""
         if member.id == ctx.author.id:
             await ctx.send("❌ متحولش لنفسك!")
             return
@@ -181,7 +133,7 @@ class Economy(commands.Cog):
             await ctx.send("❌ متحولش لبوت!")
             return
         if amount < 1:
-            await ctx.send("❌ المبلغ لازم يكون 1 على الأقل")
+            await ctx.send("❌ المبلغ 1 على الأقل!")
             return
         sender = self.get_user(ctx.author.id)
         if sender["balance"] < amount:
@@ -192,27 +144,15 @@ class Economy(commands.Cog):
         sender["total_spent"] += amount
         receiver["balance"] += amount
         receiver["total_earned"] += amount
-        self.add_transaction(ctx.author.id, "transfer_out", -amount, f"تحويل إلى {member.display_name}")
+        self.add_transaction(ctx.author.id, "transfer_out", -amount, f"تحويل لـ {member.display_name}")
         self.add_transaction(member.id, "transfer_in", amount, f"تحويل من {ctx.author.display_name}")
         self.save()
-        embed = discord.Embed(
-            title="💸 تم التحويل",
-            description=f"حولت **{amount:,} {COIN_SYMBOL}** لـ {member.mention}",
-            color=0x2ECC71
-        )
+        embed = discord.Embed(title="💸 تم التحويل", description=f"حولت **{amount:,} {COIN_SYMBOL}** لـ {member.mention}", color=0x2ECC71)
         embed.set_footer(text=f"رصيدك: {sender['balance']:,} {COIN_SYMBOL}")
         await ctx.send(embed=embed)
 
-    # ═══════════════════════════════════════
-    # 🏆 !top / /top
-    # ═══════════════════════════════════════
-    @commands.hybrid_command(
-        name="top",
-        aliases=["btop", "crypto-top", "توب"],
-        description="🏆 أغنى 10 أعضاء"
-    )
+    @commands.hybrid_command(name="top", aliases=["btop", "crypto-top"], description="🏆 أغنى 10 أعضاء")
     async def top(self, ctx: commands.Context):
-        """أغنى 10 أعضاء"""
         if not self.data:
             await ctx.send("📭 مفيش بيانات!")
             return
@@ -225,31 +165,18 @@ class Economy(commands.Cog):
                 continue
             medal = medals[i] if i < 3 else f"`#{i+1}`"
             desc += f"{medal} **{member.display_name}** — `{data.get('balance', 0):,}` {COIN_SYMBOL}\n"
-        embed = discord.Embed(
-            title=f"🏆 أغنى 10 أعضاء في {COIN_NAME}",
-            description=desc or "لا توجد بيانات",
-            color=0xF7931A
-        )
+        embed = discord.Embed(title=f"🏆 أغنى 10 أعضاء في {COIN_NAME}", description=desc or "لا توجد بيانات", color=0xF7931A)
         await ctx.send(embed=embed)
 
-    # ═══════════════════════════════════════
-    # 📜 !history / /history
-    # ═══════════════════════════════════════
-    @commands.hybrid_command(
-        name="history",
-        aliases=["bh", "bitcoin-history", "سجلي"],
-        description="📜 سجل المعاملات"
-    )
-    @app_commands.describe(member="العضو المراد عرض سجله (اختياري)")
+    @commands.hybrid_command(name="history", aliases=["bh", "سجلي"], description="📜 سجل المعاملات")
+    @app_commands.describe(member="العضو (اختياري)")
     async def history(self, ctx: commands.Context, member: discord.Member = None):
-        """سجل المعاملات"""
         target = member or ctx.author
         user = self.get_user(target.id)
         embed = discord.Embed(title=f"📜 سجل {target.display_name}", color=0x3498DB)
         embed.add_field(name="💰 الرصيد", value=f"`{user['balance']:,}` {COIN_SYMBOL}", inline=False)
         embed.add_field(name="📈 المكتسب", value=f"`{user['total_earned']:,}` {COIN_SYMBOL}", inline=False)
         embed.add_field(name="📉 المنفق", value=f"`{user['total_spent']:,}` {COIN_SYMBOL}", inline=False)
-        embed.add_field(name="🎒 العناصر", value=f"`{len(user.get('inventory', []))}`", inline=False)
         recent = user.get("transactions", [])[-10:]
         if recent:
             tx_text = ""
@@ -259,43 +186,19 @@ class Economy(commands.Cog):
             embed.add_field(name="📋 آخر 10 معاملات", value=tx_text[:1024], inline=False)
         await ctx.send(embed=embed)
 
-    # ═══════════════════════════════════════
-    # 🛒 !shop / /shop
-    # ═══════════════════════════════════════
-    @commands.hybrid_command(
-        name="shop",
-        aliases=["متجر", "bitcoin-shop"],
-        description="🛒 متجر Crypto"
-    )
+    @commands.hybrid_command(name="shop", aliases=["متجر"], description="🛒 المتجر")
     async def shop(self, ctx: commands.Context):
-        """متجر Crypto"""
-        embed = discord.Embed(
-            title=f"🛒 متجر {COIN_NAME}",
-            description="اشترِ حاجات رائعة بالـ Crypto!",
-            color=0xF7931A
-        )
+        embed = discord.Embed(title=f"🛒 متجر {COIN_NAME}", description="اشترِ حاجات رائعة!", color=0xF7931A)
         for item_id, item in SHOP_ITEMS.items():
-            embed.add_field(
-                name=f"{item['name']} (`{item_id}`)",
-                value=f"💰 `{item['price']:,}` {COIN_SYMBOL}\n📝 {item['description']}",
-                inline=False
-            )
-        embed.set_footer(text="استخدم /buy أو !buy لشراء عنصر")
+            embed.add_field(name=f"{item['name']} (`{item_id}`)", value=f"💰 `{item['price']:,}` {COIN_SYMBOL}\n📝 {item['description']}", inline=False)
+        embed.set_footer(text="استخدم !buy لشراء عنصر")
         await ctx.send(embed=embed)
 
-    # ═══════════════════════════════════════
-    # 💳 !buy / /buy
-    # ═══════════════════════════════════════
-    @commands.hybrid_command(
-        name="buy",
-        aliases=["اشتري"],
-        description="💳 شراء عنصر من المتجر"
-    )
-    @app_commands.describe(item_id="معرف العنصر (من /shop)", amount="الكمية")
+    @commands.hybrid_command(name="buy", aliases=["اشتري"], description="💳 شراء")
+    @app_commands.describe(item_id="معرف العنصر", amount="الكمية")
     async def buy(self, ctx: commands.Context, item_id: str = None, amount: int = 1):
-        """شراء من المتجر"""
         if not item_id:
-            await ctx.send("❌ اكتب اسم العنصر! استخدم `/shop` أو `!shop` لمعرفة العناصر")
+            await ctx.send("❌ اكتب اسم العنصر! استخدم `!shop`")
             return
         item_id = item_id.lower()
         item_data = SHOP_ITEMS.get(item_id)
@@ -306,10 +209,7 @@ class Economy(commands.Cog):
         user = self.get_user(ctx.author.id)
         price = item_data["price"] * amount
         if user["balance"] < price:
-            await ctx.send(
-                f"❌ رصيدك مش كفاية!\nعندك: `{user['balance']:,}` {COIN_SYMBOL}\n"
-                f"السعر: `{price:,}` {COIN_SYMBOL}"
-            )
+            await ctx.send(f"❌ رصيدك مش كفاية!\nعندك: `{user['balance']:,}` {COIN_SYMBOL}")
             return
         user["balance"] -= price
         user["total_spent"] += price
@@ -317,122 +217,61 @@ class Economy(commands.Cog):
             user.setdefault("inventory", []).append(item_id)
         self.add_transaction(ctx.author.id, "buy", -price, f"شراء {item_data['name']} x{amount}")
         self.save()
-        embed = discord.Embed(
-            title="✅ تم الشراء",
-            description=(
-                f"اشتريت **{item_data['name']}** x{amount}!\n\n"
-                f"السعر: `{price:,}` {COIN_SYMBOL}\n"
-                f"رصيدك: `{user['balance']:,}` {COIN_SYMBOL}"
-            ),
-            color=0x2ECC71
-        )
+        embed = discord.Embed(title="✅ تم الشراء", description=f"اشتريت **{item_data['name']}** x{amount}!\n\nرصيدك: `{user['balance']:,}` {COIN_SYMBOL}", color=0x2ECC71)
         await ctx.send(embed=embed)
 
-    # ═══════════════════════════════════════
-    # 🛠️ !badmin / /badmin (Group)
-    # ═══════════════════════════════════════
-    @commands.hybrid_group(
-        name="badmin",
-        aliases=["bitcoin-admin"],
-        description="🛠️ أدوات إدارة Crypto",
-        invoke_without_command=True
-    )
+    @commands.hybrid_group(name="badmin", aliases=["bitcoin-admin"], description="🛠️ إدارة Crypto", invoke_without_command=True)
     @commands.has_permissions(administrator=True)
     @app_commands.default_permissions(administrator=True)
     async def badmin(self, ctx: commands.Context):
-        """أوامر إدارة Crypto"""
-        embed = discord.Embed(
-            title="🛠️ أوامر إدارة Crypto",
-            description=(
-                "`/badmin add @عضو مبلغ` - إضافة\n"
-                "`/badmin remove @عضو مبلغ` - خصم\n"
-                "`/badmin set @عضو مبلغ` - تعيين\n"
-                "`/badmin reset @عضو` - تصفير\n\n"
-                "**أو بـ Prefix:**\n"
-                "`!badmin add @عضو مبلغ`\n"
-                "`!badmin remove @عضو مبلغ`\n"
-                "`!badmin set @عضو مبلغ`\n"
-                "`!badmin reset @عضو`"
-            ),
-            color=0xE67E22
-        )
+        embed = discord.Embed(title="🛠️ أوامر إدارة Crypto", description="`!badmin add @عضو مبلغ`\n`!badmin remove @عضو مبلغ`\n`!badmin set @عضو مبلغ`\n`!badmin reset @عضو`", color=0xE67E22)
         await ctx.send(embed=embed)
 
-    @badmin.command(name="add", aliases=["اضف"], description="إضافة رصيد لعضو")
+    @badmin.command(name="add", aliases=["اضف"], description="إضافة رصيد")
     @app_commands.describe(member="العضو", amount="المبلغ")
-    async def badmin_add(self, ctx: commands.Context, member: discord.Member, amount: int):
-        """إضافة رصيد"""
+    async def badmin_add(self, ctx, member: discord.Member, amount: int):
         user = self.get_user(member.id)
         user["balance"] += amount
         user["total_earned"] += amount
-        self.add_transaction(member.id, "admin", amount, "إضافة من المشرف")
+        self.add_transaction(member.id, "admin", amount, "إضافة")
         self.save()
-        embed = discord.Embed(
-            title="✅ تم الإضافة",
-            description=f"أضفت `{amount:,}` {COIN_SYMBOL} لـ {member.mention}",
-            color=0x2ECC71
-        )
-        await ctx.send(embed=embed)
+        await ctx.send(f"✅ تم إضافة `{amount:,}` {COIN_SYMBOL} لـ {member.mention}")
 
-    @badmin.command(name="remove", aliases=["خصم"], description="خصم رصيد من عضو")
+    @badmin.command(name="remove", aliases=["خصم"], description="خصم رصيد")
     @app_commands.describe(member="العضو", amount="المبلغ")
-    async def badmin_remove(self, ctx: commands.Context, member: discord.Member, amount: int):
-        """خصم رصيد"""
+    async def badmin_remove(self, ctx, member: discord.Member, amount: int):
         user = self.get_user(member.id)
         user["balance"] = max(0, user["balance"] - amount)
         user["total_spent"] += amount
-        self.add_transaction(member.id, "admin", -amount, "خصم من المشرف")
+        self.add_transaction(member.id, "admin", -amount, "خصم")
         self.save()
-        embed = discord.Embed(
-            title="✅ تم الخصم",
-            description=f"خصمت `{amount:,}` {COIN_SYMBOL} من {member.mention}",
-            color=0xE74C3C
-        )
-        await ctx.send(embed=embed)
+        await ctx.send(f"✅ تم خصم `{amount:,}` {COIN_SYMBOL} من {member.mention}")
 
-    @badmin.command(name="set", aliases=["عين"], description="تعيين رصيد عضو")
+    @badmin.command(name="set", aliases=["عين"], description="تعيين رصيد")
     @app_commands.describe(member="العضو", amount="المبلغ")
-    async def badmin_set(self, ctx: commands.Context, member: discord.Member, amount: int):
-        """تعيين الرصيد"""
+    async def badmin_set(self, ctx, member: discord.Member, amount: int):
         user = self.get_user(member.id)
         user["balance"] = amount
-        self.add_transaction(member.id, "admin", amount, "تعيين الرصيد")
+        self.add_transaction(member.id, "admin", amount, "تعيين")
         self.save()
-        embed = discord.Embed(
-            title="✅ تم التعيين",
-            description=f"رصيد {member.mention} بقى `{amount:,}` {COIN_SYMBOL}",
-            color=0x3498DB
-        )
-        await ctx.send(embed=embed)
+        await ctx.send(f"✅ رصيد {member.mention} بقى `{amount:,}` {COIN_SYMBOL}")
 
-    @badmin.command(name="reset", aliases=["صفر"], description="تصفير بيانات عضو")
+    @badmin.command(name="reset", aliases=["صفر"], description="تصفير")
     @app_commands.describe(member="العضو")
-    async def badmin_reset(self, ctx: commands.Context, member: discord.Member):
-        """تصفير البيانات"""
-        self.data[str(member.id)] = {
-            "balance": 0, "total_earned": 0, "total_spent": 0,
-            "last_daily": None, "last_work": None,
-            "transactions": [], "inventory": []
-        }
+    async def badmin_reset(self, ctx, member: discord.Member):
+        self.data[str(member.id)] = {"balance": 0, "total_earned": 0, "total_spent": 0, "last_daily": None, "last_work": None, "transactions": [], "inventory": []}
         self.save()
-        embed = discord.Embed(
-            title="🔄 تم التصفير",
-            description=f"تم تصفير بيانات {member.mention}",
-            color=0xE67E22
-        )
-        await ctx.send(embed=embed)
+        await ctx.send(f"🔄 تم تصفير {member.mention}")
 
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.MissingPermissions):
-            await ctx.send("❌ مفيش عندك الصلاحيات المطلوبة!", delete_after=8)
+            await ctx.send("❌ مفيش عندك الصلاحيات!")
         elif isinstance(error, commands.MemberNotFound):
-            await ctx.send("❌ مش لاقي العضو ده!", delete_after=8)
+            await ctx.send("❌ مش لاقي العضو!")
         elif isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(f"❌ ناقص بيانات: `{error.param.name}`", delete_after=8)
+            await ctx.send(f"❌ ناقص: `{error.param.name}`")
         elif isinstance(error, commands.BadArgument):
-            await ctx.send("❌ تأكد من البيانات المدخلة!", delete_after=8)
-        else:
-            print(f"❌ خطأ في أمر {ctx.command}: {error}")
+            await ctx.send("❌ تأكد من البيانات!")
 
 
 async def setup(bot):
