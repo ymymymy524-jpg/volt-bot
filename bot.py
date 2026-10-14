@@ -35,6 +35,7 @@ INITIAL_EXTENSIONS = [
     "cogs.fun",
     "cogs.utility",
     "cogs.voice",
+    "cogs.tts",
     "cogs.admin",
     "cogs.automation",
     "cogs.backup",
