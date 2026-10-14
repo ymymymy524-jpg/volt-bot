@@ -87,43 +87,41 @@ def get_all_users():
     return users
 
 
-# ═══════════════════════════════════════
-# 📋 قائمة الأوامر الكاملة (125 أمر + subcommands)
-# ═══════════════════════════════════════
 ALL_COMMANDS = [
-    # ═══ 🛠️ عام (General) — 7 ═══
+    # ═══ 🛠️ عام (General) — 6 ═══
     {"name": "ping", "description": "سرعة البوت", "category": "عام"},
     {"name": "avatar", "description": "صورة عضو", "category": "عام"},
     {"name": "banner", "description": "بانر عضو", "category": "عام"},
     {"name": "user", "description": "معلومات عضو", "category": "عام"},
     {"name": "server", "description": "معلومات السيرفر", "category": "عام"},
     {"name": "volt", "description": "رصيد Bitcoin", "category": "عام"},
+
+    # ═══ 📚 مساعدة (Help) — 1 ═══
     {"name": "help", "description": "قائمة المساعدة", "category": "عام"},
 
-    # ═══ 👑 إدارة (Moderation) — 27 ═══
+    # ═══ 👑 إدارة (Moderation) — 19 ═══
     {"name": "ban", "description": "حظر عضو", "category": "الإدارة"},
     {"name": "ban-all", "description": "حظر جماعي", "category": "الإدارة"},
-    {"name": "unban", "description": "فك حظر عضو", "category": "الإدارة"},
+    {"name": "unban", "description": "فك حظر", "category": "الإدارة"},
     {"name": "kick", "description": "طرد عضو", "category": "الإدارة"},
     {"name": "warn", "description": "أوامر الإنذارات", "category": "الإدارة"},
     {"name": "warn add", "description": "إضافة إنذار", "category": "الإدارة"},
     {"name": "warn list", "description": "عرض الإنذارات", "category": "الإدارة"},
     {"name": "warn clear", "description": "مسح الإنذارات", "category": "الإدارة"},
     {"name": "mute", "description": "كتم عضو", "category": "الإدارة"},
-    {"name": "mute-all", "description": "كتم جماعي", "category": "الإدارة"},
     {"name": "unmute", "description": "فك الكتم", "category": "الإدارة"},
     {"name": "timeout", "description": "توقيت عضو", "category": "الإدارة"},
     {"name": "untimeout", "description": "إلغاء التوقيت", "category": "الإدارة"},
-    {"name": "voicemute", "description": "كتم صوتي", "category": "الإدارة"},
-    {"name": "voicedeafen", "description": "منع السماع", "category": "الإدارة"},
     {"name": "clear", "description": "مسح رسائل", "category": "الإدارة"},
     {"name": "slowmode", "description": "الوضع البطيء", "category": "الإدارة"},
     {"name": "lock", "description": "قفل القناة", "category": "الإدارة"},
     {"name": "unlock", "description": "فتح القناة", "category": "الإدارة"},
+    {"name": "nick", "description": "تغيير اللقب", "category": "الإدارة"},
     {"name": "hide", "description": "إخفاء القناة", "category": "الإدارة"},
     {"name": "unhide", "description": "إظهار القناة", "category": "الإدارة"},
     {"name": "move", "description": "نقل عضو صوتي", "category": "الإدارة"},
-    {"name": "nick", "description": "تغيير اللقب", "category": "الإدارة"},
+    {"name": "voicemute", "description": "كتم صوتي", "category": "الإدارة"},
+    {"name": "voicedeafen", "description": "منع السماع", "category": "الإدارة"},
     {"name": "broadcast", "description": "إرسال رسالة للأعضاء", "category": "الإدارة"},
     {"name": "broadcast-embed", "description": "إرسال Embed للأعضاء", "category": "الإدارة"},
     {"name": "broadcast-cancel", "description": "إلغاء البرودكاست", "category": "الإدارة"},
@@ -196,15 +194,15 @@ ALL_COMMANDS = [
     {"name": "daily", "description": "المكافأة اليومية", "category": "الاقتصاد"},
     {"name": "work", "description": "العمل", "category": "الاقتصاد"},
     {"name": "transfer", "description": "تحويل الرصيد", "category": "الاقتصاد"},
+    {"name": "crypto-top", "description": "أغنى الأعضاء", "category": "الاقتصاد"},
+    {"name": "history", "description": "سجل المعاملات", "category": "الاقتصاد"},
     {"name": "shop", "description": "المتجر", "category": "الاقتصاد"},
     {"name": "buy", "description": "شراء من المتجر", "category": "الاقتصاد"},
-    {"name": "history", "description": "سجل المعاملات", "category": "الاقتصاد"},
     {"name": "badmin", "description": "إدارة الاقتصاد", "category": "الاقتصاد"},
     {"name": "badmin add", "description": "إضافة رصيد", "category": "الاقتصاد"},
     {"name": "badmin remove", "description": "خصم رصيد", "category": "الاقتصاد"},
     {"name": "badmin set", "description": "تعيين رصيد", "category": "الاقتصاد"},
     {"name": "badmin reset", "description": "تصفير بيانات", "category": "الاقتصاد"},
-    {"name": "crypto-top", "description": "أغنى الأعضاء", "category": "الاقتصاد"},
 
     # ═══ 🤖 ذكاء اصطناعي (AI) — 7 ═══
     {"name": "ask", "description": "اسأل الـ AI", "category": "الذكاء الاصطناعي"},
@@ -237,7 +235,6 @@ ALL_COMMANDS = [
     {"name": "settings", "description": "إعدادات السيرفر", "category": "الإعدادات"},
     {"name": "اختصارات", "description": "عرض الاختصارات", "category": "الإعدادات"},
     {"name": "تحديث-اختصارات", "description": "إعادة تحميل الاختصارات", "category": "الإعدادات"},
-    {"name": "reload-shortcuts", "description": "إعادة تحميل الاختصارات", "category": "الإعدادات"},
 ]
 
 
